@@ -117,3 +117,58 @@
     background-position: 200% 0;
   }
 }
+
+/* ---- <button> elements (forms) share the link styles ---- */
+button.btn {
+  font: inherit;
+  font-weight: 620;
+  appearance: none;
+}
+
+button.btn--primary {
+  border: 0;
+}
+
+button.btn--md {
+  font-size: 1rem;
+}
+
+button.btn--sm {
+  font-size: 0.9rem;
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+.btn:disabled::before {
+  opacity: 0.2;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: btn-spin 700ms linear infinite;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn__spinner {
+    animation-duration: 2s;
+  }
+}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import AuthNav from '../AccountMenu/AccountMenu.jsx'
 import Logo from '../Brand/Logo.jsx'
 import Button from '../Button/Button.jsx'
 import SmartLink from '../SmartLink/SmartLink.jsx'
@@ -42,6 +43,8 @@ export default function Header() {
                 </SmartLink>
               </li>
             ))}
+            <AuthNav onNavigate={closeMenu} />
+            {/* Primary CTA in every auth state: creating a page never needs an account. */}
             <li className="site-nav__cta">
               <Button to={SIGNUP_HREF} size="sm" onClick={closeMenu}>
                 Create Your Page Free

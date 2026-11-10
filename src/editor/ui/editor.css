@@ -1008,6 +1008,11 @@
   color: var(--ed-muted);
 }
 
+.ed-hint {
+  font-size: 13.5px;
+  color: var(--ed-muted);
+}
+
 .ed-soon svg {
   flex: none;
   margin-top: 3px;

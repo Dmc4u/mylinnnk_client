@@ -1,0 +1,261 @@
+/* ---------- Header auth controls ---------- */
+.site-nav__login {
+  margin-left: 6px;
+}
+
+.site-nav__signup {
+  margin-left: 2px;
+}
+
+.site-nav__auth-pending {
+  display: flex;
+  margin-left: 10px;
+}
+
+.auth-skeleton {
+  display: block;
+  width: 168px;
+  height: 40px;
+  border-radius: 999px;
+  background: linear-gradient(100deg, rgb(10 22 48 / 0.05) 30%, rgb(10 22 48 / 0.1) 50%, rgb(10 22 48 / 0.05) 70%);
+  background-size: 200% 100%;
+  animation: auth-skeleton-shimmer 1.4s linear infinite;
+}
+
+@keyframes auth-skeleton-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.site-nav__account {
+  margin-left: 10px;
+}
+
+/* ---------- Account menu ---------- */
+.account-menu {
+  position: relative;
+}
+
+.account-menu__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 240px;
+  min-height: 42px;
+  padding: 4px 12px 4px 4px;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--navy-900);
+  background: rgb(255 255 255 / 0.75);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.account-menu__toggle:hover,
+.account-menu.is-open .account-menu__toggle {
+  border-color: rgb(124 58 237 / 0.35);
+  box-shadow: var(--shadow-sm);
+}
+
+.account-menu__avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand-gradient);
+  border-radius: 50%;
+}
+
+.account-menu__avatar--lg {
+  width: 40px;
+  height: 40px;
+  font-size: 1.05rem;
+}
+
+.account-menu__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu__chevron {
+  flex: none;
+  color: var(--muted);
+  transition: transform 250ms var(--ease-out);
+}
+
+.account-menu.is-open .account-menu__chevron {
+  transform: rotate(180deg);
+}
+
+.account-menu__panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 60;
+  width: 280px;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow-lg);
+  animation: account-menu-in 220ms var(--ease-out);
+}
+
+.account-menu__panel[hidden] {
+  display: none;
+}
+
+.account-menu__who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.account-menu__who-text {
+  min-width: 0;
+}
+
+.account-menu__who-name {
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.account-menu__who-email {
+  overflow: hidden;
+  font-size: 0.86rem;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-menu__hint {
+  margin: 8px 6px 0;
+  padding: 8px 10px;
+  font-size: 0.84rem;
+  color: var(--warn-700);
+  background: var(--warn-50);
+  border-radius: 10px;
+}
+
+.account-menu__hint a {
+  font-weight: 600;
+  color: inherit;
+}
+
+.account-menu__items {
+  display: grid;
+  gap: 2px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account-menu__item {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 540;
+  color: var(--navy-900);
+  text-align: left;
+  text-decoration: none;
+  background: none;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.account-menu__item:hover,
+.account-menu__item:focus-visible {
+  background: rgb(10 22 48 / 0.05);
+}
+
+.account-menu__item:disabled {
+  cursor: wait;
+  color: var(--muted);
+}
+
+.account-menu__error {
+  margin: 6px 6px 2px;
+  font-size: 0.84rem;
+  color: var(--danger-600);
+}
+
+@keyframes account-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/* ---------- Mobile: show the account panel inline in the nav sheet ---------- */
+@media (max-width: 1080px) {
+  .site-nav__login,
+  .site-nav__account,
+  .site-nav__auth-pending {
+    margin: 0;
+  }
+
+  /* Sign up + Create stack as full-width buttons below the links. */
+  .site-nav__signup {
+    margin: 8px 0 0;
+  }
+
+  .site-nav__signup .btn {
+    width: 100%;
+  }
+
+  .site-nav__account {
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+  }
+
+  .auth-skeleton {
+    width: 100%;
+  }
+
+  .account-menu__toggle {
+    display: none;
+  }
+
+  .account-menu__panel,
+  .account-menu__panel[hidden] {
+    position: static;
+    display: block;
+    width: auto;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    animation: none;
+  }
+
+  .account-menu__item {
+    padding: 12px 14px;
+    font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-skeleton {
+    animation: none;
+  }
+
+  .account-menu__panel {
+    animation: none;
+  }
+}

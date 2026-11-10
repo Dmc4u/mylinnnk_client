@@ -48,6 +48,17 @@
   --muted: #59627a;
   --line: #e6e8ee;
 
+  /* Status (forms, alerts) */
+  --danger-600: #b42318;
+  --danger-50: #fef3f2;
+  --danger-200: #fecdca;
+  --success-700: #0f766e;
+  --success-50: #effcf9;
+  --success-200: #a7f3e4;
+  --warn-700: #92400e;
+  --warn-50: #fffaeb;
+  --warn-200: #fde68a;
+
   --brand-gradient: linear-gradient(100deg, var(--teal-600), var(--purple-600));
   --brand-gradient-soft: linear-gradient(100deg, var(--teal-400), var(--purple-400));
 

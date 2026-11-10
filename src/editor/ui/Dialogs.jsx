@@ -3,19 +3,28 @@ import { PUBLISHING_GUARANTEES, describeBilling } from '../config/plans.js'
 import Modal from './Modal.jsx'
 import Icon from './icons.jsx'
 
-/** Save Draft for guests: saved locally, account required for cloud saving. */
-export function SaveDraftDialog({ autosave, onClose }) {
+/**
+ * Save Draft: drafts are saved on this device (signed in or not). Saving to an
+ * account arrives with cloud drafts; until then nothing claims otherwise.
+ * Log in / Sign up open in a new tab so the editor (and this draft) stay open;
+ * this tab learns about the new session automatically.
+ */
+export function SaveDraftDialog({ autosave, signedIn, user, onClose }) {
   const savedLocally = autosave.status === 'saved'
   return (
     <Modal
       title="Save your draft"
       onClose={onClose}
       footer={
-        <>
-          <button type="button" className="ed-btn ed-btn--ghost" onClick={onClose}>Keep editing</button>
-          <button type="button" className="ed-btn" disabled aria-describedby="account-soon">Log in</button>
-          <button type="button" className="ed-btn ed-btn--primary" disabled aria-describedby="account-soon">Sign up free</button>
-        </>
+        signedIn ? (
+          <button type="button" className="ed-btn ed-btn--primary" onClick={onClose}>Keep editing</button>
+        ) : (
+          <>
+            <button type="button" className="ed-btn ed-btn--ghost" onClick={onClose}>Keep editing</button>
+            <a className="ed-btn" href="/login" target="_blank" rel="noopener" aria-describedby="account-new-tab">Log in</a>
+            <a className="ed-btn ed-btn--primary" href="/signup" target="_blank" rel="noopener" aria-describedby="account-new-tab">Sign up free</a>
+          </>
+        )
       }
     >
       <div className={`ed-notice ${savedLocally ? 'ed-notice--ok' : 'ed-notice--warn'}`}>
@@ -26,12 +35,21 @@ export function SaveDraftDialog({ autosave, onClose }) {
             : autosave.error ?? 'This browser could not store your draft. Keep this tab open while you edit.'}
         </p>
       </div>
-      <p>
-        To keep drafts safe across devices and come back to them anytime, you’ll need a <b>free MyLinnnk account</b>.
-        Your current draft will stay on this device while you sign up.
-      </p>
+      {signedIn ? (
+        <p>
+          You’re logged in as <b>{user?.displayName}</b>.
+        </p>
+      ) : (
+        <>
+          <p>
+            To keep drafts safe across devices and come back to them anytime, you’ll need a <b>free MyLinnnk account</b>.
+            Your current draft will stay on this device while you sign up.
+          </p>
+          <p className="ed-hint" id="account-new-tab">Log in and sign up open in a new tab, so you won’t lose your place here.</p>
+        </>
+      )}
       <p className="ed-soon" id="account-soon">
-        <Icon name="lock" size={16} /> Account features are coming soon. Until then, drafts live only in this browser:
+        <Icon name="lock" size={16} /> Saving to your account is coming soon. Until then, drafts live only in this browser:
         clearing browser data, switching devices or private browsing can remove them.
       </p>
     </Modal>
@@ -39,7 +57,7 @@ export function SaveDraftDialog({ autosave, onClose }) {
 }
 
 /** Publish: explains the plan model honestly. No payment, no fake live URL. */
-export function PublishDialog({ options, category, session, onClose }) {
+export function PublishDialog({ options, category, signedIn, onClose }) {
   return (
     <Modal
       size="lg"
@@ -55,7 +73,7 @@ export function PublishDialog({ options, category, session, onClose }) {
       <p>
         Creating and editing your page is free. Publishing it at a public web address requires a publishing plan.
       </p>
-      {session.status === 'guest' && (
+      {!signedIn && (
         <div className="ed-notice">
           <Icon name="info" />
           <p>You’ll need a free account before you can pay and publish, so your page is linked to you.</p>

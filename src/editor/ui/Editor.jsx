@@ -6,7 +6,8 @@ import useMediaLibrary from '../hooks/useMediaLibrary.js'
 import useEditorHistory from '../model/useEditorHistory.js'
 import { addSection, duplicateSection, moveSection, moveSectionTo, removeSection, setTitle } from '../model/operations.js'
 import { newId, pageForRender, resolvePageMedia } from '../model/page.js'
-import { auth, publishing } from '../services/accountServices.js'
+import { useAuth } from '../../auth/useAuth.js'
+import { publishing } from '../services/accountServices.js'
 import Canvas from './Canvas.jsx'
 import { ConfirmDialog, PublishDialog, SaveDraftDialog } from './Dialogs.jsx'
 import PropertiesPanel from './PropertiesPanel.jsx'
@@ -42,14 +43,12 @@ export default function Editor({ template, initialPage, initiallyStored, drafts,
   const [dialog, setDialog] = useState(null)
   const [toast, setToast] = useState(null)
   const [scrollRequest, setScrollRequest] = useState(null)
-  const [session, setSession] = useState({ status: 'guest', user: null })
+  // Read-only here: the editor works the same signed in or not (no login required).
+  const { status: authStatus, user } = useAuth()
+  const signedIn = authStatus === 'authenticated'
 
   const selected = page.sections.find((s) => s.id === selectedId) ?? null
   const renderPage = useMemo(() => pageForRender(resolvePageMedia(page, media.urls)), [page, media.urls])
-
-  useEffect(() => {
-    auth.getSession().then(setSession)
-  }, [])
 
   // Once a brand-new draft is first stored, put its id in the URL so a refresh reopens it.
   const { stored, savedAt } = autosave
@@ -255,9 +254,9 @@ export default function Editor({ template, initialPage, initiallyStored, drafts,
         </div>
       )}
 
-      {dialog?.type === 'save' && <SaveDraftDialog autosave={autosave} onClose={() => setDialog(null)} />}
+      {dialog?.type === 'save' && <SaveDraftDialog autosave={autosave} signedIn={signedIn} user={user} onClose={() => setDialog(null)} />}
       {dialog?.type === 'publish' && (
-        <PublishDialog options={publishing.getPublishingOptions(page)} category={page.templateCategory} session={session} onClose={() => setDialog(null)} />
+        <PublishDialog options={publishing.getPublishingOptions(page)} category={page.templateCategory} signedIn={signedIn} onClose={() => setDialog(null)} />
       )}
       {dialog?.type === 'newDraft' && (
         <ConfirmDialog

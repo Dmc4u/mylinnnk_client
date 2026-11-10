@@ -1,0 +1,179 @@
+/* ---------- Form fields (account screens) ---------- */
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field__label {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.field__control {
+  position: relative;
+}
+
+.field__input {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 14px;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid #cfd4df;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgb(10 22 48 / 0.04);
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.field__input::placeholder {
+  color: #8b93a7;
+}
+
+.field__input:hover {
+  border-color: #b5bccb;
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--teal-600);
+  box-shadow: 0 0 0 4px rgb(20 184 166 / 0.18);
+}
+
+.field--invalid .field__input {
+  border-color: var(--danger-600);
+}
+
+.field--invalid .field__input:focus {
+  box-shadow: 0 0 0 4px rgb(180 35 24 / 0.14);
+}
+
+.field__hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.field__error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.86rem;
+  font-weight: 520;
+  color: var(--danger-600);
+}
+
+.form-icon {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* Password show/hide */
+.password-field {
+  position: relative;
+}
+
+.password-field .field__input {
+  padding-right: 74px;
+}
+
+.password-field__toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  min-width: 58px;
+  height: 36px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--navy-600);
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.password-field__toggle:hover {
+  background: rgb(10 22 48 / 0.05);
+  color: var(--navy-900);
+}
+
+/* ---------- Alerts ---------- */
+.form-alert {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  font-size: 0.93rem;
+  line-height: 1.5;
+  border: 1px solid;
+  border-radius: 14px;
+}
+
+.form-alert__icon {
+  display: inline-flex;
+  margin-top: 1px;
+}
+
+.form-alert__icon .form-icon {
+  margin: 0;
+}
+
+.form-alert__body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.form-alert__title {
+  font-weight: 650;
+}
+
+.form-alert__text a {
+  font-weight: 600;
+}
+
+.form-alert--error {
+  color: var(--danger-600);
+  background: var(--danger-50);
+  border-color: var(--danger-200);
+}
+
+.form-alert--error .form-alert__text {
+  color: #7a271a;
+}
+
+.form-alert--success {
+  color: var(--success-700);
+  background: var(--success-50);
+  border-color: var(--success-200);
+}
+
+.form-alert--success .form-alert__text,
+.form-alert--info .form-alert__text {
+  color: var(--navy-800);
+}
+
+.form-alert--info {
+  color: var(--purple-600);
+  background: #f7f5ff;
+  border-color: var(--purple-200);
+}
+
+.form-alert--warn {
+  color: var(--warn-700);
+  background: var(--warn-50);
+  border-color: var(--warn-200);
+}
+
+.form-alert--warn .form-alert__text {
+  color: #713f12;
+}

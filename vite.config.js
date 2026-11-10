@@ -12,4 +12,11 @@ export default defineConfig({
       "/api": "http://localhost:3003",
     },
   },
+  // Vitest (npm test): component and unit tests run in jsdom, no browser or API needed.
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.js"],
+    include: ["src/**/*.test.{js,jsx}"],
+    restoreMocks: true,
+  },
 });

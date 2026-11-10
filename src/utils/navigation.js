@@ -2,9 +2,9 @@
 export const getUseTemplateHref = (slug) => `/editor/${slug}`
 
 /**
- * Where every "Create Your Page Free" button points. Sign-up isn't built yet,
- * so it scrolls to the homepage's closing call-to-action; change it here once
- * it exists.
+ * Where every "Create Your Page Free" button points: the homepage's
+ * get-started section, which leads into the templates. Creating a page never
+ * requires an account (sign-up has its own link: /signup).
  */
 export const SIGNUP_HREF = '/#get-started'
 

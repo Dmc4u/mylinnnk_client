@@ -18,4 +18,9 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    // Test helpers aren't hot-reloaded modules.
+    files: ['src/test/**/*.{js,jsx}', 'src/**/*.test.{js,jsx}'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 ])

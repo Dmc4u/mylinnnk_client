@@ -7,6 +7,12 @@ import HomePage from '../../pages/HomePage/HomePage.jsx'
 import TemplatesPage from '../../pages/TemplatesPage/TemplatesPage.jsx'
 import TemplatePreviewPage from '../../pages/TemplatePreviewPage/TemplatePreviewPage.jsx'
 import NotFoundPage from '../../pages/NotFoundPage/NotFoundPage.jsx'
+import LoginPage from '../../pages/LoginPage/LoginPage.jsx'
+import SignupPage from '../../pages/SignupPage/SignupPage.jsx'
+import ForgotPasswordPage from '../../pages/ForgotPasswordPage/ForgotPasswordPage.jsx'
+import ResetPasswordPage from '../../pages/ResetPasswordPage/ResetPasswordPage.jsx'
+import VerifyEmailPage from '../../pages/VerifyEmailPage/VerifyEmailPage.jsx'
+import AccountPage from '../../pages/AccountPage/AccountPage.jsx'
 import './App.css'
 
 // The editor is only downloaded when someone opens it.
@@ -55,6 +61,13 @@ function App() {
         <Route index element={<HomePage />} />
         <Route path="templates" element={<TemplatesPage />} />
         <Route path="templates/:slug" element={<TemplatePreviewPage />} />
+        {/* Accounts. The editor never requires one. */}
+        <Route path="login" element={<LoginPage />} />
+        <Route path="signup" element={<SignupPage />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
+        <Route path="verify-email" element={<VerifyEmailPage />} />
+        <Route path="account" element={<AccountPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

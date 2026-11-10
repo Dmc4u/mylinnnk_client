@@ -1,0 +1,133 @@
+.account-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  background: linear-gradient(100deg, rgb(45 212 191 / 0.08), rgb(167 139 250 / 0.1));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.account-profile__avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand-gradient);
+  border-radius: 50%;
+}
+
+.account-profile__text {
+  min-width: 0;
+}
+
+.account-profile__name {
+  font-size: 1.15rem;
+  font-weight: 680;
+  overflow-wrap: anywhere;
+}
+
+.account-profile__email {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.account-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.account-details > div {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.account-details dt {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.account-details dd {
+  margin: 6px 0 0;
+  font-weight: 560;
+}
+
+.account-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  font-size: 0.85rem;
+  font-weight: 620;
+  border-radius: 999px;
+}
+
+.account-badge--ok {
+  color: var(--success-700);
+  background: var(--success-50);
+  border: 1px solid var(--success-200);
+}
+
+.account-badge--pending {
+  color: var(--warn-700);
+  background: var(--warn-50);
+  border: 1px solid var(--warn-200);
+}
+
+.account-section {
+  display: grid;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.account-section h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.account-section p {
+  color: var(--muted);
+}
+
+.resend-verification {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
+.auth-actions--start {
+  justify-content: flex-start;
+}
+
+.account-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 520px) {
+  .account-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .resend-verification .btn {
+    width: 100%;
+  }
+}
