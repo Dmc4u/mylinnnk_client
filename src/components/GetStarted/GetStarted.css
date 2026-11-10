@@ -1,0 +1,95 @@
+.get-started {
+  padding-top: 0;
+}
+
+.get-started__panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(56px, 8vw, 96px) 24px;
+  text-align: center;
+  color: #c7cee0;
+  background:
+    radial-gradient(60% 80% at 15% 0%, rgb(20 184 166 / 0.28), transparent 70%),
+    radial-gradient(60% 80% at 90% 100%, rgb(124 58 237 / 0.32), transparent 70%),
+    var(--navy-900);
+  border-radius: 32px;
+  box-shadow: var(--shadow-lg);
+}
+
+.get-started__rings {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  display: grid;
+  place-items: center;
+}
+
+.get-started__rings span {
+  grid-area: 1 / 1;
+  width: 380px;
+  aspect-ratio: 1;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 50%;
+  animation: get-started-ring 9s ease-in-out infinite;
+}
+
+.get-started__rings span:nth-child(2) {
+  width: 620px;
+  animation-delay: -3s;
+}
+
+.get-started__rings span:nth-child(3) {
+  width: 860px;
+  animation-delay: -6s;
+}
+
+.get-started__mark {
+  animation: get-started-bob 6s ease-in-out infinite alternate;
+}
+
+.get-started__title {
+  margin-top: 26px;
+  font-size: clamp(2rem, 4.6vw, 3.4rem);
+  font-weight: 740;
+  letter-spacing: -0.04em;
+  color: #fff;
+}
+
+.get-started__text {
+  max-width: 30rem;
+  margin-top: 16px;
+  font-size: 1.1rem;
+}
+
+.get-started__cta {
+  margin-top: 34px;
+}
+
+/* On navy, give the primary button a light face so it stands out */
+.get-started__cta.btn--primary {
+  color: var(--navy-900);
+  background: #fff;
+}
+
+@keyframes get-started-ring {
+  0%,
+  100% {
+    scale: 1;
+    opacity: 1;
+  }
+
+  50% {
+    scale: 1.05;
+    opacity: 0.5;
+  }
+}
+
+@keyframes get-started-bob {
+  to {
+    transform: translateY(-8px) rotate(-4deg);
+  }
+}

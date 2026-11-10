@@ -1,0 +1,66 @@
+import { useEffect, useState } from 'react'
+import Logo from '../Brand/Logo.jsx'
+import Button from '../Button/Button.jsx'
+import { NAV_LINKS, SIGNUP_HREF } from '../../utils/navigation.js'
+import './Header.css'
+
+export default function Header() {
+  const [scrolled, setScrolled] = useState(() => typeof window !== 'undefined' && window.scrollY > 8)
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    if (!menuOpen) return undefined
+    const onKey = (event) => {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [menuOpen])
+
+  const closeMenu = () => setMenuOpen(false)
+
+  return (
+    <header className={`site-header ${scrolled ? 'is-scrolled' : ''} ${menuOpen ? 'is-open' : ''}`}>
+      <div className="site-header__inner container">
+        <a href="#top" className="site-header__brand" aria-label="MyLinnnk home" onClick={closeMenu}>
+          <Logo size={34} />
+        </a>
+
+        <nav className="site-nav" aria-label="Main">
+          <ul id="site-nav-list" className="site-nav__list">
+            {NAV_LINKS.map((link) => (
+              <li key={link.href}>
+                <a className="site-nav__link" href={link.href} onClick={closeMenu}>
+                  {link.label}
+                </a>
+              </li>
+            ))}
+            <li className="site-nav__cta">
+              <Button href={SIGNUP_HREF} size="sm" onClick={closeMenu}>
+                Create Your Page Free
+              </Button>
+            </li>
+          </ul>
+        </nav>
+
+        <button
+          type="button"
+          className="site-header__toggle"
+          aria-expanded={menuOpen}
+          aria-controls="site-nav-list"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <span className="sr-only">{menuOpen ? 'Close menu' : 'Open menu'}</span>
+          <span className="site-header__toggle-bar" aria-hidden="true" />
+          <span className="site-header__toggle-bar" aria-hidden="true" />
+        </button>
+      </div>
+    </header>
+  )
+}

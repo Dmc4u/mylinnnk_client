@@ -1,0 +1,39 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 1;
+}
+
+.logo .brand-mark {
+  flex: none;
+  transition: transform 500ms var(--ease-spring);
+}
+
+.logo__word {
+  font-size: calc(var(--logo-size, 36px) * 0.58);
+  font-weight: 720;
+  letter-spacing: -0.035em;
+  color: var(--navy-900);
+}
+
+.logo__nnn {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.logo--dark .logo__word {
+  color: #f5f7fb;
+}
+
+.logo--dark .logo__nnn {
+  background-image: linear-gradient(100deg, #5eead4, #c4b5fd);
+}
+
+/* Playful nudge when the logo link is hovered */
+a:hover > .logo .brand-mark,
+a:focus-visible > .logo .brand-mark {
+  transform: rotate(-8deg) scale(1.06);
+}

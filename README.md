@@ -16,3 +16,4 @@ npm run dev
 git init
 git add .
 git commit -m "Initial commit: set up Vite + React project"
+git push origin main
