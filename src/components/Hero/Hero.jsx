@@ -64,12 +64,12 @@ export default function Hero() {
         </h1>
 
         <p className="hero__lede">
-          Create a beautiful page for a birthday, a wedding, your business or your story — and share it with a
-          single link.
+          Create a beautiful page for a birthday, a wedding, your business or your story. Share it with a single
+          link.
         </p>
 
         <div className="hero__actions">
-          <Button href={SIGNUP_HREF}>Create Your Page Free</Button>
+          <Button to={SIGNUP_HREF}>Create Your Page Free</Button>
           <Button href="#how" variant="ghost">
             See how it works
           </Button>

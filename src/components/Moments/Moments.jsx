@@ -15,7 +15,7 @@ export default function Moments() {
           id="moments-title"
           eyebrow="Moments"
           title="A page for every chapter of life"
-          intro="Celebrate, announce, introduce or remember — MyLinnnk shapes itself around what matters to you."
+          intro="Celebrate, announce, introduce or remember. MyLinnnk shapes itself around what matters to you."
         />
 
         <ul className="moments__grid">

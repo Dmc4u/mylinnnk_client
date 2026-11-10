@@ -9,6 +9,17 @@
   flex: 1;
 }
 
+/* Gentle fade between routes */
+.page-transition {
+  animation: page-fade 450ms var(--ease-out) both;
+}
+
+@keyframes page-fade {
+  from {
+    opacity: 0;
+  }
+}
+
 .skip-link {
   position: fixed;
   top: 12px;

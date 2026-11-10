@@ -10,7 +10,7 @@ export const MOMENTS = [
     title: 'Maya turns 30',
     meta: 'Sat · 7 pm · Rooftop',
     url: 'mylinnnk.com/maya30',
-    blurb: 'The date, the details, your photos and a heartfelt message — all on one page.',
+    blurb: 'The date, the details, your photos and a heartfelt message, all on one page.',
     cover: 'linear-gradient(135deg, #8b5cf6 0%, #c084fc 55%, #f0abfc 100%)',
     icon: [
       'M4 21h16',
@@ -36,7 +36,7 @@ export const MOMENTS = [
     title: 'Northwind Studio',
     meta: 'Design · Open Mon–Fri',
     url: 'mylinnnk.com/northwind',
-    blurb: 'A clean profile with services, links and contact details — ready to share.',
+    blurb: 'A clean profile with your services, links and contact details, ready to share.',
     cover: 'linear-gradient(135deg, #0a1630 0%, #13244a 45%, #0d9488 100%)',
     icon: ['M4 8h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z', 'M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2', 'M3 13h18'],
   },

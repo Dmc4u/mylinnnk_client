@@ -7,7 +7,7 @@ import './Features.css'
 const FEATURES = [
   {
     title: 'Templates for every moment',
-    text: 'Start from a design made for birthdays, weddings, businesses or stories — then make it yours.',
+    text: 'Start from a design made for birthdays, weddings, businesses or stories, then make it yours.',
     icon: ['M4 4h7v7H4z', 'M13 4h7v4h-7z', 'M13 10h7v10h-7z', 'M4 13h7v7H4z'],
   },
   {

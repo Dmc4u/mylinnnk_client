@@ -19,7 +19,7 @@ export default function GetStarted() {
             Ready to tell your story?
           </h2>
           <p className="get-started__text">Your moments deserve a page of their own.</p>
-          <Button href={SIGNUP_HREF} className="get-started__cta">
+          <Button to={SIGNUP_HREF} className="get-started__cta">
             Create Your Page Free
           </Button>
         </Reveal>

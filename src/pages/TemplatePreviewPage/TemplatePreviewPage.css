@@ -1,0 +1,213 @@
+.preview {
+  padding: calc(var(--header-h) + 36px) 0 clamp(72px, 9vw, 112px);
+}
+
+.preview__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.92rem;
+  font-weight: 560;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 200ms ease, gap 300ms var(--ease-out);
+}
+
+.preview__back:hover,
+.preview__back:focus-visible {
+  gap: 10px;
+  color: var(--navy-900);
+}
+
+.preview__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 22px;
+  animation: page-fade-up 600ms var(--ease-out) both;
+}
+
+.preview__heading {
+  max-width: 36rem;
+}
+
+.preview__category a {
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--teal-600);
+  text-decoration: none;
+}
+
+.preview__category a:hover {
+  text-decoration: underline;
+}
+
+.preview__title {
+  margin-top: 8px;
+  font-size: clamp(2rem, 4.4vw, 3rem);
+  font-weight: 760;
+  letter-spacing: -0.04em;
+}
+
+.preview__desc {
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.preview__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.preview__devices {
+  display: inline-flex;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.preview__device {
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  font-weight: 560;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 200ms ease, background-color 250ms ease;
+}
+
+.preview__device[aria-pressed='true'] {
+  color: #fff;
+  background: var(--navy-900);
+}
+
+.preview__soon {
+  padding: 10px 18px;
+  font-weight: 600;
+  color: var(--muted);
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+}
+
+/* ---------- Device frame ---------- */
+.preview__stage {
+  margin-top: 36px;
+  padding: clamp(20px, 4vw, 48px) 20px;
+  background:
+    radial-gradient(50% 60% at 25% 40%, rgb(45 212 191 / 0.1), transparent 70%),
+    radial-gradient(50% 60% at 75% 60%, rgb(139 92 246 / 0.1), transparent 70%),
+    #eef0f4;
+}
+
+.preview__frame {
+  width: min(var(--frame-w), 100%);
+  margin-inline: auto;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid rgb(10 22 48 / 0.08);
+  border-radius: 18px;
+  box-shadow: var(--shadow-lg);
+  transition: width 600ms var(--ease-out);
+  animation: page-fade-up 700ms var(--ease-out) 120ms both;
+}
+
+.preview__chrome {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 38px;
+  padding-inline: 16px;
+  background: #f6f7fa;
+  border-bottom: 1px solid rgb(10 22 48 / 0.06);
+}
+
+.preview__dots {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-right: 24px;
+  border-radius: 50%;
+  background: #f87171;
+  box-shadow:
+    14px 0 #fbbf24,
+    28px 0 #34d399;
+}
+
+.preview__url {
+  flex: 1;
+  max-width: 360px;
+  margin-inline: auto;
+  overflow: hidden;
+  padding: 4px 14px;
+  font-size: 0.78rem;
+  color: #6b7488;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: #fff;
+  border-radius: 999px;
+}
+
+.preview__page {
+  max-height: 78vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.preview__credits {
+  width: min(1200px, 100%);
+  margin: 18px auto 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--muted);
+  text-align: center;
+}
+
+.preview__credits a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.preview__credits a:hover {
+  color: var(--navy-900);
+}
+
+/* ---------- Related ---------- */
+.preview__related {
+  margin-top: clamp(56px, 8vw, 88px);
+}
+
+.preview__related-title {
+  font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+  font-weight: 740;
+  letter-spacing: -0.03em;
+}
+
+.preview__related-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 640px) {
+  .preview__tools {
+    width: 100%;
+  }
+
+  .preview__stage {
+    padding-inline: 12px;
+  }
+}

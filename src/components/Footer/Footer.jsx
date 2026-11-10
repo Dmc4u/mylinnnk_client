@@ -1,5 +1,6 @@
 import Logo from '../Brand/Logo.jsx'
-import { NAV_LINKS } from '../../utils/navigation.js'
+import SmartLink from '../SmartLink/SmartLink.jsx'
+import { NAV_LINKS, SIGNUP_HREF } from '../../utils/navigation.js'
 import './Footer.css'
 
 export default function Footer() {
@@ -10,21 +11,21 @@ export default function Footer() {
       <div className="site-footer__glow" aria-hidden="true" />
       <div className="container site-footer__inner">
         <div className="site-footer__brand">
-          <a href="#top" className="site-footer__logo" aria-label="MyLinnnk home">
+          <SmartLink to="/" className="site-footer__logo" aria-label="MyLinnnk home">
             <Logo variant="dark" size={40} />
-          </a>
+          </SmartLink>
           <p className="site-footer__tagline">Your moments. Your story. Your page.</p>
         </div>
 
         <nav className="site-footer__nav" aria-label="Footer">
           <ul>
             {NAV_LINKS.map((link) => (
-              <li key={link.href}>
-                <a href={link.href}>{link.label}</a>
+              <li key={link.to}>
+                <SmartLink to={link.to}>{link.label}</SmartLink>
               </li>
             ))}
             <li>
-              <a href="#get-started">Get started</a>
+              <SmartLink to={SIGNUP_HREF}>Get started</SmartLink>
             </li>
           </ul>
         </nav>

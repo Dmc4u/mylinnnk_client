@@ -1,0 +1,76 @@
+.template-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.template-card__media {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+}
+
+.template-card__media .tpl-thumb {
+  transition: transform 700ms var(--ease-out);
+}
+
+.template-card:hover .template-card__media .tpl-thumb {
+  transform: scale(1.035);
+}
+
+.template-card__badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: #fff;
+  background: rgb(10 22 48 / 0.82);
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+}
+
+.template-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 20px 22px 22px;
+}
+
+.template-card__category {
+  font-size: 0.74rem;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--teal-600);
+}
+
+.template-card__name {
+  margin-top: 6px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.template-card__desc {
+  margin-top: 6px;
+  font-size: 0.94rem;
+  color: var(--muted);
+}
+
+.template-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.template-card__soon {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
