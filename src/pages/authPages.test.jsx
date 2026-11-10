@@ -231,7 +231,7 @@ describe('account page and header', () => {
     await user.click(screen.getByRole('button', { name: 'Log out' }))
     await waitFor(() => expect(location()).toBe('/'))
     expect(within(header()).getByRole('link', { name: 'Log in' })).toBeInTheDocument()
-    expect(within(header()).getByRole('link', { name: 'Sign up' })).toBeInTheDocument()
+    expect(within(header()).getByRole('link', { name: 'Create Your Page Free' })).toBeInTheDocument()
     expect(api.state.session).toBeNull()
   })
 
@@ -291,11 +291,17 @@ describe('account page and header', () => {
     expect(await within(header()).findByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login?next=%2Ftemplates')
   })
 
-  it('keeps the primary "Create Your Page Free" CTA for guests and signed-in users', async () => {
+  it('login page links to sign-up, keeping the return path', async () => {
+    renderApp('/login?next=%2Ftemplates')
+    const footer = (await screen.findByText(/Don’t have an account?/)).closest('p')
+    expect(within(footer).getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/signup?next=%2Ftemplates')
+  })
+
+  it('header shows at most two actions: Log in or the account menu, plus the primary CTA', async () => {
     const { api, ana } = apiWithAna()
     const signedOut = renderApp('/templates', { api })
     await within(header()).findByRole('link', { name: 'Log in' })
-    expect(within(header()).getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/signup?next=%2Ftemplates')
+    expect(within(header()).queryByRole('link', { name: 'Sign up' })).not.toBeInTheDocument()
     expect(within(header()).getByRole('link', { name: 'Create Your Page Free' })).toHaveAttribute('href', '/#get-started')
     signedOut.unmount()
 

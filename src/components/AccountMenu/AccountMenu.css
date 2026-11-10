@@ -3,10 +3,6 @@
   margin-left: 6px;
 }
 
-.site-nav__signup {
-  margin-left: 2px;
-}
-
 .site-nav__auth-pending {
   display: flex;
   margin-left: 10px;
@@ -41,7 +37,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  max-width: 240px;
+  max-width: 200px;
   min-height: 42px;
   padding: 4px 12px 4px 4px;
   font: inherit;
@@ -208,15 +204,6 @@
   .site-nav__account,
   .site-nav__auth-pending {
     margin: 0;
-  }
-
-  /* Sign up + Create stack as full-width buttons below the links. */
-  .site-nav__signup {
-    margin: 8px 0 0;
-  }
-
-  .site-nav__signup .btn {
-    width: 100%;
   }
 
   .site-nav__account {

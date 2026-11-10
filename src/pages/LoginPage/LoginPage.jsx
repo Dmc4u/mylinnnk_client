@@ -66,7 +66,7 @@ export default function LoginPage() {
       lead="Log in to manage your MyLinnnk account."
       footer={
         <p>
-          New to MyLinnnk? <Link to={authHref('signup', params.get('next'))}>Create a free account</Link>
+          Don’t have an account? <Link to={authHref('signup', params.get('next'))}>Sign up</Link>
         </p>
       }
     >

@@ -3,16 +3,16 @@ import { Link, useLocation } from 'react-router'
 import { errorMessage } from '../../auth/messages.js'
 import { authHref } from '../../auth/redirects.js'
 import { useAuth } from '../../auth/useAuth.js'
-import Button from '../Button/Button.jsx'
 import SmartLink from '../SmartLink/SmartLink.jsx'
 import './AccountMenu.css'
 
 /**
  * Auth controls for the site header, rendered as <li> items of the main nav.
  *   loading       → a placeholder of the same size (no layout jump)
- *   signed out    → "Log in" + "Sign up"
+ *   signed out    → "Log in" (sign-up is linked from the login page)
  *   signed in     → account menu (display name, Account, Log out)
- * The header adds the primary "Create Your Page Free" CTA after these items.
+ * The header adds the primary "Create Your Page Free" CTA after these items,
+ * so it never shows more than two actions.
  */
 export default function AuthNav({ onNavigate }) {
   const { status } = useAuth()
@@ -35,18 +35,11 @@ export default function AuthNav({ onNavigate }) {
   }
 
   return (
-    <>
-      <li className="site-nav__login">
-        <SmartLink className="site-nav__link" to={authHref('login', `${pathname}${search}`)} onClick={onNavigate}>
-          Log in
-        </SmartLink>
-      </li>
-      <li className="site-nav__signup">
-        <Button to={authHref('signup', `${pathname}${search}`)} variant="ghost" size="sm" onClick={onNavigate}>
-          Sign up
-        </Button>
-      </li>
-    </>
+    <li className="site-nav__login">
+      <SmartLink className="site-nav__link" to={authHref('login', `${pathname}${search}`)} onClick={onNavigate}>
+        Log in
+      </SmartLink>
+    </li>
   )
 }
 

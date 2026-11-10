@@ -132,7 +132,7 @@
   transform: rotate(-45deg);
 }
 
-/* Collapses below the width where links + Log in + Sign up + Create fit on one row. */
+/* Collapses below the width where links + account menu + Create fit on one row. */
 @media (max-width: 1080px) {
   .site-header__toggle {
     display: inline-block;
