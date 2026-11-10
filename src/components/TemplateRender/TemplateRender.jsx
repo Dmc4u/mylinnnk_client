@@ -10,9 +10,10 @@ import './TemplateRender.css'
  * would edit comes from `template.sections[].content`.
  *
  * maxSections limits how many sections are rendered (thumbnails only need
- * the top of the page).
+ * the top of the page). selectedSectionId (editor only) marks one section as
+ * selected so the editor can outline it.
  */
-function TemplateRender({ template, maxSections }) {
+function TemplateRender({ template, maxSections, selectedSectionId }) {
   const { theme } = template
   const sections = maxSections ? template.sections.slice(0, maxSections) : template.sections
 
@@ -29,7 +30,7 @@ function TemplateRender({ template, maxSections }) {
         return (
           <Tag
             key={section.id}
-            className={`ts ts-${section.type} ts-${section.type}--${section.variant} ts-tone-${section.tone ?? 'default'}`}
+            className={`ts ts-${section.type} ts-${section.type}--${section.variant} ts-tone-${section.tone ?? 'default'} ts-space-${section.options?.spacing ?? 'normal'}${section.id === selectedSectionId ? ' is-selected' : ''}`}
             data-section={section.id}
           >
             <Section

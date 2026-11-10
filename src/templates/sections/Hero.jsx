@@ -109,9 +109,9 @@ export default function Hero({ variant, content: c, options = {}, ornament }) {
           </h2>
           <div className="ts-hero__editorial-foot">
             {c.subtitle && <p className="ts-hero__subtitle">{c.subtitle}</p>}
-            {c.meta?.length > 0 && (
+            {c.tags?.length > 0 && (
               <ul className="ts-hero__metalist">
-                {c.meta.map((m) => (
+                {c.tags.map((m) => (
                   <li key={m}>{m}</li>
                 ))}
               </ul>

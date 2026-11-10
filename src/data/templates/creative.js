@@ -89,7 +89,7 @@ export const studioMono = {
         eyebrow: '// product designer',
         title: 'I design calm\nsoftware for\nbusy people.',
         subtitle: 'Currently leading design at a health-tech start-up. Previously at agencies in Berlin and Madrid.',
-        meta: ['Available for advising', 'Madrid', 'UTC+1'],
+        tags: ['Available for advising', 'Madrid', 'UTC+1'],
       },
     },
     {

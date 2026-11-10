@@ -1,20 +1,24 @@
 /**
- * Template content schema — the contract between template data and a future
- * visual editor. Templates are plain JSON-serialisable objects:
+ * Template content schema — the contract between template data, the renderer
+ * and the visual editor. Templates (and editable pages created from them) are
+ * plain JSON-serialisable objects:
  *
  *   {
  *     slug, name, category, description, tags, featured, status,   // catalogue metadata
- *     theme:    { colors, fonts, type, radius, ornament },            // style (see theme.js)
+ *     theme:    { colors, fonts, type, radius, ornament, imageFilter }, // style (see theme.js)
  *     sections: [{ id, type, variant, tone?, options?, content }],    // ordered page sections
  *   }
  *
- * `content` holds everything a user would edit (text, lists, images).
- * `type`/`variant`/`options`/`tone` are presentation choices an editor can
- * expose as layout pickers. Nothing a user edits lives in JSX.
+ * `content` holds everything a user edits (text, lists, images, links).
+ * `type`/`variant`/`options`/`tone` are presentation choices the editor
+ * exposes as layout pickers. Nothing a user edits lives in JSX.
  *
  * Field kinds:
  *   text      single line              richtext  paragraphs split by a blank line
- *   image     { src, alt, focus?, caption?, credit? }
+ *   link      URL a button points to (http(s), mailto:, tel: or #anchor)
+ *   number    numeric value
+ *   image     { src?, mediaId?, alt, focus?, caption?, credit?, original? }
+ *             src = bundled template photo; mediaId = a user upload (editor only)
  *   list      array of objects with the listed `of` fields
  *   strings   array of strings
  */
@@ -39,20 +43,48 @@ export const SECTION_TYPES = {
       ctaStyle: ['solid', 'outline', 'inverse'],
     },
     fields: {
-      eyebrow: 'text', title: 'text', subtitle: 'text', meta: 'text', cta: 'text', badge: 'text',
+      eyebrow: 'text', title: 'text', subtitle: 'text', meta: 'text', tags: 'strings',
+      cta: 'text', ctaHref: 'link', badge: 'text',
       image: IMAGE, images: { kind: 'list', of: IMAGE },
+    },
+    /** Which fields and options each hero layout actually renders. */
+    variantFields: {
+      cover: ['eyebrow', 'title', 'subtitle', 'meta', 'cta', 'ctaHref', 'image'],
+      split: ['eyebrow', 'title', 'subtitle', 'meta', 'cta', 'ctaHref', 'badge', 'image'],
+      arch: ['eyebrow', 'title', 'subtitle', 'meta', 'image'],
+      poster: ['eyebrow', 'title', 'subtitle', 'meta', 'image'],
+      collage: ['eyebrow', 'title', 'subtitle', 'cta', 'ctaHref', 'images'],
+      editorial: ['eyebrow', 'title', 'subtitle', 'tags'],
+      framed: ['eyebrow', 'title', 'subtitle', 'image'],
+    },
+    variantOptions: {
+      cover: ['align', 'overlay', 'height', 'ctaStyle'],
+      split: ['imageSide', 'imageShape'],
     },
   },
   details: {
     label: 'Key details',
     variants: ['ticket', 'inline', 'cards', 'stickers'],
     fields: { eyebrow: 'text', title: 'text', note: 'text', items: { kind: 'list', of: { label: 'text', value: 'text' } } },
+    variantFields: {
+      ticket: ['eyebrow', 'title', 'items', 'note'],
+      inline: ['eyebrow', 'title', 'items'],
+      cards: ['eyebrow', 'title', 'items'],
+      stickers: ['eyebrow', 'title', 'items'],
+    },
   },
   text: {
     label: 'Text',
     variants: ['centered', 'split', 'dropcap', 'letter'],
     options: { imageSide: ['left', 'right'] },
-    fields: { eyebrow: 'text', title: 'text', body: 'richtext', image: IMAGE, cta: 'text', signature: 'text' },
+    fields: { eyebrow: 'text', title: 'text', body: 'richtext', image: IMAGE, cta: 'text', ctaHref: 'link', signature: 'text' },
+    variantFields: {
+      centered: ['eyebrow', 'title', 'body', 'cta', 'ctaHref'],
+      split: ['eyebrow', 'title', 'body', 'cta', 'ctaHref', 'image'],
+      dropcap: ['eyebrow', 'title', 'body'],
+      letter: ['eyebrow', 'title', 'body', 'signature'],
+    },
+    variantOptions: { split: ['imageSide'] },
   },
   gallery: {
     label: 'Gallery',
@@ -91,7 +123,11 @@ export const SECTION_TYPES = {
     variants: ['bar'],
     fields: { eyebrow: 'text', title: 'text', raised: 'text', goal: 'text', percent: 'number', note: 'text' },
   },
-  cta: { label: 'Call to action', variants: ['banner', 'centered', 'signature'], fields: { title: 'text', text: 'text', button: 'text' } },
+  cta: {
+    label: 'Call to action',
+    variants: ['banner', 'centered', 'signature'],
+    fields: { title: 'text', text: 'text', button: 'text', buttonHref: 'link' },
+  },
   contact: {
     label: 'Contact',
     variants: ['columns'],
@@ -102,13 +138,67 @@ export const SECTION_TYPES = {
 
 export const SECTION_TONES = ['default', 'surface', 'accent', 'inverse']
 
-/** Returns a list of problems with a template's structure (empty when valid). */
+/** Presentation option available on every section type. */
+export const GENERIC_OPTIONS = { spacing: ['compact', 'normal', 'roomy'] }
+
+/**
+ * Structural rules the editor must respect so pages always render sensibly.
+ * Types not listed are free to add, duplicate, remove and reorder.
+ */
+export const SECTION_RULES = {
+  nav: { max: 1, position: 'first', duplicable: false, addable: true },
+  hero: { min: 1, max: 1, duplicable: false, removable: false, addable: false },
+}
+
+/** Human-readable labels for the editor UI. */
+export const FIELD_LABELS = {
+  brand: 'Site name', links: 'Menu items', cta: 'Button label', ctaHref: 'Button link',
+  eyebrow: 'Small heading', title: 'Heading', subtitle: 'Subtitle', meta: 'Details line', tags: 'Tags',
+  badge: 'Badge', image: 'Image', images: 'Images', note: 'Note', items: 'Items', body: 'Text',
+  signature: 'Signature', intro: 'Introduction', label: 'Label', value: 'Value', text: 'Text',
+  author: 'Author', parts: 'Countdown', unit: 'Unit', raised: 'Amount raised', goal: 'Goal',
+  percent: 'Progress (%)', button: 'Button label', buttonHref: 'Button link', lines: 'Contact lines',
+}
+
+export const VARIANT_LABELS = {
+  split: 'Split', centered: 'Centred', cover: 'Full-bleed photo', arch: 'Arched portrait', poster: 'Poster',
+  collage: 'Photo collage', editorial: 'Editorial type', framed: 'Framed photo', ticket: 'Ticket', inline: 'Inline',
+  cards: 'Cards', stickers: 'Stickers', dropcap: 'Editorial columns', letter: 'Handwritten letter',
+  masonry: 'Masonry', filmstrip: 'Filmstrip', polaroids: 'Polaroids', mosaic: 'Mosaic', vertical: 'Vertical',
+  schedule: 'Schedule', years: 'Years', numbered: 'Numbered', menu: 'Menu', columns: 'Columns', lineup: 'Line-up',
+  big: 'Big numbers', large: 'Large', banner: 'Banner', boxes: 'Boxes', bar: 'Progress bar', band: 'Band',
+}
+
+export const OPTION_LABELS = {
+  align: 'Text alignment', overlay: 'Photo overlay', height: 'Height', imageSide: 'Image side',
+  imageShape: 'Image shape', ctaStyle: 'Button style', spacing: 'Spacing', tone: 'Background',
+}
+
+/** Readable label for a content field key. */
+export const fieldLabel = (key) => FIELD_LABELS[key] ?? key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())
+
+/** Fields that apply to a section's current variant (all fields when unspecified). */
+export function fieldsForVariant(type, variant) {
+  const def = SECTION_TYPES[type]
+  if (!def) return []
+  return def.variantFields?.[variant] ?? Object.keys(def.fields)
+}
+
+/** Layout options that apply to a section's current variant, plus generic options. */
+export function optionsForVariant(type, variant) {
+  const def = SECTION_TYPES[type]
+  if (!def) return {}
+  const keys = def.variantOptions ? (def.variantOptions[variant] ?? []) : Object.keys(def.options ?? {})
+  return { ...Object.fromEntries(keys.map((k) => [k, def.options[k]])), ...GENERIC_OPTIONS }
+}
+
+/** Returns a list of problems with a template's (or page's) structure (empty when valid). */
 export function validateTemplate(template) {
   const problems = []
   const ids = new Set()
   for (const section of template.sections ?? []) {
     const def = SECTION_TYPES[section.type]
-    const where = `${template.slug} › ${section.id ?? '(no id)'}`
+    const where = `${template.slug ?? template.templateSlug} › ${section.id ?? '(no id)'}`
     if (!section.id) problems.push(`${where}: missing id`)
     else if (ids.has(section.id)) problems.push(`${where}: duplicate id`)
     ids.add(section.id)
@@ -120,6 +210,11 @@ export function validateTemplate(template) {
     if (section.tone && !SECTION_TONES.includes(section.tone)) problems.push(`${where}: unknown tone "${section.tone}"`)
     for (const key of Object.keys(section.content ?? {})) {
       if (!(key in def.fields)) problems.push(`${where}: unexpected field "${key}"`)
+    }
+    const allowedOptions = { ...(def.options ?? {}), ...GENERIC_OPTIONS }
+    for (const [key, value] of Object.entries(section.options ?? {})) {
+      if (!allowedOptions[key]) problems.push(`${where}: unexpected option "${key}"`)
+      else if (!allowedOptions[key].includes(value)) problems.push(`${where}: invalid ${key} "${value}"`)
     }
   }
   return problems
