@@ -3,7 +3,7 @@ import Button from '../Button/Button.jsx'
 import PageCard from './PageCard.jsx'
 import usePointerParallax from '../../hooks/usePointerParallax.js'
 import { MOMENTS } from '../../utils/moments.js'
-import { SIGNUP_HREF } from '../../utils/navigation.js'
+import { CREATE_PAGE_HREF } from '../../utils/navigation.js'
 import './Hero.css'
 
 const HEADLINE = [
@@ -69,7 +69,7 @@ export default function Hero() {
         </p>
 
         <div className="hero__actions">
-          <Button to={SIGNUP_HREF}>Create Your Page Free</Button>
+          <Button to={CREATE_PAGE_HREF}>Create Your Page Free</Button>
           <Button href="#how" variant="ghost">
             See how it works
           </Button>

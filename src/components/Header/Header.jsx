@@ -3,7 +3,7 @@ import AuthNav from '../AccountMenu/AccountMenu.jsx'
 import Logo from '../Brand/Logo.jsx'
 import Button from '../Button/Button.jsx'
 import SmartLink from '../SmartLink/SmartLink.jsx'
-import { NAV_LINKS, SIGNUP_HREF } from '../../utils/navigation.js'
+import { CREATE_PAGE_HREF, NAV_LINKS } from '../../utils/navigation.js'
 import './Header.css'
 
 export default function Header() {
@@ -46,7 +46,7 @@ export default function Header() {
             <AuthNav onNavigate={closeMenu} />
             {/* Primary CTA in every auth state: creating a page never needs an account. */}
             <li className="site-nav__cta">
-              <Button to={SIGNUP_HREF} size="sm" onClick={closeMenu}>
+              <Button to={CREATE_PAGE_HREF} size="sm" onClick={closeMenu}>
                 Create Your Page Free
               </Button>
             </li>

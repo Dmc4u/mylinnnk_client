@@ -1,6 +1,6 @@
 import Logo from '../Brand/Logo.jsx'
 import SmartLink from '../SmartLink/SmartLink.jsx'
-import { NAV_LINKS, SIGNUP_HREF } from '../../utils/navigation.js'
+import { GET_STARTED_HREF, NAV_LINKS } from '../../utils/navigation.js'
 import './Footer.css'
 
 export default function Footer() {
@@ -25,7 +25,7 @@ export default function Footer() {
               </li>
             ))}
             <li>
-              <SmartLink to={SIGNUP_HREF}>Get started</SmartLink>
+              <SmartLink to={GET_STARTED_HREF}>Get started</SmartLink>
             </li>
           </ul>
         </nav>

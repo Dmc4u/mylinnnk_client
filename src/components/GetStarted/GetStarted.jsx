@@ -1,7 +1,7 @@
 import Reveal from '../Reveal/Reveal.jsx'
 import Button from '../Button/Button.jsx'
 import BrandMark from '../Brand/BrandMark.jsx'
-import { SIGNUP_HREF } from '../../utils/navigation.js'
+import { CREATE_PAGE_HREF } from '../../utils/navigation.js'
 import './GetStarted.css'
 
 export default function GetStarted() {
@@ -19,7 +19,7 @@ export default function GetStarted() {
             Ready to tell your story?
           </h2>
           <p className="get-started__text">Your moments deserve a page of their own.</p>
-          <Button to={SIGNUP_HREF} className="get-started__cta">
+          <Button to={CREATE_PAGE_HREF} className="get-started__cta">
             Create Your Page Free
           </Button>
         </Reveal>

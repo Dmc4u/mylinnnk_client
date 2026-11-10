@@ -24,6 +24,16 @@ async function seedDraft(title = 'Ana & Rui') {
 const snapshotStorage = () => Object.fromEntries(Object.keys(localStorage).sort().map((k) => [k, localStorage.getItem(k)]))
 
 describe('guest editing without an account', () => {
+  it('Create Your Page Free → template gallery → chosen template’s editor, no login', async () => {
+    const { user, location } = renderApp('/')
+    const hero = screen.getAllByRole('link', { name: 'Create Your Page Free' })
+    await user.click(hero[1]) // the homepage hero button (the header's is first)
+    await waitFor(() => expect(location()).toBe('/templates'))
+    await user.click(await screen.findByRole('link', { name: 'Use This Template: Coastal Evening' }))
+    expect(await screen.findByRole('button', { name: 'Save draft' }, { timeout: 5000 })).toBeInTheDocument()
+    expect(location().startsWith('/editor/coastal-evening')).toBe(true)
+  })
+
   it('templates can be browsed and opened in the editor while signed out', async () => {
     const { user, location } = renderApp('/templates')
     const useTemplate = await screen.findByRole('link', { name: 'Use This Template: Garden Vows' })

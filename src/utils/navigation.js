@@ -2,11 +2,14 @@
 export const getUseTemplateHref = (slug) => `/editor/${slug}`
 
 /**
- * Where every "Create Your Page Free" button points: the homepage's
- * get-started section, which leads into the templates. Creating a page never
- * requires an account (sign-up has its own link: /signup).
+ * Where every "Create Your Page Free" button points: straight to the template
+ * gallery (choose a template → editor). Creating a page never requires an
+ * account (sign-up has its own link: /signup).
  */
-export const SIGNUP_HREF = '/#get-started'
+export const CREATE_PAGE_HREF = '/templates'
+
+/** The homepage's "Ready to tell your story?" section (footer "Get started" link). */
+export const GET_STARTED_HREF = '/#get-started'
 
 export const templatePreviewPath = (slug) => `/templates/${slug}`
 

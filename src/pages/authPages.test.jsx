@@ -297,18 +297,27 @@ describe('account page and header', () => {
     expect(within(footer).getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/signup?next=%2Ftemplates')
   })
 
+  it('every "Create Your Page Free" button goes straight to the template gallery', async () => {
+    renderApp('/')
+    const ctas = await screen.findAllByRole('link', { name: 'Create Your Page Free' })
+    expect(ctas.length).toBe(3) // header, hero, "Ready to tell your story?"
+    for (const cta of ctas) expect(cta).toHaveAttribute('href', '/templates')
+    expect(screen.getByRole('heading', { name: 'Ready to tell your story?' })).toBeInTheDocument()
+    expect(within(screen.getByRole('contentinfo')).getByRole('link', { name: 'Get started' })).toHaveAttribute('href', '/#get-started')
+  })
+
   it('header shows at most two actions: Log in or the account menu, plus the primary CTA', async () => {
     const { api, ana } = apiWithAna()
     const signedOut = renderApp('/templates', { api })
     await within(header()).findByRole('link', { name: 'Log in' })
     expect(within(header()).queryByRole('link', { name: 'Sign up' })).not.toBeInTheDocument()
-    expect(within(header()).getByRole('link', { name: 'Create Your Page Free' })).toHaveAttribute('href', '/#get-started')
+    expect(within(header()).getByRole('link', { name: 'Create Your Page Free' })).toHaveAttribute('href', '/templates')
     signedOut.unmount()
 
     api.signIn(ana)
     renderApp('/templates', { api })
     await within(header()).findByRole('button', { name: /Account menu for Ana Silva/ })
-    expect(within(header()).getByRole('link', { name: 'Create Your Page Free' })).toHaveAttribute('href', '/#get-started')
+    expect(within(header()).getByRole('link', { name: 'Create Your Page Free' })).toHaveAttribute('href', '/templates')
     expect(within(header()).queryByRole('link', { name: 'Sign up' })).not.toBeInTheDocument()
   })
 })
