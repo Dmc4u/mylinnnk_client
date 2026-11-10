@@ -28,7 +28,8 @@ The frontend already uses these state names (`src/editor/config/plans.js → PAG
 draft ──(owner requests publish)──▶ pending_payment
 pending_payment ──(verified webhook: payment succeeded)──▶ published
 pending_payment ──(payment failed / abandoned / expired session)──▶ draft
-published ──(entitlement period ends / subscription not renewed)──▶ expired
+published ──(one-time pass period ends / subscription cancelled or renewal failed)──▶ expired
+published ──(subscription renews / pass extended / plan switched, verified webhook)──▶ published
 published ──(owner unpublishes)──▶ unpublished
 unpublished ──(owner republishes, entitlement still valid)──▶ published
 expired ──(owner renews / pays again, verified webhook)──▶ published
@@ -45,10 +46,30 @@ any ──(moderation)──▶ suspended ──(moderation resolved)──▶ p
 Plan identifiers live in `src/editor/config/plans.js` for the UI; the backend owns the real `PublishingPlans`
 collection (prices, currency, period length, renewal rules).
 
-- `event-pass`: one-time payment, fixed publication period (length to be defined).
-- `pro-monthly` / `pro-annual`: subscription; page stays live while the subscription is active.
+| Plan ID | Family | Billing | Renewal |
+|---|---|---|---|
+| `event-pass` | Personal event page | One-time payment for a fixed publication period | Never renews automatically |
+| `pro-pass` | Professional page | One-time payment for a fixed publication period | Never renews automatically |
+| `pro-monthly` | Professional page | Subscription, billed monthly | Renews monthly until cancelled |
+| `pro-annual` | Professional page | Subscription, billed annually | Renews annually until cancelled |
 
-The template category only provides a **suggested** plan family. The server applies the actual rules.
+- Prices (`price`) and publication periods (`periodDays`) are configuration, `null` in the frontend until the
+  server provides them. Different plans may have different periods (e.g. the event pass and the professional pass).
+- The template category only provides a **suggested** plan family. The server applies the actual eligibility rules.
+
+### Renewal and switching rules
+
+- **One-time passes never renew automatically.** Before the period ends the owner can buy another pass
+  (extending the period) or switch to a subscription (professional pages only). If they do nothing, the page
+  moves to `expired`.
+- **Subscriptions renew automatically** according to the billing agreement the user accepted (monthly or annual)
+  until cancelled. Cancelling keeps the page live until the end of the paid period, then it moves to `expired`.
+  A failed renewal payment follows the provider's retry/grace rules before the page expires.
+- **Switching plans** (e.g. pass → monthly, monthly → annual, annual → pass at renewal) changes only the
+  entitlement and billing records. The page document, its drafts and media are untouched. Proration, credits
+  and switch timing are decided server-side and will be defined with the payment provider.
+- **Expiry never deletes content.** An `expired` page keeps its document, published revision, drafts and media;
+  renewing or buying a new plan returns it to `published` without rebuilding anything.
 
 ## Backend responsibilities (future phases)
 
@@ -60,7 +81,8 @@ The template category only provides a **suggested** plan family. The server appl
 6. Record the payment transaction idempotently (keyed by provider event/payment ID).
 7. Create or extend the `PublishingEntitlement`.
 8. Publish the page only after a verified, recorded payment. A checkout redirect alone authorises nothing.
-9. Handle renewals, cancellations, failed payments, refunds/chargebacks and expiry.
+9. Handle subscription renewals, one-time pass extensions, plan switches, cancellations, failed payments,
+   refunds/chargebacks and expiry, without touching page content.
 10. Keep an auditable history of payment and publishing events.
 
 ## Conceptual entities
@@ -72,8 +94,10 @@ The template category only provides a **suggested** plan family. The server appl
 - **PublishingPlans**: server-defined plans and prices.
 - **Orders**: an attempt to buy a plan for a page.
 - **Payments**: provider transactions linked to orders (idempotent, verified via webhooks).
-- **Subscriptions**: recurring billing state for professional plans.
-- **PublishingEntitlements**: the right to publish a specific page until a date (or while a subscription is active).
+- **Subscriptions**: recurring billing state for `pro-monthly` / `pro-annual` (status, current period end, cancel-at-period-end).
+- **PublishingEntitlements**: the right to publish a specific page, linked to the plan that granted it:
+  until a fixed date (one-time passes) or while a subscription is active. Plan switches create or update an
+  entitlement; they never modify the page document.
 
 ## Frontend boundaries already in place
 

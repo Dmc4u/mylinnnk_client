@@ -1,4 +1,5 @@
 import { CATEGORY_LABELS } from '../../data/templates.js'
+import { PUBLISHING_GUARANTEES, describeBilling } from '../config/plans.js'
 import Modal from './Modal.jsx'
 import Icon from './icons.jsx'
 
@@ -73,10 +74,13 @@ export function PublishDialog({ options, category, session, onClose }) {
                 </li>
               ))}
             </ul>
-            <ul className="ed-plan__options">
+            <ul className="ed-plan__options" aria-label={`${family.label} options`}>
               {family.plans.map((plan) => (
-                <li key={plan.id}>
-                  <span>{plan.label}</span>
+                <li key={plan.id} data-plan={plan.id}>
+                  <span className="ed-plan__option">
+                    <span className="ed-plan__name">{plan.label}</span>
+                    <span className="ed-plan__terms">{describeBilling(plan)}</span>
+                  </span>
                   <span className="ed-plan__price">{plan.price == null ? 'Price to be announced' : plan.price}</span>
                 </li>
               ))}
@@ -84,6 +88,13 @@ export function PublishDialog({ options, category, session, onClose }) {
           </section>
         ))}
       </div>
+      <ul className="ed-guarantees">
+        {PUBLISHING_GUARANTEES.map((g) => (
+          <li key={g}>
+            <Icon name="check" size={16} /> {g}
+          </li>
+        ))}
+      </ul>
       <p className="ed-panel__hint">
         {category ? `This page uses a ${CATEGORY_LABELS[category] ?? category} template. ` : ''}
         The plan that applies is confirmed when you publish, based on how the page will be used.
