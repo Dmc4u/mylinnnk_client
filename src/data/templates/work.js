@@ -156,7 +156,7 @@ export const northwindStudio = {
         eyebrow: 'Brand & digital studio · Lisbon',
         title: 'We make brave\nbrands feel\nfamiliar.',
         subtitle: 'Identity, websites and campaigns for independent businesses since 2016.',
-        meta: ['Branding', 'Web design', 'Campaigns', 'Art direction'],
+        tags: ['Branding', 'Web design', 'Campaigns', 'Art direction'],
       },
     },
     { id: 'marquee', type: 'marquee', variant: 'band', tone: 'accent', content: { items: ['Identity', 'Packaging', 'Websites', 'Motion', 'Campaigns'] } },

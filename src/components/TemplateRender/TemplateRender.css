@@ -151,6 +151,15 @@
   padding: 96px var(--pad);
 }
 
+/* Generic section spacing option (editor-controlled) */
+.ts.ts-space-compact:not(.ts-hero, .ts-nav) {
+  padding-block: 56px;
+}
+
+.ts.ts-space-roomy:not(.ts-hero, .ts-nav) {
+  padding-block: 140px;
+}
+
 .ts-tone-surface {
   color: var(--t-surface-ink);
   background: var(--t-surface);

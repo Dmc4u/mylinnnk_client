@@ -20,6 +20,13 @@
   }
 }
 
+.app-loading {
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  color: var(--muted);
+}
+
 .skip-link {
   position: fixed;
   top: 12px;
