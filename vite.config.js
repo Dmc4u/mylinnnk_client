@@ -7,5 +7,9 @@ export default defineConfig({
   server: {
     port: 3002,
     open: true,
+    // Development only: forward API calls to the MyLinnnk API (mylinnnk_api) on port 3003.
+    proxy: {
+      "/api": "http://localhost:3003",
+    },
   },
 });
