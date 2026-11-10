@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Logo from '../Brand/Logo.jsx'
 import Button from '../Button/Button.jsx'
+import SmartLink from '../SmartLink/SmartLink.jsx'
 import { NAV_LINKS, SIGNUP_HREF } from '../../utils/navigation.js'
 import './Header.css'
 
@@ -28,21 +29,21 @@ export default function Header() {
   return (
     <header className={`site-header ${scrolled ? 'is-scrolled' : ''} ${menuOpen ? 'is-open' : ''}`}>
       <div className="site-header__inner container">
-        <a href="#top" className="site-header__brand" aria-label="MyLinnnk home" onClick={closeMenu}>
+        <SmartLink to="/" className="site-header__brand" aria-label="MyLinnnk home" onClick={closeMenu}>
           <Logo size={34} />
-        </a>
+        </SmartLink>
 
         <nav className="site-nav" aria-label="Main">
           <ul id="site-nav-list" className="site-nav__list">
             {NAV_LINKS.map((link) => (
-              <li key={link.href}>
-                <a className="site-nav__link" href={link.href} onClick={closeMenu}>
+              <li key={link.to}>
+                <SmartLink className="site-nav__link" to={link.to} onClick={closeMenu}>
                   {link.label}
-                </a>
+                </SmartLink>
               </li>
             ))}
             <li className="site-nav__cta">
-              <Button href={SIGNUP_HREF} size="sm" onClick={closeMenu}>
+              <Button to={SIGNUP_HREF} size="sm" onClick={closeMenu}>
                 Create Your Page Free
               </Button>
             </li>

@@ -16,7 +16,7 @@ export default function HowItWorks() {
           id="how-title"
           eyebrow="How it works"
           title="Live in three simple steps"
-          intro="No design skills needed — pick, personalise and share."
+          intro="No design skills needed. Pick, personalise and share."
         />
 
         <Reveal as="ol" className="how__steps">

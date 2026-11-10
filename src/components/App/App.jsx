@@ -1,28 +1,42 @@
+import { Outlet, Route, Routes, useLocation } from 'react-router'
 import Header from '../Header/Header.jsx'
-import Hero from '../Hero/Hero.jsx'
-import Features from '../Features/Features.jsx'
-import Moments from '../Moments/Moments.jsx'
-import HowItWorks from '../HowItWorks/HowItWorks.jsx'
-import GetStarted from '../GetStarted/GetStarted.jsx'
 import Footer from '../Footer/Footer.jsx'
+import ScrollManager from '../ScrollManager/ScrollManager.jsx'
+import HomePage from '../../pages/HomePage/HomePage.jsx'
+import TemplatesPage from '../../pages/TemplatesPage/TemplatesPage.jsx'
+import TemplatePreviewPage from '../../pages/TemplatePreviewPage/TemplatePreviewPage.jsx'
+import NotFoundPage from '../../pages/NotFoundPage/NotFoundPage.jsx'
 import './App.css'
 
-function App() {
+function SiteLayout() {
+  const { pathname } = useLocation()
+
   return (
     <div className="app">
       <a className="skip-link" href="#main">
         Skip to content
       </a>
+      <ScrollManager />
       <Header />
-      <main id="main" className="app__main">
-        <Hero />
-        <Features />
-        <Moments />
-        <HowItWorks />
-        <GetStarted />
+      {/* Keyed by path so each page plays its entrance transition */}
+      <main id="main" className="app__main page-transition" key={pathname}>
+        <Outlet />
       </main>
       <Footer />
     </div>
+  )
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route element={<SiteLayout />}>
+        <Route index element={<HomePage />} />
+        <Route path="templates" element={<TemplatesPage />} />
+        <Route path="templates/:slug" element={<TemplatePreviewPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+    </Routes>
   )
 }
 

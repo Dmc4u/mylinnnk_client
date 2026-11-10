@@ -1,0 +1,228 @@
+/* ---------- Page heading ---------- */
+.templates-hero {
+  position: relative;
+  padding: calc(var(--header-h) + 64px) 0 8px;
+  text-align: center;
+  background: radial-gradient(120% 90% at 50% 0%, #ffffff 0%, var(--bg) 70%);
+}
+
+.templates-hero__eyebrow {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--teal-600);
+  animation: page-fade-up 700ms var(--ease-out) both;
+}
+
+.templates-hero__title {
+  max-width: 48rem;
+  margin: 14px auto 0;
+  font-size: clamp(2.4rem, 5.6vw, 4.4rem);
+  font-weight: 760;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+  animation: page-fade-up 800ms var(--ease-out) 80ms both;
+}
+
+.templates-hero__title .text-gradient {
+  padding-bottom: 0.1em;
+}
+
+.templates-hero__intro {
+  max-width: 38rem;
+  margin: 20px auto 0;
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  color: var(--muted);
+  animation: page-fade-up 800ms var(--ease-out) 160ms both;
+}
+
+/* ---------- Gallery ---------- */
+.gallery {
+  padding-block: 40px clamp(80px, 10vw, 120px);
+}
+
+.gallery__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.gallery__title {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 740;
+  letter-spacing: -0.035em;
+}
+
+.gallery__search {
+  position: relative;
+  flex: 1 1 320px;
+  max-width: 420px;
+}
+
+.gallery__search input {
+  width: 100%;
+  padding: 14px 18px 14px 48px;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 250ms ease,
+    box-shadow 250ms ease;
+}
+
+.gallery__search input::placeholder {
+  color: #8a92a6;
+}
+
+.gallery__search input:focus {
+  outline: none;
+  border-color: var(--teal-500);
+  box-shadow: 0 0 0 4px rgb(20 184 166 / 0.15);
+}
+
+.gallery__search-icon {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  color: var(--muted);
+  translate: 0 -50%;
+  pointer-events: none;
+}
+
+.gallery__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.gallery__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  font-size: 0.9rem;
+  font-weight: 560;
+  color: var(--navy-600);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    color 250ms ease,
+    background-color 250ms ease,
+    border-color 250ms ease,
+    transform 350ms var(--ease-spring);
+}
+
+.gallery__chip:hover {
+  border-color: rgb(124 58 237 / 0.35);
+  transform: translateY(-1px);
+}
+
+.gallery__chip[aria-pressed='true'] {
+  color: #fff;
+  background: var(--navy-900);
+  border-color: var(--navy-900);
+}
+
+.gallery__chip-count {
+  min-width: 22px;
+  padding: 1px 7px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  text-align: center;
+  color: var(--muted);
+  background: rgb(10 22 48 / 0.06);
+  border-radius: 999px;
+}
+
+.gallery__chip[aria-pressed='true'] .gallery__chip-count {
+  color: var(--navy-900);
+  background: var(--teal-200);
+}
+
+.gallery__status {
+  margin-top: 22px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.gallery__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gallery__item {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 440px;
+  animation: page-fade-up 500ms var(--ease-out) both;
+}
+
+.gallery__empty {
+  margin-top: 28px;
+  padding: 56px 24px;
+  text-align: center;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.gallery__empty-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.gallery__reset {
+  margin-top: 18px;
+  padding: 10px 18px;
+  font-weight: 600;
+  color: var(--purple-600);
+  background: transparent;
+  border: 1px solid rgb(124 58 237 / 0.35);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.gallery__reset:hover {
+  background: rgb(124 58 237 / 0.06);
+}
+
+/* On phones the chips scroll sideways instead of wrapping into many rows */
+@media (max-width: 640px) {
+  .gallery__filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: -20px;
+    padding: 4px 20px 10px;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 20px;
+  }
+
+  .gallery__filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gallery__chip {
+    flex: none;
+    scroll-snap-align: start;
+  }
+
+  .gallery__search {
+    max-width: none;
+  }
+}

@@ -17,3 +17,6 @@ git init
 git add .
 git commit -m "Initial commit: set up Vite + React project"
 git push origin main
+
+Project: MyLinnnk — Brand Identity and Animated Homepage
+MyLinnnk — Phase 2: Template Gallery

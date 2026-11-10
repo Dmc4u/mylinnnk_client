@@ -78,8 +78,13 @@
 }
 
 .site-nav__link:hover::after,
-.site-nav__link:focus-visible::after {
+.site-nav__link:focus-visible::after,
+.site-nav__link[aria-current='page']::after {
   transform: scaleX(1);
+}
+
+.site-nav__link[aria-current='page'] {
+  color: var(--navy-900);
 }
 
 .site-nav__cta {
