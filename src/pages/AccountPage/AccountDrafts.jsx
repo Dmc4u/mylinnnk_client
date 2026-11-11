@@ -101,9 +101,10 @@ function CloudDrafts() {
                 <p className="account-drafts__meta">
                   {templateName(d.templateSlug)} · updated {when(d.updatedAt)}
                 </p>
-                {d.deviceMediaCount > 0 && (
+                {d.pendingMediaCount > 0 && (
                   <p className="account-drafts__media">
-                    {images(d.deviceMediaCount)} {d.deviceMediaCount === 1 ? 'stays on the device where it was' : 'stay on the device where they were'} added.
+                    {images(d.pendingMediaCount)} not uploaded yet: {d.pendingMediaCount === 1 ? 'it uploads' : 'they upload'} from the device where{' '}
+                    {d.pendingMediaCount === 1 ? 'it was' : 'they were'} added.
                   </p>
                 )}
               </div>
@@ -265,7 +266,7 @@ function ImportGuestDrafts() {
                   <span className="account-drafts__meta">
                     {templateName(c.templateSlug)} · edited {when(c.updatedAt)}
                   </span>
-                  {c.mediaCount > 0 && <span className="account-drafts__media">{images(c.mediaCount)} will stay on this device only.</span>}
+                  {c.mediaCount > 0 && <span className="account-drafts__media">{images(c.mediaCount)} will be uploaded to your account after importing.</span>}
                   {!c.valid && <span className="account-drafts__media">This draft is damaged and can’t be imported.</span>}
                 </span>
               </label>
@@ -328,8 +329,8 @@ function ImportGuestDrafts() {
           </ul>
           {mediaToStay > 0 && (
             <p>
-              <b>{images(mediaToStay)}</b> will stay on this device. On other devices these pages show the original template photos or a placeholder
-              until image syncing arrives.
+              <b>{images(mediaToStay)}</b> will then upload to your account in the background, so they also appear on your other devices. They stay
+              on this device too.
             </p>
           )}
         </ConfirmDialog>

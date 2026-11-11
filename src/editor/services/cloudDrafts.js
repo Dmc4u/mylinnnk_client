@@ -35,7 +35,12 @@ export function fromCloudDraft(draft) {
   return {
     ok: true,
     page: { ...result.page, storage: 'cloud', createdAt: draft.createdAt, updatedAt: draft.updatedAt },
-    cloud: { id: draft.id, revision: draft.revision, deviceMediaIds: draft.deviceMediaIds ?? [...collectMediaIds(result.page)] },
+    cloud: {
+      id: draft.id,
+      revision: draft.revision,
+      mediaIds: draft.mediaIds ?? [...collectMediaIds(result.page)],
+      pendingMediaIds: draft.pendingMediaIds ?? [],
+    },
   }
 }
 

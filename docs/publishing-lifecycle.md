@@ -120,10 +120,10 @@ User-requested deletion of a draft is separate: a soft delete kept for 30 days (
 
 ## Frontend boundaries already in place
 
-| Concern | Today (Phase 4, Stage 4) | Later |
+| Concern | Today (Phase 4, Stage 5) | Later |
 |---|---|---|
 | Drafts | Guests: `localDrafts` (localStorage). Signed in: cloud drafts (`cloudDrafts.js`, `/api/v1/pages`) with recovery copies until the server confirms | In place |
-| Media | `localMedia` (IndexedDB) on the device that added the image; other devices show the template photo or a placeholder. Each image lists the drafts that use it (`owners`: `local:<id>` / `cloud:<clientId>`); copies and imports share the file, and deleting a draft only releases its claim (the file goes when no draft uses it) | `remoteMedia.upload` (private Cloud Storage) |
+| Media | `localMedia` (IndexedDB) on the device that added the image, always kept. Each image lists the drafts that use it (`owners`: `local:<id>` / `cloud:<clientId>`); copies and imports share the file, and deleting a draft only releases its claim. For a signed-in user's cloud drafts, `mediaSync` uploads images in the background (on create, import, open and reconnect; retry-safe, server-confirmed) to the account's private storage (`/api/v1/media`, local folder in development, private Cloud Storage in production); other devices then load them via `/api/v1/media/:id/content`. Guest and local-draft images are never uploaded. Display order: this device → account → template photo → placeholder | Public delivery of published pages' images |
 | Auth | Cookie sessions + CSRF (`src/auth`) | In place |
 | Publishing | `publishing.getPublishingOptions()` (hint only), `startCheckout()` unavailable | server checkout + webhooks |
 

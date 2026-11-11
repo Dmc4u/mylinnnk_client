@@ -9,12 +9,14 @@
  *   marker records the import (importMarks.js). The cloud draft also becomes an
  *   owner of those images on this device, so deleting the local draft later
  *   doesn't remove images the imported draft still uses.
- * - Uploaded images stay on this device: the cloud copy references them.
+ * - The imported draft's images (on this device) are then uploaded to the account in
+ *   the background (mediaSync.js); they also stay on this device.
  */
 import { collectMediaIds, newId } from '../model/page.js'
 import { getImportMarks, markImported } from '../storage/importMarks.js'
 import { claimMedia, cloudOwner } from '../storage/mediaStore.js'
 import { cloudDraftApi, toCloudContent } from './cloudDrafts.js'
+import { syncMedia } from './mediaSync.js'
 import { localDrafts } from './draftService.js'
 
 /** Local drafts with their import state for this user. Unreadable drafts are reported, not hidden. */
@@ -56,8 +58,11 @@ export async function importLocalDraft({ withCsrf, userId, draftId, asCopy = fal
   if (asCopy) content.title = `${content.title} (copy)`.slice(0, 120)
   try {
     const { created, draft } = await withCsrf((csrf) => cloudDraftApi.create(csrf, clientId, content))
-    await claimMedia([...collectMediaIds(loaded.page)], cloudOwner(draft.clientId))
+    const mediaIds = [...collectMediaIds(loaded.page)]
+    await claimMedia(mediaIds, cloudOwner(draft.clientId))
     markImported(userId, loaded.page.id, draft.id)
+    // Explicit import = these images now belong to a cloud draft: upload them (background, retry-safe).
+    if (mediaIds.length) syncMedia({ userId, mediaIds, withCsrf }).catch(() => {})
     return { status: 'imported', pageId: draft.id, created }
   } catch (error) {
     if (error?.code === 'CLIENT_ID_CONFLICT') {

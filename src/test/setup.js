@@ -36,8 +36,11 @@ if (typeof HTMLDialogElement !== 'undefined' && !HTMLDialogElement.prototype.sho
 }
 Element.prototype.scrollIntoView ??= function scrollIntoView() {}
 
-afterEach(() => {
+afterEach(async () => {
   cleanup()
+  // The image upload queue is per tab (module state): start every test fresh.
+  const { resetMediaSync } = await import('../editor/services/mediaSync.js')
+  resetMediaSync()
   vi.unstubAllGlobals()
   localStorage.clear()
   sessionStorage.clear()

@@ -23,6 +23,10 @@ export function createFakeAuthApi() {
     pages: [], // cloud drafts (Stage 4 contract, mylinnnk_api/routes/page.js)
     pagesDown: false, // only /pages fails (network error), the rest of the API works
     pageDelay: 0, // ms before /pages answers
+    media: [], // account images (Stage 5 contract, mylinnnk_api/routes/media.js)
+    mediaDown: false, // /media requests fail with a network error
+    mediaDelay: 0, // ms before /media answers
+    mediaFailures: 0, // the next N uploads answer 503 STORAGE_UNAVAILABLE
     activePageRequests: 0,
     maxConcurrentPageRequests: 0,
   }
@@ -151,13 +155,16 @@ export function createFakeAuthApi() {
     return [...ids].sort()
   }
   let pageSeq = 0
+  const readyIds = (owner) => new Set(state.media.filter((m) => m.owner === owner).map((m) => m.mediaId))
+  const pendingOf = (p) => p.mediaIds.filter((id) => !readyIds(p.owner).has(id))
   const summary = (p) => ({
     id: p.id, clientId: p.clientId, title: p.title, templateSlug: p.templateSlug, templateCategory: p.templateCategory,
-    status: 'draft', revision: p.revision, deviceMediaCount: p.deviceMediaIds.length, createdAt: p.createdAt, updatedAt: p.updatedAt,
+    status: 'draft', revision: p.revision, mediaCount: p.mediaIds.length, pendingMediaCount: pendingOf(p).length, createdAt: p.createdAt, updatedAt: p.updatedAt,
   })
   const detail = (p) => ({
     ...summary(p),
-    deviceMediaIds: [...p.deviceMediaIds],
+    mediaIds: [...p.mediaIds],
+    pendingMediaIds: pendingOf(p),
     page: { id: p.clientId, ...structuredClone(Object.fromEntries(EDITABLE.map((k) => [k, p[k]]))), status: 'draft', createdAt: p.createdAt, updatedAt: p.updatedAt },
   })
   const tick = () => new Date(Date.now() + pageSeq++).toISOString()
@@ -202,7 +209,7 @@ export function createFakeAuthApi() {
       const draft = {
         id: `665f${String(1000000 + state.pages.length).padStart(20, '0')}`.slice(0, 24),
         owner, clientId: body.clientId, ...structuredClone(body.page), revision: 1, creationHash: hash, contentHash: hash,
-        deviceMediaIds: mediaIdsOf(body.page), deletedAt: null, createdAt: now, updatedAt: now,
+        mediaIds: mediaIdsOf(body.page), deletedAt: null, createdAt: now, updatedAt: now,
       }
       state.pages.push(draft)
       return ok({ created: true, draft: detail(draft) }, 201)
@@ -222,7 +229,7 @@ export function createFakeAuthApi() {
       if (revision !== draft.revision) {
         return fail(409, 'REVISION_CONFLICT', 'This draft was changed somewhere else since you opened it.', [{ path: 'revision', message: 'is out of date', currentRevision: draft.revision }])
       }
-      Object.assign(draft, structuredClone(body.page), { revision: draft.revision + 1, contentHash: hash, deviceMediaIds: mediaIdsOf(body.page), updatedAt: tick() })
+      Object.assign(draft, structuredClone(body.page), { revision: draft.revision + 1, contentHash: hash, mediaIds: mediaIdsOf(body.page), updatedAt: tick() })
       return ok({ draft: detail(draft) })
     }
     if (method === 'DELETE') {
@@ -234,14 +241,64 @@ export function createFakeAuthApi() {
     return fail(404, 'NOT_FOUND', `No route for ${method} ${path}.`)
   }
 
+  /* ---------------- Account images (/media) ---------------- */
+  const MEDIA_ID = /^media_[a-z0-9]{8,32}$/
+  const mediaSummary = (m) => ({ mediaId: m.mediaId, contentType: 'image/webp', bytes: m.bytes, width: 10, height: 10, hasAlpha: false, createdAt: m.createdAt })
+
+  async function mediaRoute(method, path, query, headers, body) {
+    if (state.mediaDown) throw new TypeError('Failed to fetch')
+    if (!currentUser()) return fail(401, 'UNAUTHENTICATED', 'You need to sign in.')
+    if (method !== 'GET' && headers['X-CSRF-Token'] !== state.session.csrfToken) return fail(403, 'CSRF_INVALID', 'Your security token is missing or out of date.')
+    const owner = state.session.userId
+    const [, , mediaId, sub] = path.split('/')
+    if (method === 'GET' && !mediaId) {
+      const mine = state.media.filter((m) => m.owner === owner)
+      if (query.get('ids')) {
+        const ids = query.get('ids').split(',')
+        const have = new Set(mine.map((m) => m.mediaId))
+        return ok({ available: ids.filter((id) => have.has(id)), missing: ids.filter((id) => !have.has(id)) })
+      }
+      return ok({ media: mine.map(mediaSummary), usage: { bytes: mine.reduce((n, m) => n + m.bytes, 0), items: mine.length } })
+    }
+    if (!MEDIA_ID.test(mediaId ?? '')) return fail(400, 'VALIDATION_FAILED', 'The request is invalid.')
+    const existing = state.media.find((m) => m.owner === owner && m.mediaId === mediaId)
+    if (method === 'PUT') {
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(headers['Content-Type'])) return fail(415, 'UNSUPPORTED_MEDIA_TYPE', 'Upload a JPEG, PNG or WebP image.')
+      const bytes = typeof body?.text === 'function' ? await body.text() : String(body ?? '')
+      if (state.mediaFailures > 0) {
+        state.mediaFailures -= 1
+        return fail(503, 'STORAGE_UNAVAILABLE', 'The image couldn’t be stored right now. Please try again.')
+      }
+      if (existing) {
+        if (existing.hash !== bytes) return fail(409, 'MEDIA_ID_CONFLICT', 'A different image already uses this id.')
+        return ok({ created: false, media: mediaSummary(existing) })
+      }
+      const media = { owner, mediaId, hash: bytes, bytes: bytes.length, createdAt: new Date().toISOString() }
+      state.media.push(media)
+      return ok({ created: true, media: mediaSummary(media) }, 201)
+    }
+    if (!existing) return fail(404, 'NOT_FOUND', 'Image not found.')
+    if (method === 'GET' && sub === 'content') return new Response(existing.hash, { status: 200, headers: { 'content-type': 'image/webp', 'cache-control': 'private, no-cache' } })
+    if (method === 'DELETE') {
+      if (state.pages.some((p) => p.owner === owner && p.mediaIds.includes(mediaId))) return fail(409, 'MEDIA_IN_USE', 'This image is used by one of your drafts.')
+      state.media = state.media.filter((m) => m !== existing)
+      return ok({ deleted: true, mediaId })
+    }
+    return fail(404, 'NOT_FOUND', `No route for ${method} ${path}.`)
+  }
+
   async function fetch(url, init = {}) {
     const method = init.method ?? 'GET'
     const path = new URL(url, 'http://localhost').pathname.replace(/^\/api\/v1/, '')
     const headers = { ...(init.headers ?? {}) }
-    const body = init.body ? JSON.parse(init.body) : undefined
+    const body = typeof init.body === 'string' ? JSON.parse(init.body) : init.body
     state.requests.push({ method, path, headers, body, credentials: init.credentials, url })
     if (state.down) throw new TypeError('Failed to fetch')
     if (state.proxyError) return new Response('Bad gateway', { status: 502, headers: { 'content-type': 'text/plain' } })
+    if (path === '/media' || path.startsWith('/media/')) {
+      if (state.mediaDelay) await new Promise((r) => setTimeout(r, state.mediaDelay))
+      return mediaRoute(method, path, new URL(url, 'http://localhost').searchParams, headers, body)
+    }
     if (path === '/pages' || path.startsWith('/pages/')) {
       // Concurrency is tracked for writes (saves), not for list/read requests.
       const isWrite = method !== 'GET'
@@ -273,6 +330,9 @@ export function createFakeAuthApi() {
     },
     requestsTo: (path) => state.requests.filter((r) => r.path === path),
     pageRequests: () => state.requests.filter((r) => r.path === '/pages' || r.path.startsWith('/pages/')),
+    mediaRequests: (method) => state.requests.filter((r) => (r.path === '/media' || r.path.startsWith('/media/')) && (!method || r.method === method)),
+    /** An image already stored in the account (e.g. uploaded from another device). */
+    seedMedia: (user, mediaId, hash = 'img') => state.media.push({ owner: user.id, mediaId, hash, bytes: hash.length, createdAt: new Date().toISOString() }),
     /** Stores a cloud draft directly (e.g. created on another device). */
     seedPage: (user, clientId, page) => {
       const now = tick()
@@ -280,7 +340,7 @@ export function createFakeAuthApi() {
       const draft = {
         id: `665f${String(1000000 + state.pages.length).padStart(20, '0')}`.slice(0, 24),
         owner: user.id, clientId, ...structuredClone(Object.fromEntries(EDITABLE.map((k) => [k, page[k]]))), revision: 1,
-        creationHash: hash, contentHash: hash, deviceMediaIds: mediaIdsOf(page), deletedAt: null, createdAt: now, updatedAt: now,
+        creationHash: hash, contentHash: hash, mediaIds: mediaIdsOf(page), deletedAt: null, createdAt: now, updatedAt: now,
       }
       state.pages.push(draft)
       return draft

@@ -13,14 +13,43 @@ function SaveStatus({ autosave }) {
     status === 'saved' ? `Saved on this device${savedAt ? ` · ${new Date(savedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : ''}` :
     'Not saved yet')
   return (
-    <span className={`ed-status ed-status--${status}`} role="status" title={error ?? undefined}>
+    <span className={`ed-status ed-status--${status}`} role="status" title={error ?? text}>
       <span className="ed-status__dot" aria-hidden="true" />
       <span className="ed-status__text">{text}</span>
     </span>
   )
 }
 
-export default function Toolbar({ title, onTitle, history, device, onDevice, zoomMode, onZoomMode, preview, onPreview, autosave, onSave, onPublish, onTogglePanel }) {
+/**
+ * Image upload state for cloud drafts, separate from the page's own save state:
+ * "Saved to your account" is about the page; this is about its images.
+ */
+function MediaStatus({ media }) {
+  if (!media) return null
+  const { total, synced, uploading, failed, waiting } = media
+  let status = 'saving'
+  let text = 'Checking images…'
+  if (failed) {
+    status = 'error'
+    text = `Image upload failed (${failed})`
+  } else if (uploading) {
+    text = `Images uploading… (${uploading})`
+  } else if (waiting) {
+    status = 'new'
+    text = `${waiting} image${waiting === 1 ? '' : 's'} not uploaded yet`
+  } else if (synced === total) {
+    status = 'saved'
+    text = 'Images synced'
+  }
+  return (
+    <span className={`ed-status ed-status--${status} ed-status--media`} aria-live="polite" data-testid="media-status" title={text}>
+      <span className="ed-status__dot" aria-hidden="true" />
+      <span className="ed-status__text">{text}</span>
+    </span>
+  )
+}
+
+export default function Toolbar({ title, onTitle, history, device, onDevice, zoomMode, onZoomMode, preview, onPreview, autosave, mediaStatus, onSave, onPublish, onTogglePanel }) {
   const titleId = useId()
   return (
     <header className="ed-toolbar">
@@ -34,6 +63,7 @@ export default function Toolbar({ title, onTitle, history, device, onDevice, zoo
         <label htmlFor={titleId} className="sr-only">Page title</label>
         <input id={titleId} className="ed-toolbar__title" value={title} onChange={(e) => onTitle(e.target.value)} maxLength={120} />
         <SaveStatus autosave={autosave} />
+        <MediaStatus media={mediaStatus} />
       </div>
 
       <div className="ed-toolbar__center">

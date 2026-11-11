@@ -22,6 +22,8 @@ export default function EditorBanners({
   onSaveAsCopy,
   onRecheckSession,
   signedInLocalDraft,
+  mediaFailures = [],
+  onRetryUploads,
 }) {
   const banners = []
   const status = cloudSync.status
@@ -120,15 +122,31 @@ export default function EditorBanners({
     }
   }
 
+  if (mediaFailures.length > 0) {
+    const n = mediaFailures.length
+    banners.push(
+      <div key="upload-failed" className="ed-banner ed-banner--warn" role="alert">
+        <Icon name="image" size={18} />
+        <p>
+          {n} {plural(n, 'image', 'images')} couldn’t be uploaded to your account ({String(mediaFailures[0].message ?? '').replace(/[.\s]+$/, '')}). {plural(n, 'It stays', 'They stay')} on this
+          device and in this draft; uploading is retried automatically when possible.
+        </p>
+        <div className="ed-banner__actions">
+          <button type="button" className="ed-btn ed-btn--sm" onClick={onRetryUploads}>Retry uploads</button>
+        </div>
+      </div>,
+    )
+  }
+
   if (missingMedia > 0) {
     banners.push(
       <div key="media" className="ed-banner ed-banner--info" role="status">
         <Icon name="image" size={18} />
         <p>
           {missingMedia} uploaded {plural(missingMedia, 'image is', 'images are')} stored only on the device where{' '}
-          {plural(missingMedia, 'it was', 'they were')} added. Text, layout and design are saved to your account; here{' '}
-          {plural(missingMedia, 'it shows', 'they show')} the original template photo or a placeholder. Nothing is removed unless you replace{' '}
-          {plural(missingMedia, 'it', 'them')}.
+          {plural(missingMedia, 'it was', 'they were')} added and {plural(missingMedia, 'hasn’t', 'haven’t')} reached your account yet. Text, layout and
+          design are saved to your account; here {plural(missingMedia, 'it shows', 'they show')} the original template photo or a placeholder until that
+          device uploads {plural(missingMedia, 'it', 'them')}. Nothing is removed unless you replace {plural(missingMedia, 'it', 'them')}.
         </p>
       </div>,
     )

@@ -1,11 +1,15 @@
 /**
- * Media boundary. Today uploads are processed in the browser and stored in
- * IndexedDB for the guest draft. `remoteMedia.upload` is the future
- * authenticated upload (signed URL / media API) and is unavailable for now.
+ * Media boundary.
+ * - localMedia: images processed in the browser and kept in this browser's
+ *   IndexedDB (guests and signed-in users alike; nothing is deleted after upload).
+ * - remoteMedia: the signed-in user's account images (/api/v1/media). Images are
+ *   requested through the same-origin /api path (Vite proxy in development, the
+ *   site's /api route in production), so the session cookie applies and
+ *   private images never need a public URL.
  */
 import { newId } from '../model/page.js'
 import { claimMedia, getMedia, listMedia, putMedia, releaseMedia } from '../storage/mediaStore.js'
-import { FeatureUnavailableError } from './errors.js'
+import { API_BASE, apiRequest } from '../../auth/authApi.js'
 
 export const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024
@@ -62,8 +66,25 @@ export const localMedia = {
   remove: (id, owner) => releaseMedia(id, owner),
 }
 
+const BATCH = 100
+
 export const remoteMedia = {
-  upload() {
-    throw new FeatureUnavailableError('media', 'Uploading images to your account is coming soon.')
+  /** Same-origin URL of an account image (owner-only; the API checks the session). */
+  contentUrl: (mediaId, variant = 'full') => `${API_BASE}/media/${encodeURIComponent(mediaId)}/content${variant === 'thumb' ? '?variant=thumb' : ''}`,
+
+  /** → { available: [ids on the server], missing: [ids not (yet) uploaded] } */
+  async availability(ids) {
+    const unique = [...new Set(ids)]
+    const result = { available: [], missing: [] }
+    for (let i = 0; i < unique.length; i += BATCH) {
+      const data = await apiRequest(`/media?ids=${unique.slice(i, i + BATCH).join(',')}`)
+      result.available.push(...data.available)
+      result.missing.push(...data.missing)
+    }
+    return result
   },
+
+  /** Uploads one image under its editor id. Retry-safe: the same file again returns the stored image. */
+  upload: (csrfToken, mediaId, blob) =>
+    apiRequest(`/media/${encodeURIComponent(mediaId)}`, { method: 'PUT', rawBody: blob, contentType: blob.type, csrfToken }),
 }

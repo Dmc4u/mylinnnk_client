@@ -13,6 +13,8 @@
 
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
+  /* One column exactly the screen's width: a long toolbar or banner can't widen the editor. */
+  grid-template-columns: minmax(0, 1fr);
   height: 100dvh;
   overflow: hidden;
   color: var(--ed-ink);
@@ -145,6 +147,14 @@
   flex: 1 1 auto;
 }
 
+/* Desktop (one row): only the title and statuses give way; the controls keep their size. */
+@media (min-width: 1180px) {
+  .ed-toolbar__center,
+  .ed-toolbar__end {
+    flex: none;
+  }
+}
+
 .ed-toolbar__brand {
   display: inline-flex;
   flex: none;
@@ -184,13 +194,22 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  flex: none;
+  /* Page and image statuses may shrink (ellipsis, full text in the tooltip) so the toolbar never
+     grows wider than the screen. */
+  flex: 0 1 auto;
+  min-width: 0;
   font-size: 13px;
   color: var(--ed-muted);
   white-space: nowrap;
 }
 
+.ed-status__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .ed-status__dot {
+  flex: none;
   width: 8px;
   height: 8px;
   border-radius: 50%;

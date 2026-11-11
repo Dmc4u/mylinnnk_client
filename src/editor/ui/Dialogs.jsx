@@ -77,10 +77,11 @@ function CloudSaveDialog({ cloud, user, onClose }) {
             : `${cloud.text}. ${cloud.message ?? ''} Your changes are kept on this device until they reach your account.`}
         </p>
       </div>
-      {cloud.deviceMedia > 0 && (
+      {cloud.pendingMedia > 0 && (
         <p className="ed-soon">
-          <Icon name="image" size={16} /> Uploaded images stay on the device where they were added for now. On other devices this page shows the
-          original template photos or a placeholder in their place. Image syncing is coming in a later update.
+          <Icon name="image" size={16} /> {cloud.pendingMedia} {cloud.pendingMedia === 1 ? 'image hasn’t' : 'images haven’t'} reached your account yet. Images
+          upload separately in the background from the device where they were added; until then other devices show the original template photo or a
+          placeholder.
         </p>
       )}
     </Modal>

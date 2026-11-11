@@ -4,6 +4,8 @@ import { SECTION_TYPES } from '../../templates/schema.js'
 import useAutosave from '../hooks/useAutosave.js'
 import useCloudSync from '../hooks/useCloudSync.js'
 import useMediaLibrary from '../hooks/useMediaLibrary.js'
+import useMediaSync from '../hooks/useMediaSync.js'
+import { remoteMedia } from '../services/mediaService.js'
 import { resolveMediaForRender } from '../model/mediaFallback.js'
 import useEditorHistory from '../model/useEditorHistory.js'
 import { addSection, duplicateSection, moveSection, moveSectionTo, removeSection, setTitle } from '../model/operations.js'
@@ -91,11 +93,28 @@ export default function Editor({
   const [toast, setToast] = useState(null)
   const [scrollRequest, setScrollRequest] = useState(null)
   // Read-only here: the editor works the same signed in or not (no login required).
-  const { status: authStatus, user, refreshSession } = useAuth()
+  const { status: authStatus, user, refreshSession, withCsrf } = useAuth()
   const signedIn = authStatus === 'authenticated'
 
   const selected = page.sections.find((s) => s.id === selectedId) ?? null
-  const resolved = useMemo(() => resolveMediaForRender(page, media.urls, { loaded: media.loaded }), [page, media.urls, media.loaded])
+  // Cloud drafts: keep their images uploaded to the owner's account (never for guests or local drafts).
+  const mediaSync = useMediaSync({
+    enabled: isCloud && authStatus === 'authenticated' && user?.id === ownerId,
+    userId: ownerId,
+    mediaIds: referencedMedia,
+    withCsrf,
+  })
+  // Image sources, in order: this device (IndexedDB) → the account (same-origin /api) → fallback (see mediaFallback.js).
+  const remoteKey = [...mediaSync.remoteIds].sort().join(',')
+  const displayUrls = useMemo(() => {
+    const urls = new Map()
+    for (const id of remoteKey ? remoteKey.split(',') : []) urls.set(id, remoteMedia.contentUrl(id))
+    for (const [id, url] of media.urls) urls.set(id, url)
+    return urls
+  }, [media.urls, remoteKey])
+  const mediaReady = media.loaded && mediaSync.checked
+  const resolved = useMemo(() => resolveMediaForRender(page, displayUrls, { loaded: mediaReady }), [page, displayUrls, mediaReady])
+  const panelMedia = useMemo(() => ({ ...media, urls: displayUrls }), [media, displayUrls])
   const renderPage = useMemo(() => pageForRender(resolved.page), [resolved])
 
   // Once a brand-new local draft is first stored, put its id in the URL so a refresh reopens it.
@@ -270,6 +289,7 @@ export default function Editor({
           setDrawer(null)
         }}
         autosave={saveView}
+        mediaStatus={mediaSync.enabled && referencedMedia.length ? mediaSync.summary : null}
         onSave={async () => {
           if (isCloud) await cloudSync.saveNow()
           else await autosave.saveNow()
@@ -288,6 +308,8 @@ export default function Editor({
         isCloud={isCloud}
         cloudSync={cloudSync}
         missingMedia={resolved.missing.length}
+        mediaFailures={mediaSync.failures}
+        onRetryUploads={mediaSync.retry}
         recovery={pendingRecovery}
         recoveryAppliesDirectly={Boolean(pendingRecovery && (pendingRecovery.unsavedNew || pendingRecovery.baseRevision === initialCloud?.revision))}
         busy={conflictBusy}
@@ -352,7 +374,7 @@ export default function Editor({
         </main>
 
         <aside className="ed-right" aria-label="Properties" data-open={drawer === 'right' || undefined}>
-          <PropertiesPanel key={selected?.id ?? 'page'} page={page} section={selected} apply={apply} media={media} onStructure={onStructure} />
+          <PropertiesPanel key={selected?.id ?? 'page'} page={page} section={selected} apply={apply} media={panelMedia} onStructure={onStructure} />
           <button type="button" className="ed-drawer-close" onClick={() => setDrawer(null)}>
             Close
           </button>
@@ -375,7 +397,7 @@ export default function Editor({
       {dialog?.type === 'save' && (
         <SaveDraftDialog
           autosave={autosave}
-          cloud={isCloud ? { status: cloudSync.status, text: saveView.text, message: cloudSync.message, missingMedia: resolved.missing.length, deviceMedia: referencedMedia.length } : null}
+          cloud={isCloud ? { status: cloudSync.status, text: saveView.text, message: cloudSync.message, missingMedia: resolved.missing.length, pendingMedia: mediaSync.summary.total - mediaSync.summary.synced } : null}
           signedIn={signedIn}
           user={user}
           onClose={() => setDialog(null)}

@@ -52,7 +52,7 @@ describe('guest draft import', () => {
 
     const section = await screen.findByRole('region', { name: 'Drafts on this device' })
     expect(within(section).getByText('Wedding (guest)')).toBeInTheDocument()
-    expect(within(section).getByText(/1 uploaded image will stay on this device only/)).toBeInTheDocument()
+    expect(within(section).getByText(/1 uploaded image will be uploaded to your account after importing/)).toBeInTheDocument()
     expect(within(section).getAllByRole('checkbox', { checked: true })).toHaveLength(2)
     expect(api.requestsTo('/pages').filter((r) => r.method === 'POST')).toHaveLength(0) // never automatic
 
@@ -67,7 +67,7 @@ describe('guest draft import', () => {
     const posts = api.requestsTo('/pages').filter((r) => r.method === 'POST')
     expect(posts.map((r) => r.body.clientId).sort()).toEqual([first.id, second.id].sort())
     expect(api.state.pages.every((p) => p.owner === ana.id)).toBe(true)
-    expect(api.state.pages.find((p) => p.clientId === first.id).deviceMediaIds).toEqual([`media_${first.id.slice(6)}`])
+    expect(api.state.pages.find((p) => p.clientId === first.id).mediaIds).toEqual([`media_${first.id.slice(6)}`])
 
     expect(guestDraftStorage()).toEqual(before) // local drafts untouched
     expect(await getMedia(`media_${first.id.slice(6)}`)).toMatchObject({ draftId: first.id }) // image kept in IndexedDB

@@ -41,9 +41,10 @@ export class ApiError extends Error {
  * Throws ApiError for `{ error }` responses, network failures, timeouts and
  * responses that aren't the API's JSON (for example a proxy error page).
  */
-export async function apiRequest(path, { method = 'GET', body, csrfToken, headers: extraHeaders = {} } = {}) {
+export async function apiRequest(path, { method = 'GET', body, rawBody, contentType, csrfToken, headers: extraHeaders = {} } = {}) {
   const headers = { Accept: 'application/json', ...extraHeaders }
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  if (rawBody !== undefined) headers['Content-Type'] = contentType
+  else if (body !== undefined) headers['Content-Type'] = 'application/json'
   if (csrfToken) headers['X-CSRF-Token'] = csrfToken
 
   const controller = new AbortController()
@@ -53,7 +54,8 @@ export async function apiRequest(path, { method = 'GET', body, csrfToken, header
     response = await fetch(`${API_BASE}${path}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      // rawBody: bytes sent as they are (image uploads); body: JSON.
+      body: rawBody !== undefined ? rawBody : body === undefined ? undefined : JSON.stringify(body),
       credentials: 'include',
       cache: 'no-store',
       signal: controller.signal,

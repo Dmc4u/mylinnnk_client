@@ -147,3 +147,26 @@ export const releaseMedia = (id, owner) => updateOwners(id, (owners) => owners.f
 export async function releaseOwnerMedia(owner) {
   for (const record of await listMedia(owner)) await releaseMedia(record.id, owner)
 }
+
+/**
+ * Records that `userId`'s account confirmed it stores this image (uploaded, or
+ * found already there). Informational only: the local file is never deleted
+ * because of it (Stage 5 keeps every local copy).
+ */
+export async function markUploaded(id, userId) {
+  const at = new Date().toISOString()
+  const apply = (record) => ({ ...record, uploaded: { ...(record.uploaded ?? {}), [userId]: at } })
+  if (memory.has(id)) {
+    memory.set(id, apply(memory.get(id)))
+    return
+  }
+  try {
+    await run('readwrite', (store) => {
+      store.get(id).onsuccess = (e) => {
+        if (e.target.result) store.put(apply(e.target.result))
+      }
+    })
+  } catch {
+    /* the server still has it; only this note is missing */
+  }
+}
