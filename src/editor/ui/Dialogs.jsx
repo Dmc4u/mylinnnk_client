@@ -1,5 +1,6 @@
 import { CATEGORY_LABELS } from '../../data/templates.js'
-import { PUBLISHING_GUARANTEES, describeBilling } from '../config/plans.js'
+import { PUBLISHING_GUARANTEES, planTerms, priceDescription, priceParts } from '../config/plans.js'
+import usePlans from '../../components/Pricing/usePlans.js'
 import Modal from './Modal.jsx'
 import Icon from './icons.jsx'
 
@@ -116,8 +117,19 @@ export function ConflictDialog({ busy, onLoadNewer, onSaveCopy, onClose }) {
   )
 }
 
-/** Publish: explains the plan model honestly. No payment, no fake live URL. */
-export function PublishDialog({ options, category, signedIn, onClose }) {
+const FAMILIES = [
+  { id: 'celebration', label: 'Personal event page', summary: 'Birthdays, anniversaries and weddings.' },
+  { id: 'professional', label: 'Professional page', summary: 'Businesses, portfolios and community pages.' },
+]
+
+/**
+ * Publish: shows the server's plans and prices (GET /plans) honestly. Paid
+ * publishing doesn't exist yet: no payment, no order, no fake live URL.
+ */
+export function PublishDialog({ suggested, category, signedIn, onClose }) {
+  const { status, data, retry } = usePlans()
+  const plans = data?.plans ?? []
+  const custom = plans.find((p) => p.billing === 'custom_quote')
   return (
     <Modal
       size="lg"
@@ -131,7 +143,8 @@ export function PublishDialog({ options, category, signedIn, onClose }) {
       }
     >
       <p>
-        Creating and editing your page is free. Publishing it at a public web address requires a publishing plan.
+        Creating and editing your page is free. Publishing it at a public web address requires a publishing plan for this
+        page. Prices are per published page and nothing renews automatically.
       </p>
       {!signedIn && (
         <div className="ed-notice">
@@ -139,33 +152,48 @@ export function PublishDialog({ options, category, signedIn, onClose }) {
           <p>You’ll need a free account before you can pay and publish, so your page is linked to you.</p>
         </div>
       )}
-      <div className="ed-plans">
-        {options.families.map((family) => (
-          <section key={family.id} className={`ed-plan${options.suggested === family.id ? ' is-suggested' : ''}`} aria-labelledby={`plan-${family.id}`}>
-            {options.suggested === family.id && <span className="ed-plan__badge">Likely for this page</span>}
-            <h3 id={`plan-${family.id}`}>{family.label}</h3>
-            <p className="ed-plan__summary">{family.summary}</p>
-            <ul>
-              {family.points.map((p) => (
-                <li key={p}>
-                  <Icon name="check" size={16} /> {p}
-                </li>
-              ))}
-            </ul>
-            <ul className="ed-plan__options" aria-label={`${family.label} options`}>
-              {family.plans.map((plan) => (
-                <li key={plan.id} data-plan={plan.id}>
-                  <span className="ed-plan__option">
-                    <span className="ed-plan__name">{plan.label}</span>
-                    <span className="ed-plan__terms">{describeBilling(plan)}</span>
-                  </span>
-                  <span className="ed-plan__price">{plan.price == null ? 'Price to be announced' : plan.price}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
+      {status === 'loading' && <p className="ed-panel__hint" role="status">Loading prices…</p>}
+      {status === 'error' && (
+        <div className="ed-notice" role="alert">
+          <Icon name="info" />
+          <p>
+            We couldn’t load the prices right now.{' '}
+            <button type="button" className="ed-btn ed-btn--sm" onClick={retry}>Try again</button>
+          </p>
+        </div>
+      )}
+      {status === 'ready' && (
+        <div className="ed-plans">
+          {FAMILIES.map((family) => (
+            <section key={family.id} className={`ed-plan${suggested === family.id ? ' is-suggested' : ''}`} aria-labelledby={`plan-${family.id}`}>
+              {suggested === family.id && <span className="ed-plan__badge">Likely for this page</span>}
+              <h3 id={`plan-${family.id}`}>{family.label}</h3>
+              <p className="ed-plan__summary">{family.summary}</p>
+              <ul className="ed-plan__options" aria-label={`${family.label} options`}>
+                {plans.filter((p) => p.family === family.id).map((plan) => (
+                  <li key={plan.id} data-plan={plan.id}>
+                    <span className="ed-plan__option">
+                      <span className="ed-plan__name">
+                        {plan.name}
+                        {plan.savings ? ` · save ${plan.savings.percent}%` : ''}
+                      </span>
+                      <span className="ed-plan__terms">{planTerms(plan)}</span>
+                    </span>
+                    <span className="ed-plan__price">
+                      <span aria-hidden="true">{priceParts(plan, data.currency).amount}</span>
+                      <span className="sr-only">{priceDescription(plan, data.currency)}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      )}
+      {custom && <p className="ed-panel__hint">Need something bespoke? {custom.name} is quoted individually: price and duration agreed with you.</p>}
+      <p className="ed-panel__hint">
+        <a href="/pricing" target="_blank" rel="noopener">Compare all plans</a> (opens in a new tab, so this page stays open).
+      </p>
       <ul className="ed-guarantees">
         {PUBLISHING_GUARANTEES.map((g) => (
           <li key={g}>
@@ -178,7 +206,7 @@ export function PublishDialog({ options, category, signedIn, onClose }) {
         The plan that applies is confirmed when you publish, based on how the page will be used.
       </p>
       <p className="ed-soon" id="publish-soon">
-        <Icon name="lock" size={16} /> Publishing and payments are coming soon. Nothing is charged and your page is not published yet.
+        <Icon name="lock" size={16} /> Paid publishing is coming soon. Nothing is charged and your page is not published yet.
       </p>
     </Modal>
   )

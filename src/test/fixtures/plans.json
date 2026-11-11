@@ -1,0 +1,148 @@
+{
+  "currency": {
+    "code": "NGN",
+    "symbol": "₦",
+    "minorUnit": 100
+  },
+  "checkout": {
+    "available": false,
+    "message": "Paid publishing is coming soon. Nothing can be bought yet."
+  },
+  "plans": [
+    {
+      "id": "free",
+      "name": "Free Editor",
+      "family": "free",
+      "billing": "free",
+      "publishing": false,
+      "featured": false,
+      "summary": "Build, edit and save your pages for free.",
+      "features": [
+        "Every template and theme",
+        "Save drafts to your account",
+        "Edit on any device; no publishing"
+      ],
+      "validity": null,
+      "price": {
+        "id": "free:NGN:v1",
+        "currency": "NGN",
+        "amountMinor": 0
+      },
+      "savings": null
+    },
+    {
+      "id": "celebration",
+      "name": "Celebration",
+      "family": "celebration",
+      "billing": "one_time",
+      "publishing": true,
+      "featured": false,
+      "summary": "For birthdays, anniversaries and weddings.",
+      "features": [
+        "Your page live for 30 days",
+        "One shareable web address",
+        "Pay once; nothing renews"
+      ],
+      "validity": {
+        "days": 30
+      },
+      "price": {
+        "id": "celebration:NGN:v1",
+        "currency": "NGN",
+        "amountMinor": 250000
+      },
+      "savings": null
+    },
+    {
+      "id": "pro-starter",
+      "name": "Professional Starter",
+      "family": "professional",
+      "billing": "one_time",
+      "publishing": true,
+      "featured": false,
+      "summary": "Try a business or portfolio page for three months.",
+      "features": [
+        "Your page live for 90 days",
+        "One shareable web address",
+        "Pay once; nothing renews"
+      ],
+      "validity": {
+        "days": 90
+      },
+      "price": {
+        "id": "pro-starter:NGN:v1",
+        "currency": "NGN",
+        "amountMinor": 750000
+      },
+      "savings": null
+    },
+    {
+      "id": "pro-monthly",
+      "name": "Professional Monthly",
+      "family": "professional",
+      "billing": "manual_renewal",
+      "publishing": true,
+      "featured": true,
+      "summary": "Keep a professional page live, one month at a time.",
+      "features": [
+        "Your page live for 30 days per payment",
+        "Renew whenever you are ready",
+        "Never charged automatically"
+      ],
+      "validity": {
+        "days": 30
+      },
+      "price": {
+        "id": "pro-monthly:NGN:v1",
+        "currency": "NGN",
+        "amountMinor": 300000
+      },
+      "savings": null
+    },
+    {
+      "id": "pro-annual",
+      "name": "Professional Annual",
+      "family": "professional",
+      "billing": "manual_renewal",
+      "publishing": true,
+      "featured": false,
+      "summary": "A full year of your professional page.",
+      "features": [
+        "Your page live for 365 days per payment",
+        "Best value for long-term pages",
+        "Never charged automatically"
+      ],
+      "validity": {
+        "days": 365
+      },
+      "price": {
+        "id": "pro-annual:NGN:v1",
+        "currency": "NGN",
+        "amountMinor": 2400000
+      },
+      "savings": {
+        "comparedToPlanId": "pro-monthly",
+        "periods": 12,
+        "regularAmountMinor": 3600000,
+        "amountMinor": 1200000,
+        "percent": 33
+      }
+    },
+    {
+      "id": "special-request",
+      "name": "Special Request",
+      "family": "custom",
+      "billing": "custom_quote",
+      "publishing": true,
+      "featured": false,
+      "summary": "Something bespoke? We will quote it for you.",
+      "features": [
+        "Custom design or content help",
+        "Price and duration agreed with you"
+      ],
+      "validity": null,
+      "price": null,
+      "savings": null
+    }
+  ]
+}

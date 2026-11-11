@@ -1,54 +1,28 @@
 /**
- * Publishing plan configuration — the single place plan identifiers live.
+ * Publishing plans on the frontend: stable ids, hints and display helpers only.
  *
- * Prices (`price`) and publication periods (`periodDays`) are intentionally
- * `null`: they are configurable and will come from the server
- * (PublishingPlans collection) once the backend exists. The frontend must
- * never decide what a user pays or whether they may publish.
+ * Prices, currencies and validity periods come from the server
+ * (GET /api/v1/plans, mylinnnk_api/config/plans.js). The frontend never decides
+ * what a user pays or whether they may publish, and keeps no prices of its own.
  *
- * billing:
- *   'one_time'      single payment for a fixed publication period; never renews automatically
- *   'subscription'  recurring payment; renews every `interval` until cancelled
+ * Amounts are integers in minor units (kobo for NGN).
  */
 
-export const PLAN_FAMILIES = {
-  event: {
-    id: 'event',
-    label: 'Personal event page',
-    summary: 'For birthdays, weddings, anniversaries and other celebrations.',
-    points: [
-      'One-time publishing payment',
-      'Your page stays live for a fixed publication period',
-      'No automatic renewal: renew or extend whenever you like',
-    ],
-    plans: [
-      { id: 'event-pass', label: 'One-time pass', billing: 'one_time', autoRenew: false, periodDays: null, price: null },
-    ],
-  },
-  professional: {
-    id: 'professional',
-    label: 'Professional page',
-    summary: 'For businesses, portfolios, professional profiles and ongoing community pages.',
-    points: [
-      'Choose a one-time payment or a subscription',
-      'One-time: live for a fixed period, no automatic renewal',
-      'Subscriptions renew monthly or annually until cancelled',
-    ],
-    plans: [
-      { id: 'pro-pass', label: 'One-time pass', billing: 'one_time', autoRenew: false, periodDays: null, price: null },
-      { id: 'pro-monthly', label: 'Monthly', billing: 'subscription', autoRenew: true, interval: 'month', price: null },
-      { id: 'pro-annual', label: 'Annual', billing: 'subscription', autoRenew: true, interval: 'year', price: null },
-    ],
-  },
-}
+/** Stable plan ids (server: config/plans.js). Prices apply per published page. */
+export const PLAN_IDS = ['free', 'celebration', 'pro-starter', 'pro-monthly', 'pro-annual', 'special-request']
 
-/** Short, honest description of how a plan is billed and renewed. */
-export function describeBilling(plan) {
-  if (plan.billing === 'one_time') {
-    const period = plan.periodDays ? `${plan.periodDays} days` : 'a fixed period (to be announced)'
-    return `Pay once · live for ${period} · does not renew automatically`
-  }
-  return `Billed ${plan.interval === 'year' ? 'every year' : 'every month'} · renews automatically until cancelled`
+/**
+ * Template category → the plan family a page would *probably* need. A UI hint
+ * only; the server will apply the real eligibility rules when publishing exists.
+ * Categories not listed get no suggestion.
+ */
+export const CATEGORY_PLAN_HINT = {
+  birthdays: 'celebration',
+  weddings: 'celebration',
+  anniversaries: 'celebration',
+  business: 'professional',
+  portfolios: 'professional',
+  'leadership-community': 'professional',
 }
 
 /** Guarantees shown with every plan choice (they also bind the future backend design). */
@@ -57,20 +31,49 @@ export const PUBLISHING_GUARANTEES = [
   'If publishing access expires, your page goes offline but your saved drafts and content are kept.',
 ]
 
-/**
- * Category → plan family the page would *probably* need. This is a UI hint
- * only; the server will apply the real eligibility rules.
- */
-export const CATEGORY_PLAN_HINT = {
-  birthdays: 'event',
-  weddings: 'event',
-  anniversaries: 'event',
-  events: 'event',
-  'personal-stories': 'event',
-  business: 'professional',
-  portfolios: 'professional',
-  'leadership-community': 'professional',
-}
-
 /** Publishing lifecycle states (see docs/publishing-lifecycle.md). */
 export const PAGE_STATES = ['draft', 'pending_payment', 'published', 'expired', 'unpublished', 'suspended']
+
+/** "₦2,500" from { amountMinor: 250000 } and the currency the server described. */
+export function formatAmount(amountMinor, currency = { code: 'NGN', minorUnit: 100 }) {
+  const major = amountMinor / currency.minorUnit
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: currency.code,
+    minimumFractionDigits: Number.isInteger(major) ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(major)
+}
+
+/** Short price line: { amount: '₦3,000', per: '/ 30 days' }. */
+export function priceParts(plan, currency) {
+  if (plan.billing === 'custom_quote' || !plan.price) return { amount: 'Custom quote', per: '' }
+  const amount = formatAmount(plan.price.amountMinor, currency)
+  if (plan.billing === 'free') return { amount, per: 'forever' }
+  if (plan.billing === 'one_time') return { amount, per: 'one-time' }
+  return { amount, per: `/ ${plan.validity.days} days` }
+}
+
+/** Honest one-line terms for a plan. */
+export function planTerms(plan) {
+  const days = plan.validity?.days
+  switch (plan.billing) {
+    case 'free':
+      return 'Drafts only · no publishing'
+    case 'one_time':
+      return `Pay once · live for ${days} days · never renews`
+    case 'manual_renewal':
+      return `Live for ${days} days per payment · renew manually · never charged automatically`
+    default:
+      return 'Price and duration agreed with you'
+  }
+}
+
+/** Full sentence for screen readers, e.g. "₦3,000 for 30 days, renewed manually". */
+export function priceDescription(plan, currency) {
+  if (plan.billing === 'custom_quote' || !plan.price) return 'Custom quotation'
+  const amount = formatAmount(plan.price.amountMinor, currency)
+  if (plan.billing === 'free') return `${amount}, free`
+  if (plan.billing === 'one_time') return `${amount}, one-time payment for ${plan.validity.days} days`
+  return `${amount} for ${plan.validity.days} days, renewed manually`
+}

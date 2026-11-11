@@ -434,7 +434,7 @@ export default function Editor({
         />
       )}
       {dialog?.type === 'publish' && (
-        <PublishDialog options={publishing.getPublishingOptions(page)} category={page.templateCategory} signedIn={signedIn} onClose={() => setDialog(null)} />
+        <PublishDialog suggested={publishing.suggestedFamily(page)} category={page.templateCategory} signedIn={signedIn} onClose={() => setDialog(null)} />
       )}
       {dialog?.type === 'newDraft' && (
         <ConfirmDialog

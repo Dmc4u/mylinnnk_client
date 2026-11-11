@@ -13,6 +13,7 @@ import ForgotPasswordPage from '../../pages/ForgotPasswordPage/ForgotPasswordPag
 import ResetPasswordPage from '../../pages/ResetPasswordPage/ResetPasswordPage.jsx'
 import VerifyEmailPage from '../../pages/VerifyEmailPage/VerifyEmailPage.jsx'
 import AccountPage from '../../pages/AccountPage/AccountPage.jsx'
+import PricingPage from '../../pages/PricingPage/PricingPage.jsx'
 import './App.css'
 
 // The editor is only downloaded when someone opens it.
@@ -61,6 +62,7 @@ function App() {
         <Route index element={<HomePage />} />
         <Route path="templates" element={<TemplatesPage />} />
         <Route path="templates/:slug" element={<TemplatePreviewPage />} />
+        <Route path="pricing" element={<PricingPage />} />
         {/* Accounts. The editor never requires one. */}
         <Route path="login" element={<LoginPage />} />
         <Route path="signup" element={<SignupPage />} />

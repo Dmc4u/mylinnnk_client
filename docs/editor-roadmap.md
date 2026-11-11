@@ -56,7 +56,8 @@ Implement the flow described in [`publishing-lifecycle.md`](./publishing-lifecyc
   recorded idempotently and a `PublishingEntitlement` exists.
 - A checkout redirect alone never publishes a page.
 - Renewals, cancellations, failures, expiry and chargebacks move pages between lifecycle states without deleting content.
-- Plans: one-time `event-pass` for personal event pages; `pro-pass` (one-time), `pro-monthly` and `pro-annual`
+- Plans (renamed in Phase 5, Stage 1: `celebration`, `pro-starter`, `pro-monthly`, `pro-annual`, plus `free` and
+  `special-request`; see publishing-lifecycle.md). Originally: one-time `event-pass` for personal event pages; `pro-pass` (one-time), `pro-monthly` and `pro-annual`
   for professional pages (`src/editor/config/plans.js`). One-time passes never auto-renew; subscriptions renew
   until cancelled.
 - Add owner-facing "Renew" and "Change plan" actions that switch entitlements without touching page content.

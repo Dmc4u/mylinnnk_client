@@ -41,6 +41,9 @@ afterEach(async () => {
   // The image upload queue is per tab (module state): start every test fresh.
   const { resetMediaSync } = await import('../editor/services/mediaSync.js')
   resetMediaSync()
+  // The price list is shared by the page's components (module state) too.
+  const { resetPlansCache } = await import('../components/Pricing/usePlans.js')
+  resetPlansCache()
   vi.unstubAllGlobals()
   localStorage.clear()
   sessionStorage.clear()

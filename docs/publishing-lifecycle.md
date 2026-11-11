@@ -41,24 +41,30 @@ any ──(moderation)──▶ suspended ──(moderation resolved)──▶ p
 - Editing a published page creates unpublished changes; pushing them live does **not** require another payment
   while the entitlement is valid, unless a future plan says otherwise.
 
-## Plans (configuration, not code)
+## Plans (Phase 5, Stage 1)
 
-Plan identifiers live in `src/editor/config/plans.js` for the UI; the backend owns the real `PublishingPlans`
-collection (prices, currency, period length, renewal rules).
+Plans and prices are defined by the API (`mylinnnk_api/config/plans.js`, served by `GET /api/v1/plans`). The
+frontend keeps only the stable ids, category hints and display helpers (`src/editor/config/plans.js`) and
+shows whatever the server returns (`src/components/Pricing/`, `/pricing`, the editor's Publish dialog).
+Prices are per published page, in naira (amounts in kobo). Nothing renews or charges automatically.
 
-| Plan ID | Family | Billing | Renewal |
-|---|---|---|---|
-| `event-pass` | Personal event page | One-time payment for a fixed publication period | Never renews automatically |
-| `pro-pass` | Professional page | One-time payment for a fixed publication period | Never renews automatically |
-| `pro-monthly` | Professional page | Subscription, billed monthly | Renews monthly until cancelled |
-| `pro-annual` | Professional page | Subscription, billed annually | Renews annually until cancelled |
+| Plan ID | Plan | Billing | Validity | Price |
+|---|---|---|---|---|
+| `free` | Free Editor | free | Drafts only, no publishing | ₦0 |
+| `celebration` | Celebration (birthdays, anniversaries, weddings) | one-time | 30 days | ₦2,500 |
+| `pro-starter` | Professional Starter | one-time | 90 days | ₦7,500 |
+| `pro-monthly` | Professional Monthly (featured) | manual renewal | 30 days per payment | ₦3,000 |
+| `pro-annual` | Professional Annual | manual renewal | 365 days per payment | ₦24,000 (saves 33%) |
+| `special-request` | Special Request | custom quotation | agreed individually | quoted |
 
-- Prices (`price`) and publication periods (`periodDays`) are configuration, `null` in the frontend until the
-  server provides them. Different plans may have different periods (e.g. the event pass and the professional pass).
-- The template category only provides a **suggested** plan family. The server applies the actual eligibility rules.
+- Stage 1 only lets people compare and choose a plan: no checkout, orders, payments or publishing yet.
+- The template category only provides a **suggested** plan family. The server will apply the actual
+  eligibility rules when publishing exists.
 
 ### Renewal and switching rules
 
+- _Note: "subscriptions" below means the monthly and annual plans. At launch they are renewed manually (no
+  automatic charges); automatic renewal needs a payment provider and will be decided later._
 - **One-time passes never renew automatically.** Before the period ends the owner can buy another pass
   (extending the period) or switch to a subscription (professional pages only). If they do nothing, the page
   moves to `expired`.
@@ -120,12 +126,13 @@ User-requested deletion of a draft is separate: a soft delete kept for 30 days (
 
 ## Frontend boundaries already in place
 
-| Concern | Today (Phase 4, Stage 5) | Later |
+| Concern | Today (Phase 5, Stage 1) | Later |
 |---|---|---|
 | Drafts | Guests: `localDrafts` (localStorage). Signed in: cloud drafts (`cloudDrafts.js`, `/api/v1/pages`) with recovery copies until the server confirms | In place |
 | Media | `localMedia` (IndexedDB) on the device that added the image, always kept. Each image lists the drafts that use it (`owners`: `local:<id>` / `cloud:<clientId>`); copies and imports share the file, and deleting a draft only releases its claim. For a signed-in user's cloud drafts, `mediaSync` uploads images in the background (on create, import, open and reconnect; retry-safe, server-confirmed) to the account's private storage (`/api/v1/media`, local folder in development, private Cloud Storage in production); other devices then load them via `/api/v1/media/:id/content`. Guest and local-draft images are never uploaded. Display order: this device → account → template photo → placeholder | Public delivery of published pages' images |
 | Auth | Cookie sessions + CSRF (`src/auth`) | In place |
-| Publishing | `publishing.getPublishingOptions()` (hint only), `startCheckout()` unavailable | server checkout + webhooks |
+| Pricing | `GET /api/v1/plans` → `usePlans()`; `/pricing` and the Publish dialog show server prices; choosing a plan only selects it | admin-managed prices |
+| Publishing | `publishing.suggestedFamily()` (hint only), `startCheckout()` unavailable | payment orders, manual verification, publication |
 
 These live in `src/editor/services/` and `src/auth/`. The UI shows "Saved to your account" only after the
 server confirms a save, and never claims a payment or a live URL.

@@ -19,4 +19,5 @@ export const NAV_LINKS = [
   { to: '/#features', label: 'Features' },
   { to: '/#moments', label: 'Moments' },
   { to: '/#how', label: 'How it works' },
+  { to: '/pricing', label: 'Pricing' },
 ]

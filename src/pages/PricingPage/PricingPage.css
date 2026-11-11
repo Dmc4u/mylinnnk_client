@@ -1,0 +1,88 @@
+.pricing-page {
+  overflow-x: clip;
+  padding-bottom: 96px;
+  background: radial-gradient(120% 60% at 50% 0%, #ffffff 0%, var(--bg) 70%);
+}
+
+.pricing-hero {
+  padding: calc(var(--header-h) + 64px) 0 20px;
+  text-align: center;
+}
+
+.pricing-hero__eyebrow {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--teal-600);
+  animation: page-fade-up 700ms var(--ease-out) both;
+}
+
+.pricing-hero__title {
+  max-width: 46rem;
+  margin: 14px auto 0;
+  font-size: clamp(2.3rem, 5.2vw, 4rem);
+  font-weight: 760;
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+  animation: page-fade-up 800ms var(--ease-out) 80ms both;
+}
+
+.pricing-hero__title .text-gradient {
+  padding-bottom: 0.1em;
+}
+
+.pricing-hero__intro {
+  max-width: 40rem;
+  margin: 20px auto 0;
+  font-size: clamp(1rem, 1.5vw, 1.12rem);
+  color: var(--muted);
+  animation: page-fade-up 800ms var(--ease-out) 160ms both;
+}
+
+.pricing-page__plans {
+  padding-top: 18px;
+}
+
+.pricing-facts {
+  max-width: 880px;
+  margin-top: 64px;
+}
+
+.pricing-facts__title {
+  margin: 0 0 18px;
+  font-size: 1.3rem;
+  font-weight: 720;
+  text-align: center;
+}
+
+.pricing-facts__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px 28px;
+  margin: 0;
+  padding: 24px 28px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.pricing-facts__list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--navy-800);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pricing-hero__eyebrow,
+  .pricing-hero__title,
+  .pricing-hero__intro {
+    animation: none;
+  }
+}

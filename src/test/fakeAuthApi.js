@@ -5,6 +5,8 @@
  * session the client can't see, and a CSRF token required by logout and
  * resend-verification. Every request is recorded for assertions.
  */
+import PLANS_FIXTURE from './fixtures/plans.json'
+
 export const TOKEN_LENGTH = 43
 const token = (seed) => `${seed}`.replace(/[^A-Za-z0-9_-]/g, '').padEnd(TOKEN_LENGTH, 'x').slice(0, TOKEN_LENGTH)
 
@@ -27,6 +29,8 @@ export function createFakeAuthApi() {
     mediaDown: false, // /media requests fail with a network error
     mediaDelay: 0, // ms before /media answers
     mediaFailures: 0, // the next N uploads answer 503 STORAGE_UNAVAILABLE
+    plansDown: false, // GET /plans fails with a network error
+    plansDelay: 0, // ms before GET /plans answers
     activePageRequests: 0,
     maxConcurrentPageRequests: 0,
   }
@@ -295,6 +299,12 @@ export function createFakeAuthApi() {
     state.requests.push({ method, path, headers, body, credentials: init.credentials, url })
     if (state.down) throw new TypeError('Failed to fetch')
     if (state.proxyError) return new Response('Bad gateway', { status: 502, headers: { 'content-type': 'text/plain' } })
+    if (path === '/plans') {
+      // Public price list (mylinnnk_api/routes/plans.js); the fixture is the server's own output.
+      if (state.plansDelay) await new Promise((r) => setTimeout(r, state.plansDelay))
+      if (state.plansDown) throw new TypeError('Failed to fetch')
+      return method === 'GET' ? ok(structuredClone(PLANS_FIXTURE)) : fail(404, 'NOT_FOUND', `No route for ${method} ${path}.`)
+    }
     if (path === '/media' || path.startsWith('/media/')) {
       if (state.mediaDelay) await new Promise((r) => setTimeout(r, state.mediaDelay))
       return mediaRoute(method, path, new URL(url, 'http://localhost').searchParams, headers, body)
