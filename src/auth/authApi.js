@@ -41,8 +41,8 @@ export class ApiError extends Error {
  * Throws ApiError for `{ error }` responses, network failures, timeouts and
  * responses that aren't the API's JSON (for example a proxy error page).
  */
-export async function apiRequest(path, { method = 'GET', body, csrfToken } = {}) {
-  const headers = { Accept: 'application/json' }
+export async function apiRequest(path, { method = 'GET', body, csrfToken, headers: extraHeaders = {} } = {}) {
+  const headers = { Accept: 'application/json', ...extraHeaders }
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   if (csrfToken) headers['X-CSRF-Token'] = csrfToken
 

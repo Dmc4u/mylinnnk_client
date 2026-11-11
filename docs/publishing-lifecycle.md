@@ -99,13 +99,33 @@ collection (prices, currency, period length, renewal rules).
   until a fixed date (one-time passes) or while a subscription is active. Plan switches create or update an
   entitlement; they never modify the page document.
 
+## Expiration of paid publications (future requirement)
+
+Every paid publishing method has a validity period (exact one-time durations are set in the pricing phase).
+Publication records will store `publishedAt`, `expiresAt`, `graceEndsAt`, a lifecycle status and a
+payment or subscription reference. None of this exists yet; drafts carry no publication or payment fields.
+
+1. After a verified payment the page is public for the purchased period.
+2. At `expiresAt` a grace period of exactly 24 hours starts (`graceEndsAt = expiresAt + 24 h`) and the user
+   is told that payment or renewal is needed.
+3. Renewing during the grace period extends or reactivates the publication according to the plan.
+4. Without renewal by `graceEndsAt` the page is unpublished.
+5. Media stored only for that expired publication is then scheduled for deletion by an idempotent
+   background job (MongoDB TTL can't delete Cloud Storage objects). Images used by another active
+   publication, a retained draft or the user's media library are never deleted.
+6. The editable draft (text, layout, theme, design) is always kept; the user can pay again and republish,
+   re-uploading any images that were removed. Customers are told this before paying.
+
+User-requested deletion of a draft is separate: a soft delete kept for 30 days (Stage 4).
+
 ## Frontend boundaries already in place
 
-| Concern | Today (Phase 3) | Later |
+| Concern | Today (Phase 4, Stage 4) | Later |
 |---|---|---|
-| Drafts | `localDrafts` (localStorage) | `remoteDrafts` (authenticated API) |
-| Media | `localMedia` (IndexedDB) | `remoteMedia.upload` (signed upload) |
-| Auth | `auth.getSession()` → always guest | real sessions |
+| Drafts | Guests: `localDrafts` (localStorage). Signed in: cloud drafts (`cloudDrafts.js`, `/api/v1/pages`) with recovery copies until the server confirms | In place |
+| Media | `localMedia` (IndexedDB) on the device that added the image; other devices show the template photo or a placeholder. Each image lists the drafts that use it (`owners`: `local:<id>` / `cloud:<clientId>`); copies and imports share the file, and deleting a draft only releases its claim (the file goes when no draft uses it) | `remoteMedia.upload` (private Cloud Storage) |
+| Auth | Cookie sessions + CSRF (`src/auth`) | In place |
 | Publishing | `publishing.getPublishingOptions()` (hint only), `startCheckout()` unavailable | server checkout + webhooks |
 
-All of these live in `src/editor/services/`. The UI never claims a cloud save, a payment or a live URL.
+These live in `src/editor/services/` and `src/auth/`. The UI shows "Saved to your account" only after the
+server confirms a save, and never claims a payment or a live URL.

@@ -324,17 +324,42 @@ export function MediaPanel({ page, media, onRequestDelete }) {
 
 /* ================= Local drafts ================= */
 
-export function DraftsPanel({ drafts, currentId, stored, templatesBySlug, onOpen, onNew, onRequestDelete, storageOk }) {
+export function DraftsPanel({ drafts, currentId, stored, templatesBySlug, onOpen, onNew, onRequestDelete, storageOk, cloudDrafts = null, currentCloudId = null, onOpenCloud }) {
+  const signedIn = cloudDrafts !== null
   return (
     <div className="ed-panel">
-      <h2 className="ed-panel__title">Drafts on this device</h2>
-      <div className="ed-notice">
-        <Icon name="info" />
-        <p>
-          Guest drafts are stored only in this browser. Clearing browser data, switching devices or using private
-          browsing can remove them. Account saving is coming soon.
-        </p>
-      </div>
+      <h2 className="ed-panel__title">{signedIn ? 'Your drafts' : 'Drafts on this device'}</h2>
+      {signedIn ? (
+        <>
+          <h3 className="ed-drafts__group">In your account</h3>
+          {cloudDrafts.length === 0 ? (
+            <p className="ed-field__hint">No drafts in your account yet. New pages you edit while logged in are saved there.</p>
+          ) : (
+            <ul className="ed-drafts">
+              {cloudDrafts.map((d) => (
+                <li key={d.id} className={d.id === currentCloudId ? 'is-current' : ''}>
+                  <button type="button" className="ed-drafts__open" onClick={() => onOpenCloud(d)} disabled={d.id === currentCloudId} aria-current={d.id === currentCloudId ? 'true' : undefined}>
+                    <span className="ed-drafts__title">{d.title || 'Untitled page'}</span>
+                    <span className="ed-drafts__meta">
+                      {templatesBySlug[d.templateSlug]?.name ?? d.templateSlug} · edited {new Date(d.updatedAt).toLocaleString()}
+                      {d.id === currentCloudId ? ' · open' : ''}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <h3 className="ed-drafts__group">On this device</h3>
+        </>
+      ) : (
+        <div className="ed-notice">
+          <Icon name="info" />
+          <p>
+            Guest drafts are stored only in this browser. Clearing browser data, switching devices or using private
+            browsing can remove them. Log in to save drafts to an account.
+          </p>
+        </div>
+      )}
       {!storageOk && <p className="ed-field__hint is-error">This browser is blocking local storage, so drafts can’t be kept after you close the tab.</p>}
       <button type="button" className="ed-btn ed-btn--sm" onClick={onNew}>
         <Icon name="plus" size={16} /> Start a fresh draft

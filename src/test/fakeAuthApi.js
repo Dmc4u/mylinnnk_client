@@ -20,6 +20,11 @@ export function createFakeAuthApi() {
     rateLimited: false,
     sessionDelay: 0,
     emails: [],
+    pages: [], // cloud drafts (Stage 4 contract, mylinnnk_api/routes/page.js)
+    pagesDown: false, // only /pages fails (network error), the rest of the API works
+    pageDelay: 0, // ms before /pages answers
+    activePageRequests: 0,
+    maxConcurrentPageRequests: 0,
   }
 
   const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8' } })
@@ -128,6 +133,107 @@ export function createFakeAuthApi() {
     },
   }
 
+  /* ---------------- Cloud drafts (/pages) ---------------- */
+  const EDITABLE = ['templateId', 'templateSlug', 'templateCategory', 'title', 'schemaVersion', 'theme', 'sections']
+  const SERVER_MANAGED = ['id', '_id', 'owner', 'clientId', 'status', 'storage', 'revision', 'createdAt', 'updatedAt', 'deletedAt']
+  const sortKeys = (v) => (Array.isArray(v) ? v.map(sortKeys) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sortKeys(v[k])])) : v)
+  const hashOf = (page) => JSON.stringify(sortKeys(Object.fromEntries(EDITABLE.map((k) => [k, page[k]]))))
+  const mediaIdsOf = (page) => {
+    const ids = new Set()
+    const walk = (v) => {
+      if (Array.isArray(v)) v.forEach(walk)
+      else if (v && typeof v === 'object') {
+        if (typeof v.mediaId === 'string') ids.add(v.mediaId)
+        Object.values(v).forEach(walk)
+      }
+    }
+    walk(page.sections)
+    return [...ids].sort()
+  }
+  let pageSeq = 0
+  const summary = (p) => ({
+    id: p.id, clientId: p.clientId, title: p.title, templateSlug: p.templateSlug, templateCategory: p.templateCategory,
+    status: 'draft', revision: p.revision, deviceMediaCount: p.deviceMediaIds.length, createdAt: p.createdAt, updatedAt: p.updatedAt,
+  })
+  const detail = (p) => ({
+    ...summary(p),
+    deviceMediaIds: [...p.deviceMediaIds],
+    page: { id: p.clientId, ...structuredClone(Object.fromEntries(EDITABLE.map((k) => [k, p[k]]))), status: 'draft', createdAt: p.createdAt, updatedAt: p.updatedAt },
+  })
+  const tick = () => new Date(Date.now() + pageSeq++).toISOString()
+  const ifMatch = (headers) => {
+    const raw = headers['If-Match']
+    if (!raw) return null
+    return Number(/^"?(\d+)"?$/.exec(raw)?.[1] ?? NaN)
+  }
+  const invalidPage = (page) => {
+    if (!page || typeof page !== 'object') return [{ path: 'page', message: 'is required' }]
+    const errors = Object.keys(page).filter((k) => SERVER_MANAGED.includes(k) || !EDITABLE.includes(k)).map((k) => ({ path: `page.${k}`, message: 'is not allowed' }))
+    if (!Array.isArray(page.sections) || !page.sections.length) errors.push({ path: 'page.sections', message: 'is required' })
+    return errors
+  }
+  const ownedPage = (id) => state.pages.find((p) => p.id === id && p.owner === state.session?.userId)
+
+  function pagesRoute(method, path, headers, body) {
+    if (state.pagesDown) throw new TypeError('Failed to fetch')
+    if (!currentUser()) return fail(401, 'UNAUTHENTICATED', 'You need to sign in.')
+    if (method !== 'GET' && headers['X-CSRF-Token'] !== state.session.csrfToken) {
+      return fail(403, 'CSRF_INVALID', 'Your security token is missing or out of date. Refresh the page and try again.')
+    }
+    const owner = state.session.userId
+    const id = path.split('/')[2]
+
+    if (method === 'GET' && !id) {
+      const list = state.pages.filter((p) => p.owner === owner && !p.deletedAt).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      return ok({ drafts: list.map(summary) })
+    }
+    if (method === 'POST' && !id) {
+      const errors = invalidPage(body.page)
+      if (!/^draft_[a-z0-9]{8,32}$/.test(body.clientId ?? '')) errors.push({ path: 'clientId', message: 'must be an editor draft id' })
+      if (errors.length) return fail(400, 'INVALID_PAGE', 'The page content is invalid.', errors)
+      const hash = hashOf(body.page)
+      const existing = state.pages.find((p) => p.owner === owner && p.clientId === body.clientId)
+      if (existing) {
+        if (existing.deletedAt) return fail(410, 'DRAFT_DELETED', 'A draft with this id was deleted from your account.')
+        if (existing.creationHash === hash) return ok({ created: false, draft: detail(existing) })
+        return fail(409, 'CLIENT_ID_CONFLICT', 'Your account already has a different draft with this id.')
+      }
+      const now = tick()
+      const draft = {
+        id: `665f${String(1000000 + state.pages.length).padStart(20, '0')}`.slice(0, 24),
+        owner, clientId: body.clientId, ...structuredClone(body.page), revision: 1, creationHash: hash, contentHash: hash,
+        deviceMediaIds: mediaIdsOf(body.page), deletedAt: null, createdAt: now, updatedAt: now,
+      }
+      state.pages.push(draft)
+      return ok({ created: true, draft: detail(draft) }, 201)
+    }
+    const draft = ownedPage(id)
+    if (!draft) return fail(404, 'NOT_FOUND', 'Draft not found.')
+    if (method === 'GET') return draft.deletedAt ? fail(410, 'DRAFT_DELETED', 'This draft was deleted.') : ok({ draft: detail(draft) })
+
+    const revision = ifMatch(headers)
+    if (revision === null) return fail(428, 'REVISION_REQUIRED', 'Send the revision you edited as If-Match.')
+    if (method === 'PATCH') {
+      if (draft.deletedAt) return fail(410, 'DRAFT_DELETED', 'This draft was deleted.')
+      const errors = invalidPage(body.page)
+      if (errors.length) return fail(400, 'INVALID_PAGE', 'The page content is invalid.', errors)
+      const hash = hashOf(body.page)
+      if (hash === draft.contentHash) return ok({ draft: detail(draft) })
+      if (revision !== draft.revision) {
+        return fail(409, 'REVISION_CONFLICT', 'This draft was changed somewhere else since you opened it.', [{ path: 'revision', message: 'is out of date', currentRevision: draft.revision }])
+      }
+      Object.assign(draft, structuredClone(body.page), { revision: draft.revision + 1, contentHash: hash, deviceMediaIds: mediaIdsOf(body.page), updatedAt: tick() })
+      return ok({ draft: detail(draft) })
+    }
+    if (method === 'DELETE') {
+      if (draft.deletedAt) return ok({ deleted: true, id: draft.id, deletedAt: draft.deletedAt })
+      if (revision !== draft.revision) return fail(409, 'REVISION_CONFLICT', 'This draft was changed somewhere else since you opened it.')
+      Object.assign(draft, { deletedAt: tick(), revision: draft.revision + 1 })
+      return ok({ deleted: true, id: draft.id, deletedAt: draft.deletedAt })
+    }
+    return fail(404, 'NOT_FOUND', `No route for ${method} ${path}.`)
+  }
+
   async function fetch(url, init = {}) {
     const method = init.method ?? 'GET'
     const path = new URL(url, 'http://localhost').pathname.replace(/^\/api\/v1/, '')
@@ -136,6 +242,20 @@ export function createFakeAuthApi() {
     state.requests.push({ method, path, headers, body, credentials: init.credentials, url })
     if (state.down) throw new TypeError('Failed to fetch')
     if (state.proxyError) return new Response('Bad gateway', { status: 502, headers: { 'content-type': 'text/plain' } })
+    if (path === '/pages' || path.startsWith('/pages/')) {
+      // Concurrency is tracked for writes (saves), not for list/read requests.
+      const isWrite = method !== 'GET'
+      if (isWrite) {
+        state.activePageRequests += 1
+        state.maxConcurrentPageRequests = Math.max(state.maxConcurrentPageRequests, state.activePageRequests)
+      }
+      try {
+        if (state.pageDelay) await new Promise((r) => setTimeout(r, state.pageDelay))
+        return pagesRoute(method, path, headers, body ?? {})
+      } finally {
+        if (isWrite) state.activePageRequests -= 1
+      }
+    }
     const handler = routes[`${method} ${path}`]
     if (!handler) return fail(404, 'NOT_FOUND', `No route for ${method} ${path}.`)
     return handler({ headers, body: body ?? {} })
@@ -152,6 +272,28 @@ export function createFakeAuthApi() {
       state.session = null
     },
     requestsTo: (path) => state.requests.filter((r) => r.path === path),
+    pageRequests: () => state.requests.filter((r) => r.path === '/pages' || r.path.startsWith('/pages/')),
+    /** Stores a cloud draft directly (e.g. created on another device). */
+    seedPage: (user, clientId, page) => {
+      const now = tick()
+      const hash = hashOf(page)
+      const draft = {
+        id: `665f${String(1000000 + state.pages.length).padStart(20, '0')}`.slice(0, 24),
+        owner: user.id, clientId, ...structuredClone(Object.fromEntries(EDITABLE.map((k) => [k, page[k]]))), revision: 1,
+        creationHash: hash, contentHash: hash, deviceMediaIds: mediaIdsOf(page), deletedAt: null, createdAt: now, updatedAt: now,
+      }
+      state.pages.push(draft)
+      return draft
+    },
+    /** Another device saves a change: new content, new revision. */
+    editPageElsewhere: (id, mutate) => {
+      const draft = state.pages.find((p) => p.id === id)
+      mutate(draft)
+      draft.revision += 1
+      draft.contentHash = hashOf(draft)
+      draft.updatedAt = tick()
+      return draft
+    },
     lastEmail: (type) => [...state.emails].reverse().find((e) => e.type === type),
   }
 }

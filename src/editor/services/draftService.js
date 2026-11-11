@@ -13,7 +13,7 @@
 import { getTemplateBySlug } from '../../data/templates.js'
 import { validatePage } from '../model/page.js'
 import { listLocalDrafts, readLocalDraft, removeLocalDraft, writeLocalDraft } from '../storage/localDraftStore.js'
-import { deleteDraftMedia } from '../storage/mediaStore.js'
+import { localOwner, releaseOwnerMedia } from '../storage/mediaStore.js'
 import { FeatureUnavailableError } from './errors.js'
 
 const templateExists = (slug) => {
@@ -41,7 +41,8 @@ export const localDrafts = {
 
   async deleteDraft(pageId) {
     removeLocalDraft(pageId)
-    await deleteDraftMedia(pageId)
+    // Only this draft's claim: images also used by a copy or an imported cloud draft are kept.
+    await releaseOwnerMedia(localOwner(pageId))
   },
 }
 

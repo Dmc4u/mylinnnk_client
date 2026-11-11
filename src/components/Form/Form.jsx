@@ -107,9 +107,9 @@ export function SubmitButton({ busy, busyLabel, children, variant = 'primary', c
 }
 
 /** Plain button in the same style (for actions that aren't form submits). */
-export function ActionButton({ busy, busyLabel, children, variant = 'ghost', size = 'md', className = '', ...rest }) {
+export function ActionButton({ busy, busyLabel, children, variant = 'ghost', size = 'md', className = '', disabled = false, ...rest }) {
   return (
-    <button type="button" className={`btn btn--${variant} btn--${size} ${className}`.trim()} disabled={busy} aria-busy={busy || undefined} {...rest}>
+    <button type="button" className={`btn btn--${variant} btn--${size} ${className}`.trim()} disabled={busy || disabled} aria-busy={busy || undefined} {...rest}>
       {busy && <span className="btn__spinner" aria-hidden="true" />}
       <span className="btn__label">{busy ? busyLabel : children}</span>
     </button>

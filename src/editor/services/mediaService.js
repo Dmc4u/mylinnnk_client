@@ -4,7 +4,7 @@
  * authenticated upload (signed URL / media API) and is unavailable for now.
  */
 import { newId } from '../model/page.js'
-import { deleteMedia, getMedia, listMedia, putMedia } from '../storage/mediaStore.js'
+import { claimMedia, getMedia, listMedia, putMedia, releaseMedia } from '../storage/mediaStore.js'
 import { FeatureUnavailableError } from './errors.js'
 
 export const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -39,20 +39,27 @@ export async function prepareImage(file) {
   return { blob: blob ?? file, width: canvas.width, height: canvas.height }
 }
 
+/**
+ * Images in this browser. `owner` is the draft using them ('local:<id>' or
+ * 'cloud:<clientId>', see storage/mediaStore.js): removing an image from one
+ * draft never deletes it for another draft that uses the same file.
+ */
 export const localMedia = {
-  /** Returns { mediaId, persisted } — persisted=false means "this tab only". */
-  async upload(draftId, file) {
+  /** Returns { mediaId, persisted }; persisted=false means "this tab only". */
+  async upload(owner, draftId, file) {
     const { blob, width, height } = await prepareImage(file)
     const id = newId('media').toLowerCase()
     const { persisted } = await putMedia({
-      id, draftId, blob, type: blob.type, name: file.name.slice(0, 120), size: blob.size, width, height,
+      id, draftId, owners: [owner], blob, type: blob.type, name: file.name.slice(0, 120), size: blob.size, width, height,
       createdAt: new Date().toISOString(),
     })
     return { mediaId: id, persisted }
   },
   get: getMedia,
   list: listMedia,
-  remove: deleteMedia,
+  claim: claimMedia,
+  /** This draft stops using the image; the file is deleted only if no other draft uses it. */
+  remove: (id, owner) => releaseMedia(id, owner),
 }
 
 export const remoteMedia = {

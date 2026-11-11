@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link, Navigate, useLocation } from 'react-router'
 import AuthLayout, { AuthPending } from '../../components/AuthLayout/AuthLayout.jsx'
-import Button from '../../components/Button/Button.jsx'
 import { ActionButton, FormAlert } from '../../components/Form/Form.jsx'
 import ResendVerification from '../../components/ResendVerification/ResendVerification.jsx'
-import { errorMessage } from '../../auth/messages.js'
+import { useGuardedLogout } from '../../auth/useGuardedLogout.jsx'
+import AccountDrafts from './AccountDrafts.jsx'
 import { authHref } from '../../auth/redirects.js'
 import { useAuth } from '../../auth/useAuth.js'
 import './AccountPage.css'
@@ -19,10 +19,9 @@ const formatDate = (iso) => {
  * (The full dashboard with saved pages comes in a later stage.)
  */
 export default function AccountPage() {
-  const { status, user, notice, logout, refreshSession } = useAuth()
+  const { status, user, notice, refreshSession } = useAuth()
+  const guardedLogout = useGuardedLogout()
   const location = useLocation()
-  const [loggingOut, setLoggingOut] = useState(false)
-  const [error, setError] = useState(null)
   const [retrying, setRetrying] = useState(false)
   const welcome = location.state?.welcome === true
   const verificationEmailSent = location.state?.verificationEmailSent !== false
@@ -58,17 +57,6 @@ export default function AccountPage() {
   // Just logged out here or in another tab: go home. Otherwise (never signed in, expired): log in first.
   if (status !== 'authenticated') return <Navigate to={notice === 'signed-out' ? '/' : authHref('login', '/account')} replace />
 
-  const onLogout = async () => {
-    setLoggingOut(true)
-    setError(null)
-    try {
-      await logout() // the page then redirects home (see above)
-    } catch (e) {
-      setError(errorMessage(e))
-      setLoggingOut(false)
-    }
-  }
-
   const memberSince = formatDate(user.createdAt)
   const initial = (user.displayName.trim()[0] ?? '?').toUpperCase()
 
@@ -83,7 +71,8 @@ export default function AccountPage() {
           </p>
         </FormAlert>
       )}
-      <FormAlert>{error}</FormAlert>
+      <FormAlert>{guardedLogout.error}</FormAlert>
+      {guardedLogout.dialog}
 
       <div className="account-profile">
         <span className="account-profile__avatar" aria-hidden="true">
@@ -122,20 +111,10 @@ export default function AccountPage() {
         </section>
       )}
 
-      <section className="account-section" aria-labelledby="drafts-heading">
-        <h2 id="drafts-heading">Your pages</h2>
-        <p>
-          Saving pages to your account is coming soon. Until then, drafts you create stay saved in this browser, whether or not you’re logged in.
-        </p>
-        <div className="auth-actions auth-actions--start">
-          <Button to="/templates" variant="ghost" size="sm">
-            Browse templates
-          </Button>
-        </div>
-      </section>
+      <AccountDrafts />
 
       <div className="account-footer">
-        <ActionButton busy={loggingOut} busyLabel="Logging out…" onClick={onLogout}>
+        <ActionButton busy={guardedLogout.busy} busyLabel="Logging out…" onClick={guardedLogout.requestLogout}>
           Log out
         </ActionButton>
         <p className="auth-note">

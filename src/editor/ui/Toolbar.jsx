@@ -6,11 +6,12 @@ import Icon from './icons.jsx'
 
 function SaveStatus({ autosave }) {
   const { status, savedAt, error } = autosave
-  const text =
-    status === 'error' ? 'Not saved' :
+  // Cloud drafts pass their own wording (Saving… / Saved to your account / Offline …).
+  const text = autosave.text ??
+    (status === 'error' ? 'Not saved' :
     status === 'saving' ? 'Unsaved changes…' :
     status === 'saved' ? `Saved on this device${savedAt ? ` · ${new Date(savedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : ''}` :
-    'Not saved yet'
+    'Not saved yet')
   return (
     <span className={`ed-status ed-status--${status}`} role="status" title={error ?? undefined}>
       <span className="ed-status__dot" aria-hidden="true" />

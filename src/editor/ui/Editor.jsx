@@ -2,14 +2,19 @@ import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { SECTION_TYPES } from '../../templates/schema.js'
 import useAutosave from '../hooks/useAutosave.js'
+import useCloudSync from '../hooks/useCloudSync.js'
 import useMediaLibrary from '../hooks/useMediaLibrary.js'
+import { resolveMediaForRender } from '../model/mediaFallback.js'
 import useEditorHistory from '../model/useEditorHistory.js'
 import { addSection, duplicateSection, moveSection, moveSectionTo, removeSection, setTitle } from '../model/operations.js'
-import { newId, pageForRender, resolvePageMedia } from '../model/page.js'
+import { collectMediaIds, newId, pageForRender } from '../model/page.js'
+import { cloudOwner, localOwner } from '../storage/mediaStore.js'
+import { removeRecovery } from '../storage/recoveryStore.js'
 import { useAuth } from '../../auth/useAuth.js'
 import { publishing } from '../services/accountServices.js'
 import Canvas from './Canvas.jsx'
-import { ConfirmDialog, PublishDialog, SaveDraftDialog } from './Dialogs.jsx'
+import { ConfirmDialog, ConflictDialog, PublishDialog, SaveDraftDialog } from './Dialogs.jsx'
+import EditorBanners from './EditorBanners.jsx'
 import PropertiesPanel from './PropertiesPanel.jsx'
 import { AddSectionPanel, DraftsPanel, MediaPanel, StructurePanel, ThemePanel } from './SidebarPanels.jsx'
 import Toolbar from './Toolbar.jsx'
@@ -25,13 +30,55 @@ const TABS = [
 
 const isTyping = (el) => el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))
 
-export default function Editor({ template, initialPage, initiallyStored, drafts, templatesBySlug, storageOk, onDraftsChanged, onOpenDraft, onNewDraft, onDeleteDraft }) {
+/** Toolbar wording for cloud-draft save states. */
+const CLOUD_STATUS_TEXT = {
+  new: 'Not saved yet',
+  saving: 'Saving…',
+  saved: 'Saved to your account',
+  offline: 'Offline / not saved',
+  expired: 'Session expired',
+  'wrong-account': 'Not saved: other account',
+  conflict: 'Conflict',
+  deleted: 'Deleted from your account',
+  error: 'Not saved',
+}
+const CLOUD_STATUS_CLASS = { new: 'new', saving: 'saving', saved: 'saved' }
+
+/**
+ * mode 'local'  guest-style draft saved in this browser (unchanged Phase 3 behaviour).
+ * mode 'cloud'  draft saved to the signed-in user's account (useCloudSync), with a
+ *               recovery copy in this browser until the server confirms each save.
+ */
+export default function Editor({
+  template,
+  mode = 'local',
+  initialPage,
+  initiallyStored,
+  initialCloud = null,
+  ownerId = null,
+  recovery = null,
+  drafts,
+  cloudDrafts = null,
+  templatesBySlug,
+  storageOk,
+  onDraftsChanged,
+  onCloudCreated,
+  onOpenDraft,
+  onOpenCloudDraft,
+  onNewDraft,
+  onDeleteDraft,
+}) {
   const navigate = useNavigate()
   const history = useEditorHistory(initialPage)
   const { page, apply, undo, redo } = history
-  const autosave = useAutosave(page, history.revision, initiallyStored)
-  const media = useMediaLibrary(page.id)
+  const isCloud = mode === 'cloud'
+  const autosave = useAutosave(page, history.revision, initiallyStored, { enabled: !isCloud })
+  const cloudSync = useCloudSync({ page, editRevision: history.revision, enabled: isCloud, initialCloud, ownerId, onCreated: onCloudCreated })
+  const referencedMedia = useMemo(() => [...collectMediaIds(page)], [page])
+  const media = useMediaLibrary({ owner: isCloud ? cloudOwner(page.id) : localOwner(page.id), draftId: page.id, referencedIds: referencedMedia })
   const tabsId = useId()
+  const [pendingRecovery, setPendingRecovery] = useState(recovery)
+  const [conflictBusy, setConflictBusy] = useState(null)
 
   const [selectedId, setSelectedId] = useState(null)
   const [tab, setTab] = useState('structure')
@@ -44,22 +91,69 @@ export default function Editor({ template, initialPage, initiallyStored, drafts,
   const [toast, setToast] = useState(null)
   const [scrollRequest, setScrollRequest] = useState(null)
   // Read-only here: the editor works the same signed in or not (no login required).
-  const { status: authStatus, user } = useAuth()
+  const { status: authStatus, user, refreshSession } = useAuth()
   const signedIn = authStatus === 'authenticated'
 
   const selected = page.sections.find((s) => s.id === selectedId) ?? null
-  const renderPage = useMemo(() => pageForRender(resolvePageMedia(page, media.urls)), [page, media.urls])
+  const resolved = useMemo(() => resolveMediaForRender(page, media.urls, { loaded: media.loaded }), [page, media.urls, media.loaded])
+  const renderPage = useMemo(() => pageForRender(resolved.page), [resolved])
 
-  // Once a brand-new draft is first stored, put its id in the URL so a refresh reopens it.
-  const { stored, savedAt } = autosave
+  // Once a brand-new local draft is first stored, put its id in the URL so a refresh reopens it.
+  // (Cloud drafts do the same through onCloudCreated, with ?page=<id>.)
+  const { stored } = autosave
+  const savedAt = isCloud ? cloudSync.savedAt : autosave.savedAt
   useEffect(() => {
-    if (!stored) return
+    if (isCloud || !stored) return
     navigate(`/editor/${page.templateSlug}?draft=${page.id}`, { replace: true })
-  }, [stored, navigate, page.templateSlug, page.id])
+  }, [isCloud, stored, navigate, page.templateSlug, page.id])
 
   useEffect(() => {
     if (savedAt) onDraftsChanged()
   }, [savedAt, onDraftsChanged])
+
+  const saveView = isCloud
+    ? {
+        status: CLOUD_STATUS_CLASS[cloudSync.status] ?? 'error',
+        text:
+          CLOUD_STATUS_TEXT[cloudSync.status] +
+          (cloudSync.status === 'saved' && cloudSync.savedAt
+            ? ` · ${new Date(cloudSync.savedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+            : ''),
+        error: cloudSync.message,
+      }
+    : autosave
+
+  /** "Load newer cloud version": replaces the editor content after the user confirmed. */
+  const loadNewerVersion = async () => {
+    setConflictBusy('load')
+    try {
+      const latest = await cloudSync.fetchLatest()
+      history.reset(latest.page)
+      cloudSync.acceptServerVersion(latest)
+      setPendingRecovery(null)
+      setDialog(null)
+      setToast({ message: 'Loaded the newer version from your account.' })
+    } catch (error) {
+      setToast({ message: error.message || 'The newer version could not be loaded.' })
+    } finally {
+      setConflictBusy(null)
+    }
+  }
+
+  /** "Save my version as a new copy": a separate cloud draft with a new id; the original is untouched. */
+  const saveVersionAsCopy = async (version) => {
+    setConflictBusy('copy')
+    try {
+      const draft = await cloudSync.saveAsCopy(version)
+      if (version && pendingRecovery) removeRecovery(ownerId, pendingRecovery.clientId)
+      setDialog(null)
+      onOpenCloudDraft(draft)
+    } catch (error) {
+      setToast({ message: error.message || 'The copy could not be saved. Your changes are still here.' })
+    } finally {
+      setConflictBusy(null)
+    }
+  }
 
   useEffect(() => {
     if (!toast) return undefined
@@ -151,6 +245,9 @@ export default function Editor({ template, initialPage, initiallyStored, drafts,
         storageOk={storageOk}
         templatesBySlug={templatesBySlug}
         onOpen={onOpenDraft}
+        cloudDrafts={cloudDrafts}
+        currentCloudId={cloudSync.cloud?.id ?? null}
+        onOpenCloud={onOpenCloudDraft}
         onNew={() => setDialog({ type: 'newDraft' })}
         onRequestDelete={(d) => setDialog({ type: 'deleteDraft', draft: d })}
       />
@@ -172,9 +269,10 @@ export default function Editor({ template, initialPage, initiallyStored, drafts,
           setPreview((v) => !v)
           setDrawer(null)
         }}
-        autosave={autosave}
+        autosave={saveView}
         onSave={async () => {
-          await autosave.saveNow()
+          if (isCloud) await cloudSync.saveNow()
+          else await autosave.saveNow()
           setDialog({ type: 'save' })
         }}
         onPublish={() => setDialog({ type: 'publish' })}
@@ -186,6 +284,26 @@ export default function Editor({ template, initialPage, initiallyStored, drafts,
           This browser is blocking storage, so your changes will be lost when you close this tab.
         </p>
       )}
+      <EditorBanners
+        isCloud={isCloud}
+        cloudSync={cloudSync}
+        missingMedia={resolved.missing.length}
+        recovery={pendingRecovery}
+        recoveryAppliesDirectly={Boolean(pendingRecovery && (pendingRecovery.unsavedNew || pendingRecovery.baseRevision === initialCloud?.revision))}
+        busy={conflictBusy}
+        onRestoreRecovery={() => {
+          const restored = pendingRecovery.page
+          apply(() => ({ ...restored, storage: 'cloud' }), 'recovery')
+          setPendingRecovery(null)
+          setToast({ message: 'Your unsaved changes are back. Saving them to your account…' })
+        }}
+        onRecoveryAsCopy={() => saveVersionAsCopy(pendingRecovery.page)}
+        onDiscardRecovery={() => setDialog({ type: 'discardRecovery' })}
+        onResolveConflict={() => setDialog({ type: 'conflict' })}
+        onSaveAsCopy={() => saveVersionAsCopy()}
+        onRecheckSession={() => refreshSession()}
+        signedInLocalDraft={!isCloud && cloudDrafts !== null}
+      />
 
       <div className="ed-body">
         <aside className="ed-left" aria-label="Editor tools" data-open={drawer === 'left' || undefined}>
@@ -254,7 +372,45 @@ export default function Editor({ template, initialPage, initiallyStored, drafts,
         </div>
       )}
 
-      {dialog?.type === 'save' && <SaveDraftDialog autosave={autosave} signedIn={signedIn} user={user} onClose={() => setDialog(null)} />}
+      {dialog?.type === 'save' && (
+        <SaveDraftDialog
+          autosave={autosave}
+          cloud={isCloud ? { status: cloudSync.status, text: saveView.text, message: cloudSync.message, missingMedia: resolved.missing.length, deviceMedia: referencedMedia.length } : null}
+          signedIn={signedIn}
+          user={user}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog?.type === 'conflict' && (
+        <ConflictDialog
+          busy={conflictBusy}
+          onLoadNewer={() => setDialog({ type: 'confirmLoadNewer' })}
+          onSaveCopy={() => saveVersionAsCopy()}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog?.type === 'confirmLoadNewer' && (
+        <ConfirmDialog
+          title="Discard your unsaved changes?"
+          message="Loading the newer version from your account replaces what you see here. Your changes since the last save will be lost. To keep them, save your version as a new copy instead."
+          confirmLabel={conflictBusy === 'load' ? 'Loading…' : 'Discard and load newer version'}
+          onConfirm={loadNewerVersion}
+          onClose={() => setDialog({ type: 'conflict' })}
+        />
+      )}
+      {dialog?.type === 'discardRecovery' && (
+        <ConfirmDialog
+          title="Discard unsaved changes?"
+          message="The changes kept on this device for this draft will be deleted. The version saved in your account stays as it is."
+          confirmLabel="Discard changes"
+          onConfirm={() => {
+            removeRecovery(ownerId, pendingRecovery.clientId)
+            setPendingRecovery(null)
+            setDialog(null)
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {dialog?.type === 'publish' && (
         <PublishDialog options={publishing.getPublishingOptions(page)} category={page.templateCategory} signedIn={signedIn} onClose={() => setDialog(null)} />
       )}

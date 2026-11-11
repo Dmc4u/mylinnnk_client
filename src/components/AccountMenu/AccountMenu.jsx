@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router'
-import { errorMessage } from '../../auth/messages.js'
+import { useGuardedLogout } from '../../auth/useGuardedLogout.jsx'
 import { authHref } from '../../auth/redirects.js'
 import { useAuth } from '../../auth/useAuth.js'
 import SmartLink from '../SmartLink/SmartLink.jsx'
@@ -49,10 +49,8 @@ export default function AuthNav({ onNavigate }) {
  * shown inline inside the mobile navigation instead.
  */
 export function AccountMenu({ onNavigate }) {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(null)
   const rootRef = useRef(null)
   const toggleRef = useRef(null)
   const panelId = useId()
@@ -81,17 +79,8 @@ export function AccountMenu({ onNavigate }) {
     onNavigate?.()
   }
 
-  const onLogout = async () => {
-    setBusy(true)
-    setError(null)
-    try {
-      await logout()
-      close()
-    } catch (e) {
-      setError(errorMessage(e))
-      setBusy(false)
-    }
-  }
+  // Warns first if this account has unsaved changes on this device.
+  const { requestLogout, busy, error, dialog } = useGuardedLogout({ onLoggedOut: close })
 
   const initial = (user.displayName.trim()[0] ?? '?').toUpperCase()
 
@@ -139,7 +128,7 @@ export function AccountMenu({ onNavigate }) {
             </Link>
           </li>
           <li>
-            <button type="button" className="account-menu__item" onClick={onLogout} disabled={busy} aria-busy={busy || undefined}>
+            <button type="button" className="account-menu__item" onClick={requestLogout} disabled={busy} aria-busy={busy || undefined}>
               {busy ? 'Logging out…' : 'Log out'}
             </button>
           </li>
@@ -150,6 +139,7 @@ export function AccountMenu({ onNavigate }) {
           </p>
         )}
       </div>
+      {dialog}
     </div>
   )
 }

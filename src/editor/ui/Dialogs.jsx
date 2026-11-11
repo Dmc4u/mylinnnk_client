@@ -9,7 +9,8 @@ import Icon from './icons.jsx'
  * Log in / Sign up open in a new tab so the editor (and this draft) stay open;
  * this tab learns about the new session automatically.
  */
-export function SaveDraftDialog({ autosave, signedIn, user, onClose }) {
+export function SaveDraftDialog({ autosave, cloud = null, signedIn, user, onClose }) {
+  if (cloud) return <CloudSaveDialog cloud={cloud} user={user} onClose={onClose} />
   const savedLocally = autosave.status === 'saved'
   return (
     <Modal
@@ -52,6 +53,64 @@ export function SaveDraftDialog({ autosave, signedIn, user, onClose }) {
         <Icon name="lock" size={16} /> Saving to your account is coming soon. Until then, drafts live only in this browser:
         clearing browser data, switching devices or private browsing can remove them.
       </p>
+    </Modal>
+  )
+}
+
+/**
+ * Save Draft for cloud drafts: says exactly where the draft is. "Saved to your
+ * account" only when the server confirmed it; images stay on this device.
+ */
+function CloudSaveDialog({ cloud, user, onClose }) {
+  const saved = cloud.status === 'saved'
+  return (
+    <Modal
+      title="Save your draft"
+      onClose={onClose}
+      footer={<button type="button" className="ed-btn ed-btn--primary" onClick={onClose}>Keep editing</button>}
+    >
+      <div className={`ed-notice ${saved ? 'ed-notice--ok' : 'ed-notice--warn'}`}>
+        <Icon name={saved ? 'check' : 'info'} />
+        <p>
+          {saved
+            ? `Saved to your account (${user?.email ?? 'signed in'}). You can reopen it on any device by logging in.`
+            : `${cloud.text}. ${cloud.message ?? ''} Your changes are kept on this device until they reach your account.`}
+        </p>
+      </div>
+      {cloud.deviceMedia > 0 && (
+        <p className="ed-soon">
+          <Icon name="image" size={16} /> Uploaded images stay on the device where they were added for now. On other devices this page shows the
+          original template photos or a placeholder in their place. Image syncing is coming in a later update.
+        </p>
+      )}
+    </Modal>
+  )
+}
+
+/** Revision conflict: the user's edits are kept; nothing is overwritten or merged. */
+export function ConflictDialog({ busy, onLoadNewer, onSaveCopy, onClose }) {
+  return (
+    <Modal
+      title="This draft changed somewhere else"
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="ed-btn ed-btn--ghost" onClick={onClose}>Decide later</button>
+          <button type="button" className="ed-btn" onClick={onLoadNewer} disabled={Boolean(busy)}>Load newer cloud version</button>
+          <button type="button" className="ed-btn ed-btn--primary" onClick={onSaveCopy} disabled={Boolean(busy)}>
+            {busy === 'copy' ? 'Saving copy…' : 'Save my version as a new copy'}
+          </button>
+        </>
+      }
+    >
+      <p>
+        A newer version of this draft was saved to your account from another tab or device. Your changes here have <b>not</b> been
+        saved and nothing was overwritten. They’re kept on this device until you choose:
+      </p>
+      <ul className="ed-modal__list">
+        <li><b>Load newer cloud version</b>: open the version from your account and discard your unsaved changes here.</li>
+        <li><b>Save my version as a new copy</b>: keep both. Your version becomes a separate draft and the other one stays as it is.</li>
+      </ul>
     </Modal>
   )
 }

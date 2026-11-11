@@ -7,8 +7,10 @@ const DELAY_MS = 700
  * Saves the draft to this browser shortly after each change.
  * A brand-new draft is only written once the user actually edits it, so
  * opening the editor never creates empty drafts.
+ * `enabled: false` (cloud drafts) turns it off completely: cloud drafts are
+ * never written into the guest draft storage.
  */
-export default function useAutosave(page, revision, initiallyStored) {
+export default function useAutosave(page, revision, initiallyStored, { enabled = true } = {}) {
   const [savedRevision, setSavedRevision] = useState(0)
   const [stored, setStored] = useState(initiallyStored)
   const [savedAt, setSavedAt] = useState(initiallyStored ? page.updatedAt : null)
@@ -34,12 +36,12 @@ export default function useAutosave(page, revision, initiallyStored) {
   }, [])
 
   useEffect(() => {
-    if (revision === 0 || revision === savedRevision) return undefined
+    if (!enabled || revision === 0 || revision === savedRevision) return undefined
     const timer = setTimeout(save, DELAY_MS)
     return () => clearTimeout(timer)
-  }, [revision, savedRevision, save])
+  }, [enabled, revision, savedRevision, save])
 
-  const pending = revision !== savedRevision && revision !== 0
+  const pending = enabled && revision !== savedRevision && revision !== 0
   const status = error ? 'error' : pending ? 'saving' : stored ? 'saved' : 'new'
 
   // Warn before leaving only if something hasn't reached storage.
