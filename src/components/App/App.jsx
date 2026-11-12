@@ -14,6 +14,7 @@ import ResetPasswordPage from '../../pages/ResetPasswordPage/ResetPasswordPage.j
 import VerifyEmailPage from '../../pages/VerifyEmailPage/VerifyEmailPage.jsx'
 import AccountPage from '../../pages/AccountPage/AccountPage.jsx'
 import PricingPage from '../../pages/PricingPage/PricingPage.jsx'
+import PublicPage from '../../pages/PublicPage/PublicPage.jsx'
 import './App.css'
 
 // The editor is only downloaded when someone opens it.
@@ -49,6 +50,8 @@ function SiteLayout() {
 function App() {
   return (
     <Routes>
+      {/* A published page: the page alone, no site header/footer */}
+      <Route path="p/:slug" element={<PublicPage />} />
       {/* Full-screen editor: no site header/footer */}
       <Route
         path="editor/:templateSlug"

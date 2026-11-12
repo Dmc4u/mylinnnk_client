@@ -1,0 +1,84 @@
+/* A published page fills the window; the template's own CSS does the rest (it adapts to its
+   container width, so phones, tablets and desktops all get the right layout). */
+.public-page {
+  min-height: 100svh;
+  overflow-x: clip;
+}
+
+/* Loading, not found, unavailable and error states */
+.public-state {
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: 24px 16px;
+  background: var(--bg);
+}
+
+.public-state__loading {
+  color: var(--muted);
+}
+
+.public-state__card {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  max-width: 30rem;
+  padding: 40px 28px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.public-state__card h1 {
+  margin: 8px 0 0;
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  font-weight: 740;
+  letter-spacing: -0.02em;
+  color: var(--navy-900);
+}
+
+.public-state__card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.public-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.public-state__btn,
+.public-state__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 20px;
+  font: inherit;
+  font-weight: 650;
+  text-decoration: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.public-state__btn {
+  color: #fff;
+  background: var(--purple-600);
+  border: 0;
+}
+
+.public-state__link {
+  color: var(--purple-600);
+  background: #fff;
+  border: 1.5px solid var(--purple-200);
+}
+
+.public-state__btn:focus-visible,
+.public-state__link:focus-visible {
+  outline: 3px solid var(--purple-400);
+  outline-offset: 3px;
+}

@@ -1,6 +1,9 @@
 # MyLinnnk publishing lifecycle (draft for backend design)
 
-Status: proposal written during Phase 3 (visual editor). Nothing here is implemented on a server yet.
+Status: proposal written during Phase 3 (visual editor). Phase 5, Stage 2 implemented the foundation on the API
+(addresses, lifecycle rules, public pages and images; see mylinnnk_api/README.md "Publishing foundation") and
+`/p/:slug` in this app (src/pages/PublicPage). Payments and admin approval, and therefore real publishing, come later.
+The server lifecycle adds `pending_review`, `scheduled` and `grace`, and hides pages during grace.
 The frontend already uses these state names (`src/editor/config/plans.js → PAGE_STATES`).
 
 ## Principles

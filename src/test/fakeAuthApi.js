@@ -31,6 +31,8 @@ export function createFakeAuthApi() {
     mediaFailures: 0, // the next N uploads answer 503 STORAGE_UNAVAILABLE
     plansDown: false, // GET /plans fails with a network error
     plansDelay: 0, // ms before GET /plans answers
+    publicPages: {}, // slug → page (live), or { gone: true } (was live, not any more); anything else is 404
+    publicDown: false, // /public requests fail with a network error
     activePageRequests: 0,
     maxConcurrentPageRequests: 0,
   }
@@ -299,6 +301,15 @@ export function createFakeAuthApi() {
     state.requests.push({ method, path, headers, body, credentials: init.credentials, url })
     if (state.down) throw new TypeError('Failed to fetch')
     if (state.proxyError) return new Response('Bad gateway', { status: 502, headers: { 'content-type': 'text/plain' } })
+    if (path.startsWith('/public/pages/')) {
+      // Published pages (mylinnnk_api/routes/publication.js): no session, read-only.
+      if (state.publicDown) throw new TypeError('Failed to fetch')
+      const slug = decodeURIComponent(path.slice('/public/pages/'.length))
+      const entry = method === 'GET' ? state.publicPages[slug] : undefined
+      if (!entry) return fail(404, 'NOT_FOUND', 'Page not found.')
+      if (entry.gone) return fail(410, 'PAGE_UNAVAILABLE', 'This page isn’t available right now.')
+      return ok({ page: structuredClone(entry) })
+    }
     if (path === '/plans') {
       // Public price list (mylinnnk_api/routes/plans.js); the fixture is the server's own output.
       if (state.plansDelay) await new Promise((r) => setTimeout(r, state.plansDelay))
