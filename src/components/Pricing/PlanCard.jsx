@@ -13,7 +13,7 @@ export function Check() {
   )
 }
 
-/** The pointer's position over the card drives a soft highlight (mouse only). */
+/** The pointer's position over the front card drives a soft highlight (mouse only). */
 function trackPointer(e) {
   if (e.pointerType !== 'mouse') return
   const r = e.currentTarget.getBoundingClientRect()
@@ -22,23 +22,32 @@ function trackPointer(e) {
 }
 
 /**
- * One plan in the deck. Prices, terms and savings all come from the server's
- * plan (GET /plans). Choosing a paid plan only marks it as selected: there is
- * no checkout yet.
+ * One card of the plan stack. `offset` is its signed distance from the front
+ * card (0 = front, -1 = just behind on the left, +1 = right, …); the CSS turns
+ * it into position, rotation, depth and stacking order.
+ *
+ * Only the front card is interactive inside. A card behind it is inert and
+ * covered by one button that brings it to the front (and selects it), so every
+ * plan stays reachable by pointer, touch, keyboard and screen reader.
+ *
+ * Prices, terms and savings all come from the server's plan (GET /plans).
  */
-export default function PlanCard({ plan, currency, index, tilt, selected, onSelect }) {
+export default function PlanCard({ plan, currency, index, offset, selected, onSelect, onPeek }) {
   const nameId = useId()
   const { amount, per } = priceParts(plan, currency)
   const paid = plan.billing !== 'free'
+  const front = offset === 0
+  const depth = Math.abs(offset)
 
   return (
     <li
-      className={`plan-card plan-card--${plan.family}${plan.featured ? ' is-featured' : ''}${selected ? ' is-selected' : ''}`}
-      style={{ '--i': index, '--tilt': `${tilt}deg` }}
-      onPointerMove={trackPointer}
+      className={`plan-card plan-card--${plan.family}${plan.featured ? ' is-featured' : ''}${selected ? ' is-selected' : ''}${front ? ' is-front' : ''}`}
+      style={{ '--i': index, '--d': offset, '--ad': depth, zIndex: 20 - depth * 4 + (offset > 0 ? 1 : 0) }}
+      onPointerMove={front ? trackPointer : undefined}
       data-plan={plan.id}
+      data-depth={depth}
     >
-      <article className="plan-card__inner" aria-labelledby={nameId}>
+      <article className="plan-card__inner" aria-labelledby={nameId} inert={!front}>
         <div className="plan-card__top">
           <p className="plan-card__family">{FAMILY_LABEL[plan.family] ?? ''}</p>
           {plan.featured && <p className="plan-card__badge">Most popular</p>}
@@ -64,6 +73,7 @@ export default function PlanCard({ plan, currency, index, tilt, selected, onSele
           )}
           <span className="sr-only">{priceDescription(plan, currency)}</span>
         </p>
+        <p className="plan-card__terms">{planTerms(plan)}</p>
 
         {plan.savings && (
           <p className="plan-card__save">
@@ -82,7 +92,6 @@ export default function PlanCard({ plan, currency, index, tilt, selected, onSele
             </li>
           ))}
         </ul>
-        <p className="plan-card__terms">{planTerms(plan)}</p>
 
         <div className="plan-card__action">
           {paid ? (
@@ -96,6 +105,15 @@ export default function PlanCard({ plan, currency, index, tilt, selected, onSele
           )}
         </div>
       </article>
+
+      {!front && (
+        <button
+          type="button"
+          className="plan-card__peek"
+          aria-label={`${plan.name}, ${priceDescription(plan, currency)}. Bring to front and select`}
+          onClick={() => onPeek(plan.id)}
+        />
+      )}
     </li>
   )
 }

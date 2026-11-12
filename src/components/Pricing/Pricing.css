@@ -1,11 +1,17 @@
 /* =========================================================
-   Pricing deck: light "keepsake" cards in a gentle fan.
-   Desktop: overlapping row, ±3° at most · Tablet: wrapped grid · Phone: swipeable row
+   Plan stack: the five fixed-price plans as an overlapping, fanned stack.
+   Every card sits in the same grid cell; its signed offset from the front card
+   (--d, set by PlanCard) moves, turns and lowers it around a pivot below the
+   stack. Changing the front card animates every card to its new place.
    ========================================================= */
 .pricing {
-  --plan-w: clamp(212px, 19.5vw, 248px);
-  --plan-overlap: 22px;
-  --plan-ease: var(--ease-spring);
+  --plan-w: 312px;
+  --spread: clamp(112px, 11vw, 158px); /* sideways step between neighbouring cards */
+  --tilt: 6deg; /* turn per step */
+  --drop: 18px; /* how much lower each step sits */
+  --shrink: 0.05; /* scale lost per step */
+  --plan-ease: cubic-bezier(0.22, 0.85, 0.25, 1);
+  /* The outer cards may lean into the page margins; the page itself clips (no sideways scroll). */
   position: relative;
 }
 
@@ -36,69 +42,224 @@
   box-shadow: 0 0 0 4px rgb(20 184 166 / 0.18);
 }
 
-/* ---------- Deck ---------- */
+/* ---------- Stack ---------- */
+.plan-stack {
+  touch-action: pan-y; /* horizontal swipes switch plans; vertical scrolling stays native */
+}
+
 .plan-deck {
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
+  display: grid;
+  justify-items: center;
   margin: 0;
-  padding: 48px 0 28px;
+  padding: 56px 0 104px; /* room for the outer cards, which sit lower and lean out */
   list-style: none;
 }
 
 .plan-card {
   --lift: 0px;
   position: relative;
-  flex: none;
+  grid-area: 1 / 1;
   width: var(--plan-w);
   margin: 0;
-  rotate: var(--tilt, 0deg);
-  translate: 0 var(--lift);
-  transform-origin: 50% 115%;
+  translate: calc(var(--d, 0) * var(--spread)) calc(var(--ad, 0) * var(--drop) + var(--lift));
+  rotate: calc(var(--d, 0) * var(--tilt));
+  scale: calc(1 - var(--ad, 0) * var(--shrink));
+  transform-origin: 50% 140%;
   transition:
-    rotate 600ms var(--plan-ease),
-    translate 600ms var(--plan-ease),
-    scale 600ms var(--plan-ease);
+    translate 700ms var(--plan-ease),
+    rotate 700ms var(--plan-ease),
+    scale 700ms var(--plan-ease);
 }
 
-.plan-card + .plan-card {
-  margin-inline-start: calc(var(--plan-overlap) * -1);
+/* Cards behind: dimmed a little more with each step back, lifting when pointed at. */
+.plan-card:not(.is-front)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: var(--radius-lg);
+  background: rgb(244 245 248 / calc(0.18 + var(--ad, 0) * 0.14));
+  pointer-events: none;
+  transition: background-color 300ms var(--ease-out);
 }
 
-.plan-card.is-featured {
-  --lift: -16px;
-  z-index: 3;
+.plan-card:not(.is-front):hover {
+  --lift: -12px;
 }
 
-.plan-card:hover,
-.plan-card:focus-within {
-  --lift: -14px;
-  z-index: 5;
-  rotate: 0deg;
+.plan-card:not(.is-front):hover::after {
+  background: rgb(244 245 248 / 0.06);
 }
 
-.plan-card.is-featured:hover,
-.plan-card.is-featured:focus-within {
-  --lift: -22px;
+.plan-card:not(.is-front) .plan-card__inner {
+  box-shadow: var(--shadow-md);
 }
 
-/* Cards are dealt in once the deck scrolls into view. */
+.plan-card.is-front .plan-card__inner {
+  box-shadow:
+    0 36px 70px -24px rgb(10 22 48 / 0.38),
+    0 12px 24px -12px rgb(10 22 48 / 0.18);
+}
+
+/* The whole card behind is one button: bring to front and select. */
+.plan-card__peek {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+}
+
+.plan-card__peek:focus-visible {
+  outline: 3px solid var(--purple-500);
+  outline-offset: 4px;
+}
+
+.plan-card:has(.plan-card__peek:focus-visible) {
+  --lift: -12px;
+}
+
+/* Dealt in once the stack scrolls into view. */
 .plan-deck:not(.is-in) .plan-card {
   opacity: 0;
 }
 
 .plan-deck.is-in .plan-card {
-  animation: plan-deal 820ms var(--ease-out) backwards;
-  animation-delay: calc(var(--i, 0) * 70ms);
+  animation: plan-deal 900ms var(--plan-ease) backwards;
+  animation-delay: calc(var(--i, 0) * 80ms);
 }
 
 @keyframes plan-deal {
   from {
     opacity: 0;
-    translate: 0 44px;
+    translate: 0 56px;
     rotate: 0deg;
-    scale: 0.96;
+    scale: 0.92;
   }
+}
+
+/* ---------- Controls ---------- */
+.plan-stack__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.plan-stack__arrow {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--navy-900);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition:
+    border-color 200ms var(--ease-out),
+    color 200ms var(--ease-out),
+    scale 200ms var(--ease-spring);
+}
+
+.plan-stack__arrow:hover {
+  color: var(--purple-600);
+  border-color: var(--purple-400);
+}
+
+.plan-stack__arrow:active {
+  scale: 0.92;
+}
+
+.plan-stack__chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px;
+  background: #f1f2f6;
+  border-radius: 999px;
+}
+
+.plan-stack__chip {
+  min-height: 36px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 620;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background-color 200ms var(--ease-out),
+    color 200ms var(--ease-out),
+    box-shadow 200ms var(--ease-out);
+}
+
+.plan-stack__chip:hover {
+  color: var(--navy-900);
+}
+
+.plan-stack__chip[aria-current='true'] {
+  color: var(--navy-900);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.plan-stack__arrow:focus-visible,
+.plan-stack__chip:focus-visible,
+.plan-stack__play:focus-visible {
+  outline: 3px solid var(--purple-400);
+  outline-offset: 2px;
+}
+
+/* Position + Pause / Play */
+.plan-stack__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 14px;
+  margin-top: 10px;
+}
+
+.plan-stack__position {
+  margin: 0;
+  font-size: 0.82rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+.plan-stack__play {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--purple-600);
+  background: transparent;
+  border: 1px solid var(--purple-200);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background-color 200ms var(--ease-out),
+    border-color 200ms var(--ease-out);
+}
+
+.plan-stack__play:hover {
+  background: #f6f4ff;
+  border-color: var(--purple-400);
 }
 
 /* ---------- Card ---------- */
@@ -507,8 +668,15 @@
   margin: 0;
 }
 
+.plan-stack--skeleton {
+  display: grid;
+  justify-items: center;
+  padding: 56px 0 34px;
+}
+
 .plan-card--skeleton {
-  height: 440px;
+  width: var(--plan-w);
+  height: 520px;
   background: linear-gradient(100deg, #f1f2f6 30%, #f9fafc 50%, #f1f2f6 70%) 0 0 / 300% 100%;
   border-radius: var(--radius-lg);
   animation: plan-shimmer 1.4s linear infinite;
@@ -520,89 +688,104 @@
   }
 }
 
-.plan-deck__hint {
-  display: none;
-}
-
-/* ---------- Tablet: wrapped grid, no fan ---------- */
+/* ---------- Tablet: a tighter fan ---------- */
 @media (max-width: 1099px) {
   .pricing {
-    --plan-w: 292px;
-  }
-
-  .plan-deck {
-    flex-wrap: wrap;
-    gap: 22px;
-    padding-top: 28px;
-  }
-
-  .plan-card,
-  .plan-card:hover,
-  .plan-card:focus-within {
-    rotate: 0deg;
-  }
-
-  .plan-card + .plan-card {
-    margin-inline-start: 0;
-  }
-
-  .plan-card.is-featured {
-    --lift: 0px;
-  }
-
-  .plan-card:hover,
-  .plan-card:focus-within,
-  .plan-card.is-featured:hover,
-  .plan-card.is-featured:focus-within {
-    --lift: -6px;
+    --plan-w: 296px;
+    --spread: 96px;
+    --tilt: 5deg;
+    --drop: 16px;
   }
 }
 
-/* ---------- Phone: swipeable row ---------- */
+/* Narrow tablets: only the nearest card on each side shows (the others are one tap away). */
+@media (max-width: 999px) {
+  .plan-card[data-depth='2'] {
+    visibility: hidden;
+  }
+}
+
+/* ---------- Phone: a compact stack, one card readable, neighbours peeking ---------- */
 @media (max-width: 719px) {
   .pricing {
-    --plan-w: min(80vw, 300px);
+    --plan-w: min(calc(100vw - 64px), 330px);
+    --spread: 16px;
+    --tilt: 3.5deg;
+    --drop: 12px;
+    --shrink: 0.04;
+    margin-inline: -16px; /* use the full screen width; the stack clips at its edges */
+    overflow-x: clip;
+    padding-inline: 16px;
   }
 
   .plan-deck {
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    gap: 14px;
-    margin-inline: -16px;
-    padding: 24px max(16px, calc((100vw - var(--plan-w)) / 2)) 22px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x mandatory;
-    scroll-padding-inline: max(16px, calc((100vw - var(--plan-w)) / 2));
-    scrollbar-width: none;
+    padding: 28px 0 44px;
   }
 
-  .plan-deck::-webkit-scrollbar {
-    display: none;
+  /* Only the nearest card on each side peeks out. */
+  .plan-card[data-depth='2'] {
+    visibility: hidden;
   }
 
-  .plan-card {
-    scroll-snap-align: center;
-  }
-
-  .plan-card:hover,
-  .plan-card:focus-within,
-  .plan-card.is-featured:hover,
-  .plan-card.is-featured:focus-within {
+  .plan-card:not(.is-front):hover {
     --lift: 0px;
+  }
+
+  /* Selectors become dots; the plan name is shown below them. */
+  .plan-stack__chips {
+    gap: 2px;
+    padding: 0;
+    background: none;
+  }
+
+  .plan-stack__chip {
+    position: relative;
+    width: 32px;
+    min-height: 44px;
+    padding: 0;
+  }
+
+  .plan-stack__chip::before {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 9px;
+    height: 9px;
+    margin: -4.5px 0 0 -4.5px;
+    border-radius: 50%;
+    background: #c9cedb;
+    transition:
+      background-color 200ms var(--ease-out),
+      scale 200ms var(--ease-spring);
+  }
+
+  .plan-stack__chip[aria-current='true'] {
+    background: none;
+    box-shadow: none;
+  }
+
+  .plan-stack__chip[aria-current='true']::before {
+    background: var(--purple-600);
+    scale: 1.35;
+  }
+
+  .plan-stack__chip-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .plan-stack__position {
+    font-weight: 600;
+    color: var(--navy-800);
   }
 
   .pricing-soon {
     border-radius: 16px;
     text-align: left;
-  }
-
-  .plan-deck__hint {
-    display: block;
-    margin: 0;
-    font-size: 0.8rem;
-    text-align: center;
-    color: var(--muted);
   }
 
   .plan-custom {
@@ -621,11 +804,16 @@
   }
 }
 
-/* ---------- Reduced motion: no dealing, tilting or lifting animations ---------- */
+/* ---------- Reduced motion: cards move straight to their places ---------- */
 @media (prefers-reduced-motion: reduce) {
   .plan-card,
+  .plan-card::after,
   .plan-card__inner,
   .plan-btn,
+  .plan-stack__arrow,
+  .plan-stack__chip,
+  .plan-stack__chip::before,
+  .plan-stack__play,
   .pricing-notice.is-visible,
   .plan-card--skeleton {
     transition: none !important;
@@ -634,11 +822,5 @@
 
   .plan-deck:not(.is-in) .plan-card {
     opacity: 1;
-  }
-
-  .plan-card,
-  .plan-card:hover,
-  .plan-card:focus-within {
-    rotate: 0deg;
   }
 }

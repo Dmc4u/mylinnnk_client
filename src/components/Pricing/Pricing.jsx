@@ -1,41 +1,75 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '../../auth/useAuth.js'
 import { CREATE_PAGE_HREF } from '../../utils/navigation.js'
 import { planTerms, priceParts } from '../../editor/config/plans.js'
 import PlanCard, { Check } from './PlanCard.jsx'
+import useAutoCycle from './useAutoCycle.js'
 import usePlans from './usePlans.js'
 import './Pricing.css'
 
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-const narrow = () => typeof window !== 'undefined' && window.matchMedia?.('(max-width: 719px)').matches
 
-/** Gentle fan: at most ±2.4° at the ends so prices stay easy to read; the featured card stays upright. */
-const MAX_TILT = 2.4
-const tiltFor = (index, count, featured) => (featured || count < 2 ? 0 : Math.round(((index - (count - 1) / 2) / ((count - 1) / 2)) * MAX_TILT * 10) / 10)
+/** Signed distance of card `i` from the front card, wrapping so the fan stays balanced (…, -2, -1, 0, 1, 2, …). */
+function offsetFrom(i, front, count) {
+  let d = (((i - front) % count) + count) % count
+  if (d > Math.floor(count / 2)) d -= count
+  return d
+}
+
+/** "Professional Monthly" → "Monthly", "Free Editor" → "Free" (the selector chips). */
+const shortName = (plan) => plan.name.replace(/^Professional /, '').replace(/ Editor$/, '')
 
 /**
- * The plan deck: five fixed-price plans as a slightly overlapping fan of cards
- * (desktop), a wrapped grid (tablet) or a swipeable row (phone), plus Special
- * Request as its own custom-quote card. Prices come from GET /plans only.
+ * The plan stack: the five fixed-price plans as an overlapping, fanned stack of
+ * cards with one card in front (Professional Monthly to begin with, or the plan
+ * in ?plan=). Special Request is its own custom-quote card below.
  *
- * Stage 1: choosing a plan only selects it. Nothing is bought, no order is
- * created and nothing is published; the notice below says so.
+ * - Click or tap a card behind, or press its button with the keyboard: it comes
+ *   to the front and becomes the selected plan.
+ * - Previous / next, the plan selectors, ← / → keys and swiping only bring a
+ *   card to the front, so you can browse without choosing.
+ * - "Choose plan" on the front card selects it.
+ * - The stack also turns by itself every few seconds (useAutoCycle): it pauses
+ *   while it is pointed at, pressed, focused from the keyboard, off screen or in
+ *   a hidden tab, and has a Pause / Play button. It only changes the front card,
+ *   never the selection, and is quiet for screen readers.
  *
+ * Prices come from GET /plans only. Stage 1: selecting a plan buys nothing.
  * Props: selected (plan id | null), onSelect(planId).
  */
 export default function Pricing({ selected = null, onSelect }) {
   const { status, data, error, retry } = usePlans()
   const deckRef = useRef(null)
+  const stackRef = useRef(null)
+  const swipe = useRef(null)
   const noticeId = useId()
   const { user } = useAuth()
+  const [browsing, setBrowsing] = useState(null)
+  // Position changes made by a person are announced; automatic ones are not.
+  const [announce, setAnnounce] = useState(true)
 
   const plans = data?.plans ?? []
   const fixed = plans.filter((p) => p.billing !== 'custom_quote')
   const custom = plans.find((p) => p.billing === 'custom_quote')
   const chosen = plans.find((p) => p.id === selected && p.billing !== 'free') ?? null
 
-  // Deal the cards in when the deck scrolls into view (immediately without motion or IntersectionObserver).
+  const indexOf = (id) => fixed.findIndex((p) => p.id === id)
+  const featured = Math.max(0, fixed.findIndex((p) => p.featured))
+  const front = [browsing, selected].map(indexOf).find((i) => i >= 0) ?? featured
+  const frontPlan = fixed[front]
+
+  const cycle = useAutoCycle({
+    ready: status === 'ready' && fixed.length > 1,
+    rootRef: stackRef,
+    frontKey: front,
+    onAdvance: () => {
+      setAnnounce(false)
+      setBrowsing(fixed[(front + 1) % fixed.length].id)
+    },
+  })
+
+  // Deal the cards in when the stack scrolls into view (at once without motion or IntersectionObserver).
   useEffect(() => {
     const deck = deckRef.current
     if (status !== 'ready' || !deck) return undefined
@@ -50,20 +84,11 @@ export default function Pricing({ selected = null, onSelect }) {
     }
     const observer = new IntersectionObserver(([entry]) => entry.isIntersecting && show(), { threshold: 0.2 })
     observer.observe(deck)
-    // Safety net: the prices must never stay hidden.
-    const safety = setTimeout(show, 2500)
+    const safety = setTimeout(show, 2500) // the prices must never stay hidden
     return () => {
       observer.disconnect()
       clearTimeout(safety)
     }
-  }, [status])
-
-  // On phones the deck is a swipeable row: start with the featured plan centred.
-  useEffect(() => {
-    const deck = deckRef.current
-    if (status !== 'ready' || !deck || !narrow()) return
-    const featured = deck.querySelector('.is-featured')
-    if (featured) deck.scrollLeft = featured.offsetLeft - (deck.clientWidth - featured.clientWidth) / 2
   }, [status])
 
   if (status === 'loading') {
@@ -72,11 +97,9 @@ export default function Pricing({ selected = null, onSelect }) {
         <p className="pricing-state" role="status">
           Loading prices…
         </p>
-        <ul className="plan-deck plan-deck--skeleton" aria-hidden="true">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <li key={i} className="plan-card plan-card--skeleton" style={{ '--i': i, '--tilt': '0deg' }} />
-          ))}
-        </ul>
+        <div className="plan-stack plan-stack--skeleton" aria-hidden="true">
+          <div className="plan-card--skeleton" />
+        </div>
       </div>
     )
   }
@@ -96,7 +119,35 @@ export default function Pricing({ selected = null, onSelect }) {
     )
   }
 
-  const select = (id) => onSelect?.(id)
+  const browse = (index) => {
+    setAnnounce(true)
+    setBrowsing(fixed[((index % fixed.length) + fixed.length) % fixed.length].id)
+  }
+  const select = (id) => {
+    setAnnounce(true)
+    setBrowsing(null)
+    onSelect?.(id)
+  }
+
+  const onKeyDown = (e) => {
+    if (e.target.closest('.plan-card.is-front')) return // let the front card's own controls work normally
+    const moves = { ArrowLeft: front - 1, ArrowRight: front + 1, Home: 0, End: fixed.length - 1 }
+    if (!(e.key in moves)) return
+    e.preventDefault()
+    browse(moves[e.key])
+  }
+
+  // Swipe left / right on touch screens (vertical scrolling is left to the browser).
+  const onPointerDown = (e) => {
+    if (e.pointerType !== 'mouse') swipe.current = { x: e.clientX, y: e.clientY }
+  }
+  const onPointerUp = (e) => {
+    const start = swipe.current
+    swipe.current = null
+    if (!start) return
+    const dx = e.clientX - start.x
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(e.clientY - start.y)) browse(front + (dx < 0 ? 1 : -1))
+  }
 
   return (
     <div className="pricing">
@@ -107,22 +158,88 @@ export default function Pricing({ selected = null, onSelect }) {
         </p>
       )}
 
-      <ul ref={deckRef} className="plan-deck" aria-label="Publishing plans" aria-describedby={noticeId}>
-        {fixed.map((plan, i) => (
-          <PlanCard
-            key={plan.id}
-            plan={plan}
-            currency={data.currency}
-            index={i}
-            tilt={tiltFor(i, fixed.length, plan.featured)}
-            selected={selected === plan.id}
-            onSelect={select}
-          />
-        ))}
-      </ul>
-      <p className="plan-deck__hint" aria-hidden="true">
-        Swipe to compare plans
-      </p>
+      <div
+        ref={stackRef}
+        className="plan-stack"
+        onKeyDown={onKeyDown}
+        onPointerEnter={cycle.handlers.onPointerEnter}
+        onPointerLeave={cycle.handlers.onPointerLeave}
+        onPointerDown={(e) => {
+          cycle.handlers.onPointerDown(e)
+          onPointerDown(e)
+        }}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => (swipe.current = null)}
+        onFocus={cycle.handlers.onFocus}
+        onBlur={cycle.handlers.onBlur}
+      >
+        <ul ref={deckRef} className="plan-deck" aria-label="Publishing plans" aria-describedby={noticeId}>
+          {fixed.map((plan, i) => (
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              currency={data.currency}
+              index={i}
+              offset={offsetFrom(i, front, fixed.length)}
+              selected={selected === plan.id}
+              onSelect={select}
+              onPeek={select}
+            />
+          ))}
+        </ul>
+
+        <div className="plan-stack__controls">
+          <button type="button" className="plan-stack__arrow" aria-label="Previous plan" onClick={() => browse(front - 1)}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <path d="M11 4L6 9l5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <div className="plan-stack__chips" role="group" aria-label="Show a plan">
+            {fixed.map((plan, i) => (
+              <button
+                key={plan.id}
+                type="button"
+                className="plan-stack__chip"
+                aria-current={i === front ? 'true' : undefined}
+                aria-label={`Show ${plan.name}`}
+                onClick={() => browse(i)}
+              >
+                <span className="plan-stack__chip-label" aria-hidden="true">
+                  {shortName(plan)}
+                </span>
+              </button>
+            ))}
+          </div>
+          <button type="button" className="plan-stack__arrow" aria-label="Next plan" onClick={() => browse(front + 1)}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <path d="M7 4l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+        <div className="plan-stack__status">
+          <p className="plan-stack__position" aria-live={announce ? 'polite' : 'off'}>
+            <span className="sr-only">Showing </span>
+            {frontPlan?.name} · {front + 1} of {fixed.length}
+          </p>
+          <button
+            type="button"
+            className="plan-stack__play"
+            aria-label={cycle.stopped ? 'Play automatic plan rotation' : 'Pause automatic plan rotation'}
+            onClick={cycle.toggleStopped}
+          >
+            {cycle.stopped ? (
+              <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+                <path d="M3 1.5v9l7.5-4.5z" fill="currentColor" />
+              </svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+                <path d="M2.5 1.5h2.5v9H2.5zM7 1.5h2.5v9H7z" fill="currentColor" />
+              </svg>
+            )}
+            <span aria-hidden="true">{cycle.stopped ? 'Play' : 'Pause'}</span>
+          </button>
+        </div>
+      </div>
 
       {custom && (
         <section className={`plan-custom${selected === custom.id ? ' is-selected' : ''}`} aria-labelledby={`${noticeId}-custom`}>

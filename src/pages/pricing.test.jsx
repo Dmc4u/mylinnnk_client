@@ -14,6 +14,9 @@ vi.setConfig({ testTimeout: 15000 })
 const deck = () => screen.getByRole('list', { name: 'Publishing plans' })
 const card = (name) => screen.getByRole('article', { name })
 const writes = (api) => api.state.requests.filter((r) => r.method !== 'GET')
+/** The button covering a card behind the front one. */
+const peek = (name) => screen.getByRole('button', { name: new RegExp(`^${name}, .*Bring to front and select$`) })
+const frontPlan = () => deck().querySelector('.plan-card.is-front')?.dataset.plan
 
 async function openPricing(path = '/pricing', api = createFakeAuthApi()) {
   const utils = renderApp(path, { api })
@@ -95,52 +98,101 @@ describe('pricing page', () => {
     expect(within(card('Celebration')).getByText('₦2,500')).toBeInTheDocument()
   })
 
-  it('selects a plan without buying anything, and keeps the choice in the address', async () => {
-    const { api, user, location } = await openPricing()
-    const choose = within(card('Professional Monthly')).getByRole('button', { name: 'Choose Professional Monthly plan' })
-    expect(choose).toHaveAttribute('aria-pressed', 'false')
-    await user.click(choose)
-    expect(choose).toHaveAttribute('aria-pressed', 'true')
-    expect(location()).toBe('/pricing?plan=pro-monthly')
+  it('starts as a stack with Professional Monthly in front and the others behind it', async () => {
+    await openPricing()
+    expect(frontPlan()).toBe('pro-monthly')
+    const offsets = Object.fromEntries(within(deck()).getAllByRole('listitem').filter((li) => li.dataset.plan).map((li) => [li.dataset.plan, li.style.getPropertyValue('--d')]))
+    expect(offsets).toEqual({ free: '2', celebration: '-2', 'pro-starter': '-1', 'pro-monthly': '0', 'pro-annual': '1' })
+    // Cards behind are inert; each is reachable through one labelled button instead.
+    for (const name of ['Free Editor', 'Celebration', 'Professional Starter', 'Professional Annual']) {
+      expect(card(name)).toHaveAttribute('inert')
+      expect(peek(name)).toBeInTheDocument()
+    }
+    expect(card('Professional Monthly')).not.toHaveAttribute('inert')
+    expect(peek('Celebration')).toHaveAccessibleName('Celebration, ₦2,500, one-time payment for 30 days. Bring to front and select')
+  })
 
-    const notice = screen.getByText(/Professional Monthly selected/).closest('[role="status"]')
+  it('brings a card behind to the front and selects it, keeping the choice in the address', async () => {
+    const { api, user, location } = await openPricing()
+    await user.click(peek('Celebration'))
+    expect(frontPlan()).toBe('celebration')
+    expect(location()).toBe('/pricing?plan=celebration')
+    expect(card('Celebration')).not.toHaveAttribute('inert')
+    expect(card('Professional Monthly')).toHaveAttribute('inert')
+    expect(within(card('Celebration')).getByRole('button', { name: 'Choose Celebration plan' })).toHaveAttribute('aria-pressed', 'true')
+
+    const notice = screen.getByText(/Celebration selected/).closest('[role="status"]')
     expect(notice).toHaveTextContent('nothing is charged and no page is published yet')
     expect(within(notice).getByRole('link', { name: 'Start with a template' })).toHaveAttribute('href', '/templates')
 
-    // Choosing another plan moves the selection.
-    await user.click(within(card('Celebration')).getByRole('button', { name: 'Choose Celebration plan' }))
-    expect(choose).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getAllByRole('button', { pressed: true })).toHaveLength(1)
-
     expect(writes(api)).toEqual([]) // no order, no payment, nothing saved
-    expect(screen.queryByRole('button', { name: /pay|checkout|buy|purchase/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^(pay|checkout|buy|purchase)/i })).not.toBeInTheDocument()
+  })
+
+  it('lets every plan be brought to the front and chosen', async () => {
+    const { user, location } = await openPricing()
+    for (const [name, id] of [['Free Editor', 'free'], ['Celebration', 'celebration'], ['Professional Starter', 'pro-starter'], ['Professional Annual', 'pro-annual'], ['Professional Monthly', 'pro-monthly']]) {
+      if (frontPlan() !== id) await user.click(peek(name))
+      expect(frontPlan()).toBe(id)
+      expect(location()).toBe(`/pricing?plan=${id}`)
+    }
+    const choose = within(card('Professional Monthly')).getByRole('button', { name: 'Choose Professional Monthly plan' })
+    expect(choose).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getAllByRole('button', { pressed: true })).toHaveLength(1)
+  })
+
+  it('browses with previous / next, the plan selectors and the arrow keys without choosing', async () => {
+    const { user, location } = await openPricing()
+    await user.click(screen.getByRole('button', { name: 'Next plan' }))
+    expect(frontPlan()).toBe('pro-annual')
+    await user.click(screen.getByRole('button', { name: 'Next plan' }))
+    expect(frontPlan()).toBe('free') // wraps around
+    await user.click(screen.getByRole('button', { name: 'Previous plan' }))
+    expect(frontPlan()).toBe('pro-annual')
+    const chip = screen.getByRole('button', { name: 'Show Professional Starter' })
+    await user.click(chip)
+    expect(frontPlan()).toBe('pro-starter')
+    expect(chip).toHaveAttribute('aria-current', 'true')
+    expect(screen.getByText(/Professional Starter · 3 of 5/)).toBeInTheDocument()
+    await user.keyboard('{ArrowLeft}')
+    expect(frontPlan()).toBe('celebration')
+    await user.keyboard('{End}')
+    expect(frontPlan()).toBe('pro-annual')
+    expect(location()).toBe('/pricing') // browsing doesn't select
+    expect(screen.queryAllByRole('button', { pressed: true })).toHaveLength(0)
   })
 
   it('can be used with the keyboard alone', async () => {
-    const { user } = await openPricing()
+    const { user, location } = await openPricing()
+    peek('Professional Starter').focus()
+    await user.keyboard('{Enter}')
+    expect(frontPlan()).toBe('pro-starter')
+    expect(location()).toBe('/pricing?plan=pro-starter')
+    screen.getByRole('button', { name: 'Show Professional Annual' }).focus()
+    await user.keyboard(' ')
     const choose = within(card('Professional Annual')).getByRole('button', { name: 'Choose Professional Annual plan' })
     choose.focus()
     await user.keyboard('{Enter}')
     expect(choose).toHaveAttribute('aria-pressed', 'true')
-    const starter = within(card('Professional Starter')).getByRole('button', { name: 'Choose Professional Starter plan' })
-    starter.focus()
-    await user.keyboard(' ')
-    expect(starter).toHaveAttribute('aria-pressed', 'true')
+    expect(location()).toBe('/pricing?plan=pro-annual')
   })
 
-  it('restores a valid ?plan= and ignores an unknown one', async () => {
+  it('opens on the plan in ?plan=, selected and in front', async () => {
     await openPricing('/pricing?plan=celebration')
+    expect(frontPlan()).toBe('celebration')
     expect(within(card('Celebration')).getByRole('button', { name: /Choose Celebration/ })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('ignores an unknown ?plan=', async () => {
     await openPricing('/pricing?plan=enterprise')
+    expect(frontPlan()).toBe('pro-monthly')
     expect(screen.queryAllByRole('button', { pressed: true })).toHaveLength(0)
     expect(screen.queryByText(/selected/)).not.toBeInTheDocument()
   })
 
   it('keeps the Free Editor workflow: "Start free" opens the template gallery', async () => {
     const { user, location } = await openPricing()
+    await user.click(peek('Free Editor'))
     await user.click(within(card('Free Editor')).getByRole('link', { name: 'Start free' }))
     await waitFor(() => expect(location()).toBe('/templates'))
   })
