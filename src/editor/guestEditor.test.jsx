@@ -3,8 +3,8 @@
  * browse templates → open the editor → save locally → come back to the draft,
  * all without an account, and no auth action may touch local drafts.
  */
-import { screen, waitFor, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { configure, screen, waitFor, within } from '@testing-library/react'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { getTemplateBySlug } from '../data/templates.js'
 import { createPageFromTemplate } from './model/page.js'
 import { setContent } from './model/operations.js'
@@ -12,6 +12,14 @@ import { localDrafts } from './services/draftService.js'
 import { listLocalDrafts } from './storage/localDraftStore.js'
 import { createFakeAuthApi } from '../test/fakeAuthApi.js'
 import { renderApp } from '../test/renderApp.jsx'
+
+// Full-app journeys (router, auth, editor). Alone they take up to ~2 s, but in the default parallel
+// run (many jsdom workers) they can take 3–4× longer, so this file gets more time per test and per
+// findBy/waitFor than the defaults (5 s / 1 s). Assertions are unchanged.
+vi.setConfig({ testTimeout: 15000 })
+configure({ asyncUtilTimeout: 4000 })
+// The editor is lazy-loaded by the app: load it once up front so its first use isn't timed.
+beforeAll(() => import('../pages/EditorPage/EditorPage.jsx'))
 
 const PASSWORD = 'correct horse battery'
 

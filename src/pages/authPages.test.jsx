@@ -1,7 +1,13 @@
-import { screen, waitFor, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { configure, screen, waitFor, within } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import { createFakeAuthApi } from '../test/fakeAuthApi.js'
 import { renderApp } from '../test/renderApp.jsx'
+
+// Full-app journeys (router, auth, editor). Alone they take up to ~2 s, but in the default parallel
+// run (many jsdom workers) they can take 3–4× longer, so this file gets more time per test and per
+// findBy/waitFor than the defaults (5 s / 1 s). Assertions are unchanged.
+vi.setConfig({ testTimeout: 15000 })
+configure({ asyncUtilTimeout: 4000 })
 
 const PASSWORD = 'correct horse battery'
 

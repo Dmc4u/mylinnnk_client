@@ -3,7 +3,7 @@
  * unsaved changes on this device and the logout warning.
  */
 import 'fake-indexeddb/auto'
-import { screen, waitFor, within } from '@testing-library/react'
+import { configure, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { getTemplateBySlug } from '../data/templates.js'
 import { createPageFromTemplate } from '../editor/model/page.js'
@@ -14,7 +14,11 @@ import { getMedia, putMedia } from '../editor/storage/mediaStore.js'
 import { createFakeAuthApi } from '../test/fakeAuthApi.js'
 import { renderApp } from '../test/renderApp.jsx'
 
+// Full-app journeys (router, auth, editor). Alone they take up to ~2 s, but in the default parallel
+// run (many jsdom workers) they can take 3–4× longer, so this file gets more time per test and per
+// findBy/waitFor than the defaults (5 s / 1 s). Assertions are unchanged.
 vi.setConfig({ testTimeout: 15000 })
+configure({ asyncUtilTimeout: 4000 })
 
 const editable = (page) => Object.fromEntries(EDITABLE_FIELDS.map((k) => [k, structuredClone(page[k])]))
 const guestDraftStorage = () => Object.fromEntries(Object.keys(localStorage).filter((k) => k.startsWith('mylinnnk.draft')).sort().map((k) => [k, localStorage.getItem(k)]))
