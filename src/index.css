@@ -77,6 +77,13 @@
   --radius-lg: 22px;
   --header-h: 72px;
 
+  /* Homepage closing section (GetStarted + <Footer continuous>): one shared background.
+     Rings and light are anchored to the boundary between the two, so they line up exactly. */
+  --closing-base: var(--navy-950);
+  --closing-ring: rgb(255 255 255 / 0.055);
+  --closing-ring-gap: 64px;
+  --closing-fade: 820px;
+
   color-scheme: light;
 }
 

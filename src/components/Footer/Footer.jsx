@@ -1,14 +1,20 @@
 import Logo from '../Brand/Logo.jsx'
 import SmartLink from '../SmartLink/SmartLink.jsx'
-import { GET_STARTED_HREF, NAV_LINKS } from '../../utils/navigation.js'
+import { FOOTER_LINK_GROUPS } from '../../utils/navigation.js'
 import './Footer.css'
 
-export default function Footer() {
+/**
+ * Site footer (every page except the editor).
+ * `continuous`: on the homepage the footer continues the closing
+ * "Ready to tell your story?" section above it (same background, rings and
+ * light), so the two read as one; elsewhere it stands on its own.
+ */
+export default function Footer({ continuous = false }) {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="site-footer">
-      <div className="site-footer__glow" aria-hidden="true" />
+    <footer className={`site-footer${continuous ? ' site-footer--continuous' : ''}`}>
+      <div className="site-footer__bg" aria-hidden="true" />
       <div className="container site-footer__inner">
         <div className="site-footer__brand">
           <SmartLink to="/" className="site-footer__logo" aria-label="MyLinnnk home">
@@ -18,16 +24,20 @@ export default function Footer() {
         </div>
 
         <nav className="site-footer__nav" aria-label="Footer">
-          <ul>
-            {NAV_LINKS.map((link) => (
-              <li key={link.to}>
-                <SmartLink to={link.to}>{link.label}</SmartLink>
-              </li>
-            ))}
-            <li>
-              <SmartLink to={GET_STARTED_HREF}>Get started</SmartLink>
-            </li>
-          </ul>
+          {FOOTER_LINK_GROUPS.map((group) => (
+            <div key={group.title} className="site-footer__group">
+              <h2 className="site-footer__heading" id={`footer-${group.title.toLowerCase()}`}>
+                {group.title}
+              </h2>
+              <ul aria-labelledby={`footer-${group.title.toLowerCase()}`}>
+                {group.links.map((link) => (
+                  <li key={link.to}>
+                    <SmartLink to={link.to}>{link.label}</SmartLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </nav>
       </div>
 

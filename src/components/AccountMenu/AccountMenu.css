@@ -199,7 +199,7 @@
 }
 
 /* ---------- Mobile: show the account panel inline in the nav sheet ---------- */
-@media (max-width: 1080px) {
+@media (max-width: 860px) {
   .site-nav__login,
   .site-nav__account,
   .site-nav__auth-pending {

@@ -3,7 +3,7 @@ import AuthNav from '../AccountMenu/AccountMenu.jsx'
 import Logo from '../Brand/Logo.jsx'
 import Button from '../Button/Button.jsx'
 import SmartLink from '../SmartLink/SmartLink.jsx'
-import { CREATE_PAGE_HREF, NAV_LINKS } from '../../utils/navigation.js'
+import { CREATE_PAGE_HREF, HEADER_LINKS } from '../../utils/navigation.js'
 import './Header.css'
 
 export default function Header() {
@@ -36,7 +36,7 @@ export default function Header() {
 
         <nav className="site-nav" aria-label="Main">
           <ul id="site-nav-list" className="site-nav__list">
-            {NAV_LINKS.map((link) => (
+            {HEADER_LINKS.map((link) => (
               <li key={link.to}>
                 <SmartLink className="site-nav__link" to={link.to} onClick={closeMenu}>
                   {link.label}

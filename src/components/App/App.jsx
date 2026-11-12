@@ -41,7 +41,7 @@ function SiteLayout() {
       <main id="main" className="app__main page-transition" key={pathname}>
         <Outlet />
       </main>
-      <Footer />
+      <Footer continuous={pathname === '/'} />
     </div>
   )
 }

@@ -1,13 +1,16 @@
 .site-footer {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   color: #c7cee0;
   background: var(--navy-950);
 }
 
-.site-footer__glow {
+/* Default (every page but the homepage): a soft band of light along the top */
+.site-footer__bg {
   position: absolute;
   inset: -40% -10% auto;
+  z-index: -1;
   height: 420px;
   background:
     radial-gradient(40% 60% at 20% 50%, rgb(20 184 166 / 0.16), transparent 70%),
@@ -15,14 +18,47 @@
   pointer-events: none;
 }
 
+/* Homepage: continue the closing section's background (GetStarted.css) from the top edge. */
+.site-footer--continuous {
+  background:
+    radial-gradient(440px 320px at 50% 0%, rgb(139 92 246 / 0.34), transparent 70%),
+    radial-gradient(560px 380px at calc(50% - 440px) 0%, rgb(20 184 166 / 0.24), transparent 70%),
+    radial-gradient(600px 400px at calc(50% + 460px) 0%, rgb(124 58 237 / 0.3), transparent 70%),
+    var(--closing-base);
+}
+
+.site-footer--continuous .site-footer__bg {
+  inset: 0;
+  height: auto;
+  background: repeating-radial-gradient(
+    circle at 50% 0%,
+    transparent 0 calc(var(--closing-ring-gap) - 1px),
+    var(--closing-ring) calc(var(--closing-ring-gap) - 1px) var(--closing-ring-gap)
+  );
+  -webkit-mask-image: radial-gradient(circle var(--closing-fade) at 50% 0%, #000 30%, transparent 100%);
+  mask-image: radial-gradient(circle var(--closing-fade) at 50% 0%, #000 30%, transparent 100%);
+}
+
 .site-footer__inner {
   position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 32px;
-  padding-block: 64px 40px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 40px 64px;
+  padding-block: 64px 48px;
+}
+
+/* Homepage: a fine divider between the call to action and the footer columns */
+.site-footer--continuous .site-footer__inner {
+  padding-top: 56px;
+}
+
+.site-footer--continuous .site-footer__inner::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.16) 20%, rgb(153 246 228 / 0.35) 50%, rgb(255 255 255 / 0.16) 80%, transparent);
 }
 
 .site-footer__logo {
@@ -31,31 +67,64 @@
   text-decoration: none;
 }
 
+.site-footer__logo:focus-visible {
+  outline: 2px solid var(--teal-400);
+  outline-offset: 4px;
+}
+
 .site-footer__tagline {
+  max-width: 22rem;
   margin-top: 16px;
   font-size: 1.05rem;
+  line-height: 1.5;
   color: #9aa5c2;
 }
 
-.site-footer__nav ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 28px;
+.site-footer__nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(150px, auto));
+  gap: 28px clamp(40px, 6vw, 88px);
+}
+
+.site-footer__heading {
+  margin: 0 0 14px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--teal-200);
+}
+
+.site-footer__group ul {
+  display: grid;
+  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.site-footer__nav a {
+.site-footer__group a {
+  display: inline-block;
+  padding-block: 2px;
+  font-weight: 500;
   color: #dbe1ef;
   text-decoration: none;
-  font-weight: 500;
-  transition: color 250ms ease;
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  border-radius: 2px;
+  transition:
+    color 250ms ease,
+    background-size 300ms var(--ease-out);
 }
 
-.site-footer__nav a:hover,
-.site-footer__nav a:focus-visible {
-  color: var(--teal-200);
+.site-footer__group a:hover,
+.site-footer__group a:focus-visible {
+  color: #fff;
+  background-size: 100% 1px;
+}
+
+.site-footer__group a:focus-visible {
+  outline: 2px solid var(--teal-400);
+  outline-offset: 4px;
 }
 
 .site-footer__bottom {
@@ -63,5 +132,30 @@
   padding-block: 20px 28px;
   border-top: 1px solid rgb(255 255 255 / 0.08);
   font-size: 0.875rem;
-  color: #7f8aa8;
+  color: #8a95b2;
+}
+
+@media (max-width: 720px) {
+  .site-footer__inner {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding-block: 48px 36px;
+  }
+
+  .site-footer__nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 24px;
+  }
+}
+
+@media (max-width: 340px) {
+  .site-footer__nav {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-footer__group a {
+    transition: none;
+  }
 }

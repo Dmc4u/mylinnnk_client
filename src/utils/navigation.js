@@ -13,11 +13,34 @@ export const GET_STARTED_HREF = '/#get-started'
 
 export const templatePreviewPath = (slug) => `/templates/${slug}`
 
-/** Main navigation. `to` is a React Router location (route or /#section). */
-export const NAV_LINKS = [
+/**
+ * Main header navigation (desktop and mobile menu): real pages only.
+ * `to` is a React Router location (route or /#section).
+ */
+export const HEADER_LINKS = [
   { to: '/templates', label: 'Templates' },
-  { to: '/#features', label: 'Features' },
-  { to: '/#moments', label: 'Moments' },
-  { to: '/#how', label: 'How it works' },
   { to: '/pricing', label: 'Pricing' },
+]
+
+/**
+ * Footer navigation, in groups. Homepage sections (/#…) live here rather than in
+ * the header; SmartLink + ScrollManager scroll to them from any route.
+ */
+export const FOOTER_LINK_GROUPS = [
+  {
+    title: 'Create',
+    links: [
+      { to: '/templates', label: 'Templates' },
+      { to: '/pricing', label: 'Pricing' },
+      { to: GET_STARTED_HREF, label: 'Get started' },
+    ],
+  },
+  {
+    title: 'Discover',
+    links: [
+      { to: '/#features', label: 'Features' },
+      { to: '/#moments', label: 'Moments' },
+      { to: '/#how', label: 'How it works' },
+    ],
+  },
 ]

@@ -1,95 +1,193 @@
+/* =========================================================
+   Homepage closing section: a full-width navy arch whose orbit rings and light
+   are centred on its bottom edge. <Footer continuous> draws the same rings and
+   light from its top edge (Footer.css), so both read as one surface.
+   Keep the two backgrounds in sync.
+   ========================================================= */
 .get-started {
-  padding-top: 0;
-}
-
-.get-started__panel {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: clamp(56px, 8vw, 96px) 24px;
+  margin-top: clamp(8px, 2vw, 24px);
+  padding: clamp(112px, 13vw, 176px) 0 clamp(88px, 10vw, 136px);
   text-align: center;
   color: #c7cee0;
   background:
-    radial-gradient(60% 80% at 15% 0%, rgb(20 184 166 / 0.28), transparent 70%),
-    radial-gradient(60% 80% at 90% 100%, rgb(124 58 237 / 0.32), transparent 70%),
-    var(--navy-900);
-  border-radius: 32px;
-  box-shadow: var(--shadow-lg);
+    /* light, anchored to the bottom edge */
+    radial-gradient(440px 320px at 50% 100%, rgb(139 92 246 / 0.34), transparent 70%),
+    radial-gradient(560px 380px at calc(50% - 440px) 100%, rgb(20 184 166 / 0.24), transparent 70%),
+    radial-gradient(600px 400px at calc(50% + 460px) 100%, rgb(124 58 237 / 0.3), transparent 70%),
+    /* a soft glow where the arch begins */
+    radial-gradient(70% 220px at 50% 0%, rgb(45 212 191 / 0.1), transparent 75%),
+    var(--closing-base);
+  /* gentle arch rising out of the section above */
+  border-radius: 50% 50% 0 0 / clamp(36px, 6vw, 96px) clamp(36px, 6vw, 96px) 0 0;
 }
 
-.get-started__rings {
+/* Concentric orbit rings centred on the bottom edge, fading out with distance */
+.get-started::before {
+  content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
+  pointer-events: none;
+  background: repeating-radial-gradient(
+    circle at 50% 100%,
+    transparent 0 calc(var(--closing-ring-gap) - 1px),
+    var(--closing-ring) calc(var(--closing-ring-gap) - 1px) var(--closing-ring-gap)
+  );
+  -webkit-mask-image: radial-gradient(circle var(--closing-fade) at 50% 100%, #000 30%, transparent 100%);
+  mask-image: radial-gradient(circle var(--closing-fade) at 50% 100%, #000 30%, transparent 100%);
+}
+
+/* ---------- Orbit lights (decorative) ---------- */
+.get-started__orbits {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.get-started__orbit {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  rotate: calc(var(--a) - 18deg);
+  transition: rotate 1800ms var(--ease-out) 200ms;
+}
+
+.get-started__orbits.is-visible .get-started__orbit {
+  rotate: var(--a);
+}
+
+.get-started__light {
+  position: absolute;
+  top: -4px;
+  left: calc(var(--r) - 4px);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--teal-400);
+  box-shadow: 0 0 0 4px rgb(45 212 191 / 0.14), 0 0 18px 4px rgb(45 212 191 / 0.45);
+}
+
+.get-started__light--purple {
+  background: var(--purple-400);
+  box-shadow: 0 0 0 4px rgb(167 139 250 / 0.14), 0 0 18px 4px rgb(139 92 246 / 0.5);
+}
+
+.get-started__light--white {
+  top: -2.5px;
+  left: calc(var(--r) - 2.5px);
+  width: 5px;
+  height: 5px;
+  background: #fff;
+  box-shadow: 0 0 12px 2px rgb(255 255 255 / 0.4);
+}
+
+/* ---------- Content ---------- */
+.get-started__content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.get-started__mark-wrap {
+  position: relative;
   display: grid;
   place-items: center;
 }
 
-.get-started__rings span {
-  grid-area: 1 / 1;
-  width: 380px;
+/* A quiet halo around the mark */
+.get-started__mark-wrap::before {
+  content: '';
+  position: absolute;
+  width: 112px;
   aspect-ratio: 1;
-  border: 1px solid rgb(255 255 255 / 0.08);
+  border: 1px solid rgb(255 255 255 / 0.12);
   border-radius: 50%;
-  animation: get-started-ring 9s ease-in-out infinite;
-}
-
-.get-started__rings span:nth-child(2) {
-  width: 620px;
-  animation-delay: -3s;
-}
-
-.get-started__rings span:nth-child(3) {
-  width: 860px;
-  animation-delay: -6s;
+  background: radial-gradient(circle, rgb(45 212 191 / 0.16), transparent 70%);
 }
 
 .get-started__mark {
-  animation: get-started-bob 6s ease-in-out infinite alternate;
+  position: relative;
 }
 
 .get-started__title {
-  margin-top: 26px;
-  font-size: clamp(2rem, 4.6vw, 3.4rem);
-  font-weight: 740;
-  letter-spacing: -0.04em;
+  max-width: 14ch;
+  margin-top: 34px;
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  font-weight: 760;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
   color: #fff;
+  text-wrap: balance;
+}
+
+.get-started__accent {
+  background: linear-gradient(100deg, var(--teal-200) 0%, var(--teal-400) 40%, var(--purple-400) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .get-started__text {
-  max-width: 30rem;
-  margin-top: 16px;
-  font-size: 1.1rem;
+  max-width: 32rem;
+  margin-top: 22px;
+  font-size: clamp(1.08rem, 1.8vw, 1.3rem);
+  line-height: 1.5;
+  color: #d3d9e8;
 }
 
+.get-started__action {
+  max-width: 100%;
+  margin-top: 40px;
+}
+
+/* With enlarged text the label may wrap instead of pushing past the screen edge. */
 .get-started__cta {
-  margin-top: 34px;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
 }
 
-/* On navy, give the primary button a light face so it stands out */
+/* On navy, the primary button gets a light face and a soft teal/purple aura. */
 .get-started__cta.btn--primary {
   color: var(--navy-900);
   background: #fff;
+  box-shadow:
+    0 0 0 6px rgb(255 255 255 / 0.08),
+    0 18px 40px -14px rgb(45 212 191 / 0.55);
 }
 
-@keyframes get-started-ring {
-  0%,
-  100% {
-    scale: 1;
-    opacity: 1;
+.get-started__cta.btn--primary:hover,
+.get-started__cta.btn--primary:focus-visible {
+  box-shadow:
+    0 0 0 8px rgb(255 255 255 / 0.12),
+    0 22px 46px -14px rgb(139 92 246 / 0.6);
+}
+
+.get-started__cta.btn--primary:focus-visible {
+  outline: 3px solid var(--teal-200);
+  outline-offset: 4px;
+}
+
+@media (max-width: 560px) {
+  .get-started__light {
+    display: none;
   }
 
-  50% {
-    scale: 1.05;
-    opacity: 0.5;
+  .get-started__light--white {
+    display: block;
   }
 }
 
-@keyframes get-started-bob {
-  to {
-    transform: translateY(-8px) rotate(-4deg);
+@media (prefers-reduced-motion: reduce) {
+  .get-started__orbit {
+    rotate: var(--a);
+    transition: none;
   }
 }
