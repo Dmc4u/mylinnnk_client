@@ -5,6 +5,7 @@ import { ActionButton, FormAlert } from '../../components/Form/Form.jsx'
 import ResendVerification from '../../components/ResendVerification/ResendVerification.jsx'
 import { useGuardedLogout } from '../../auth/useGuardedLogout.jsx'
 import AccountDrafts from './AccountDrafts.jsx'
+import AccountOrders from './AccountOrders.jsx'
 import { authHref } from '../../auth/redirects.js'
 import { useAuth } from '../../auth/useAuth.js'
 import './AccountPage.css'
@@ -112,6 +113,8 @@ export default function AccountPage() {
       )}
 
       <AccountDrafts />
+
+      <AccountOrders />
 
       <div className="account-footer">
         <ActionButton busy={guardedLogout.busy} busyLabel="Logging out…" onClick={guardedLogout.requestLogout}>

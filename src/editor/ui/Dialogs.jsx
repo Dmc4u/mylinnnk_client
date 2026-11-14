@@ -126,10 +126,12 @@ const FAMILIES = [
  * Publish: shows the server's plans and prices (GET /plans) honestly. Paid
  * publishing doesn't exist yet: no payment, no order, no fake live URL.
  */
-export function PublishDialog({ suggested, category, signedIn, onClose }) {
+export function PublishDialog({ suggested, category, signedIn, cloudPageId = null, onClose }) {
   const { status, data, retry } = usePlans()
   const plans = data?.plans ?? []
   const custom = plans.find((p) => p.billing === 'custom_quote')
+  // Only when the server offers checkout, for a page saved in the signed-in user's account.
+  const canPublish = Boolean(data?.checkout?.available && signedIn && cloudPageId)
   return (
     <Modal
       size="lg"
@@ -138,7 +140,11 @@ export function PublishDialog({ suggested, category, signedIn, onClose }) {
       footer={
         <>
           <button type="button" className="ed-btn ed-btn--ghost" onClick={onClose}>Back to editing</button>
-          <button type="button" className="ed-btn ed-btn--primary" disabled aria-describedby="publish-soon">Continue to payment</button>
+          {canPublish ? (
+            <a className="ed-btn ed-btn--primary" href={`/publish/${cloudPageId}`}>Continue to publishing</a>
+          ) : (
+            <button type="button" className="ed-btn ed-btn--primary" disabled aria-describedby="publish-soon">Continue to payment</button>
+          )}
         </>
       }
     >
@@ -206,7 +212,14 @@ export function PublishDialog({ suggested, category, signedIn, onClose }) {
         The plan that applies is confirmed when you publish, based on how the page will be used.
       </p>
       <p className="ed-soon" id="publish-soon">
-        <Icon name="lock" size={16} /> Paid publishing is coming soon. Nothing is charged and your page is not published yet.
+        <Icon name="lock" size={16} />{' '}
+        {canPublish
+          ? data.checkout.test
+            ? 'Test mode: payment details are placeholders. Don’t transfer real money.'
+            : 'You’ll choose an address and a plan, then pay by bank transfer. Your page goes live once we confirm the payment.'
+          : data?.checkout?.available && !cloudPageId
+            ? 'Save this page to your account first, then publish it from here.'
+            : 'Paid publishing is coming soon. Nothing is charged and your page is not published yet.'}
       </p>
     </Modal>
   )

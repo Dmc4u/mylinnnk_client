@@ -1,0 +1,204 @@
+/* Publishing and payment pages (customer): one readable card, MyLinnnk identity. */
+.order-page {
+  min-height: 100svh;
+  padding: calc(var(--header-h) + 32px) 16px 80px;
+  background: var(--bg);
+}
+
+.order-card {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: clamp(22px, 4vw, 36px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.order-card h1 {
+  margin: 6px 0 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 760;
+  letter-spacing: -0.02em;
+  color: var(--navy-900);
+  overflow-wrap: anywhere;
+}
+
+.order-card h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  color: var(--navy-900);
+}
+
+.order-eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--teal-600);
+}
+
+.order-muted {
+  color: var(--muted);
+}
+
+.order-section,
+.order-form,
+.order-bank {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.order-status {
+  display: inline-block;
+  margin: 12px 0 0;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--navy-800);
+  background: #f1f2f6;
+  border-radius: 999px;
+}
+
+.order-status--approved { color: #0b6b5f; background: #e6faf6; }
+.order-status--rejected { color: #9a2a1d; background: #fdecea; }
+.order-status--submitted,
+.order-status--under_review { color: #5b21b6; background: #f3efff; }
+
+.order-facts {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0 0;
+}
+
+.order-facts div {
+  display: grid;
+  grid-template-columns: minmax(120px, 34%) 1fr;
+  gap: 12px;
+}
+
+.order-facts dt { color: var(--muted); }
+.order-facts dd { margin: 0; font-weight: 600; color: var(--navy-900); overflow-wrap: anywhere; }
+.order-mono { font-family: var(--font-mono); letter-spacing: 0.04em; }
+
+.order-steps { margin: 16px 0 0; padding-left: 20px; color: var(--navy-800); }
+
+.order-notice {
+  margin: 16px 0 0;
+  padding: 10px 14px;
+  color: var(--navy-800);
+  background: #f6f4ff;
+  border: 1px solid var(--purple-200);
+  border-radius: 12px;
+}
+
+.order-notice--test {
+  font-weight: 700;
+  color: #7a2e0e;
+  background: #fff4e5;
+  border-color: #f7c27a;
+}
+
+.order-bank--test {
+  outline: 2px dashed #f0a63a;
+  outline-offset: 8px;
+  border-radius: 4px;
+}
+
+.order-form {
+  display: grid;
+  gap: 8px;
+}
+
+.order-form label { font-weight: 600; color: var(--navy-900); }
+
+.order-form input,
+.order-form textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  font: inherit;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.order-form textarea { min-height: 80px; }
+
+.order-form--inline {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.order-form--inline > p { grid-column: 1 / -1; margin: 0; }
+
+.order-plans {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.order-plan {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.order-plan.is-selected { border-color: var(--purple-500); box-shadow: 0 0 0 2px var(--purple-200); }
+.order-plan__name { font-weight: 700; color: var(--navy-900); }
+.order-plan__price { font-weight: 760; color: var(--navy-900); }
+.order-plan__terms { grid-column: 2 / -1; font-size: 0.85rem; color: var(--muted); }
+
+.order-receipts { margin: 0 0 12px; padding-left: 18px; }
+
+.order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.order-btn,
+.order-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  font: inherit;
+  font-weight: 650;
+  color: var(--purple-600);
+  text-decoration: none;
+  background: #fff;
+  border: 1.5px solid var(--purple-200);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.order-btn--primary { color: #fff; background: var(--purple-600); border-color: var(--purple-600); }
+.order-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.order-upload { width: fit-content; }
+
+.order-btn:focus-visible,
+.order-link:focus-visible,
+.order-plan:focus-within {
+  outline: 3px solid var(--purple-400);
+  outline-offset: 3px;
+}
+
+.order-ok { color: #0b6b5f; font-weight: 600; }
+.order-error { color: #b42318; font-weight: 600; }
+
+@media (max-width: 560px) {
+  .order-facts div { grid-template-columns: 1fr; gap: 2px; }
+  .order-form--inline { grid-template-columns: 1fr; }
+}

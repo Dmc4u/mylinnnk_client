@@ -15,10 +15,14 @@ import VerifyEmailPage from '../../pages/VerifyEmailPage/VerifyEmailPage.jsx'
 import AccountPage from '../../pages/AccountPage/AccountPage.jsx'
 import PricingPage from '../../pages/PricingPage/PricingPage.jsx'
 import PublicPage from '../../pages/PublicPage/PublicPage.jsx'
+import PublishPage from '../../pages/PublishPage/PublishPage.jsx'
+import OrderPage from '../../pages/OrderPage/OrderPage.jsx'
 import './App.css'
 
 // The editor is only downloaded when someone opens it.
 const EditorPage = lazy(() => import('../../pages/EditorPage/EditorPage.jsx'))
+// Administration is only downloaded by people who open it (access is decided by the server).
+const AdminApp = lazy(() => import('../../admin/AdminApp.jsx'))
 
 function EditorFallback() {
   return (
@@ -52,6 +56,15 @@ function App() {
     <Routes>
       {/* A published page: the page alone, no site header/footer */}
       <Route path="p/:slug" element={<PublicPage />} />
+      {/* Administration: its own layout; every request is authorised by the server */}
+      <Route
+        path="admin/*"
+        element={
+          <Suspense fallback={<EditorFallback />}>
+            <AdminApp />
+          </Suspense>
+        }
+      />
       {/* Full-screen editor: no site header/footer */}
       <Route
         path="editor/:templateSlug"
@@ -73,6 +86,9 @@ function App() {
         <Route path="reset-password" element={<ResetPasswordPage />} />
         <Route path="verify-email" element={<VerifyEmailPage />} />
         <Route path="account" element={<AccountPage />} />
+        {/* Publishing and manual bank-transfer payments (signed in) */}
+        <Route path="publish/:pageId" element={<PublishPage />} />
+        <Route path="orders/:reference" element={<OrderPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
