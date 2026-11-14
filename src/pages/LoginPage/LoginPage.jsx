@@ -4,7 +4,7 @@ import AuthLayout from '../../components/AuthLayout/AuthLayout.jsx'
 import { ActionButton, FormAlert, PasswordField, SubmitButton, TextField } from '../../components/Form/Form.jsx'
 import Button from '../../components/Button/Button.jsx'
 import { errorMessage, NOTICES } from '../../auth/messages.js'
-import { authHref, safeNextPath } from '../../auth/redirects.js'
+import { afterLoginPath, authHref } from '../../auth/redirects.js'
 import { useAuth } from '../../auth/useAuth.js'
 import { useAuthForm } from '../../auth/useAuthForm.js'
 import { fieldErrorsFromApi, validateEmail, validateLoginPassword } from '../../auth/validation.js'
@@ -12,19 +12,26 @@ import { fieldErrorsFromApi, validateEmail, validateLoginPassword } from '../../
 const INITIAL = { email: '', password: '' }
 const validate = (v) => ({ email: () => validateEmail(v.email), password: () => validateLoginPassword(v.password) })
 
-/** /login[?next=/path] */
+/**
+ * /login[?next=/path]
+ * After logging in: see afterLoginPath (auth/redirects.js). Ordinary users: the safe `next` path or
+ * their account, as before. The admin: an intentional safe `next` (e.g. the admin page that asked for a
+ * fresh sign-in) or else the dashboard. Whether
+ * someone is the admin is the server's answer to this login (isAdmin), never a guess made here.
+ */
 export default function LoginPage() {
-  const { status, user, notice, login, logout, clearNotice } = useAuth()
+  const { status, user, isAdmin, notice, login, logout, clearNotice } = useAuth()
   const [params] = useSearchParams()
-  const next = safeNextPath(params.get('next'))
+  const afterLogin = (admin) => afterLoginPath(params.get('next'), { isAdmin: admin })
+  const next = afterLogin(isAdmin)
   const navigate = useNavigate()
   const { formRef, values, setField, errors, showFieldErrors, formError, setFormError, submitting, handleSubmit } = useAuthForm(INITIAL, validate)
   const [switching, setSwitching] = useState(false)
 
   const onSubmit = handleSubmit(async ({ email, password }) => {
     try {
-      await login({ email: email.trim(), password })
-      navigate(next, { replace: true })
+      const result = await login({ email: email.trim(), password })
+      navigate(afterLogin(result?.isAdmin === true), { replace: true })
     } catch (error) {
       if (error.code === 'VALIDATION_FAILED') showFieldErrors(fieldErrorsFromApi(error, { email: 'Enter a valid email address.', password: 'Enter your password.' }))
       setFormError(errorMessage(error))

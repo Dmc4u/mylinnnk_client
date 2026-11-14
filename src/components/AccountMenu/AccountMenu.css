@@ -180,6 +180,24 @@
   background: rgb(10 22 48 / 0.05);
 }
 
+/* Shown only when the server says this session is the admin. */
+.account-menu__item--admin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 620;
+  color: var(--purple-600);
+}
+
+.account-menu__item--admin::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  background: var(--brand-gradient);
+  border-radius: 50%;
+}
+
 .account-menu__item:disabled {
   cursor: wait;
   color: var(--muted);

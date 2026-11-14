@@ -237,3 +237,35 @@ describe('several tabs', () => {
     await waitFor(() => expect(tabB.text()).toBe('anonymous|-|signed-out'))
   })
 })
+
+describe('admin status (server-verified isAdmin)', () => {
+  it('comes only from the server, and is cleared by sign-out, expiry and a switch to another account', async () => {
+    const api = setup()
+    const admin = api.addUser({ email: 'support@dmclimited.net', password: PASSWORD, admin: true })
+    api.addUser({ email: 'ana@example.com', password: PASSWORD })
+    const tab = renderTab()
+    await waitFor(() => expect(tab.auth.status).toBe('anonymous'))
+    expect(tab.auth.isAdmin).toBe(false)
+
+    expect((await act(() => tab.auth.login({ email: 'support@dmclimited.net', password: PASSWORD }))).isAdmin).toBe(true)
+    expect(tab.auth.isAdmin).toBe(true)
+    await act(() => tab.auth.logout())
+    expect(tab.auth.isAdmin).toBe(false) // signed out
+
+    await act(() => tab.auth.login({ email: 'support@dmclimited.net', password: PASSWORD }))
+    api.expireSession()
+    await act(() => tab.auth.refreshSession())
+    expect(tab.auth.status).toBe('anonymous')
+    expect(tab.auth.isAdmin).toBe(false) // expired or revoked
+
+    await act(() => tab.auth.login({ email: 'support@dmclimited.net', password: PASSWORD }))
+    expect((await act(() => tab.auth.login({ email: 'ana@example.com', password: PASSWORD }))).isAdmin).toBe(false)
+    expect(tab.auth.isAdmin).toBe(false) // another account in the same tab
+
+    api.signIn(admin)
+    admin.admin = false // the server stops treating this account as the admin
+    await act(() => tab.auth.refreshSession())
+    expect(tab.auth.status).toBe('authenticated')
+    expect(tab.auth.isAdmin).toBe(false) // re-read with every session check
+  })
+})

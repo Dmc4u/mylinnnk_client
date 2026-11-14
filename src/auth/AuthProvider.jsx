@@ -31,11 +31,18 @@ const SESSION_CHANGED_MESSAGE = 'You signed in to a different account in another
  * - A CSRF_INVALID answer (the session was replaced in another tab) re-reads
  *   the session and retries once, but only if it still belongs to the same user.
  *
+ * Admin status
+ * - `isAdmin` is the server's own answer (GET /auth/session and POST /auth/login, computed by the
+ *   same check every /api/v1/admin request runs). It only decides what to show (the Admin Dashboard
+ *   link, where to go after logging in); the admin APIs check every request themselves. It is never
+ *   derived from the email or anything else on this side, and is reset to false whenever the
+ *   session ends, expires or changes, and re-read with every session check. No extra requests.
+ *
  * Guest drafts are never touched here: signing in, signing up or out leaves
  * localStorage drafts and IndexedDB media exactly as they were.
  */
 export default function AuthProvider({ children, api = authApi }) {
-  const [state, setState] = useState({ status: 'loading', user: null, notice: null })
+  const [state, setState] = useState({ status: 'loading', user: null, isAdmin: false, notice: null })
   const csrfRef = useRef(null)
   const userIdRef = useRef(null)
   const epochRef = useRef(0)
@@ -51,17 +58,17 @@ export default function AuthProvider({ children, api = authApi }) {
     }
   }, [])
 
-  const setSignedIn = useCallback((user, csrfToken) => {
+  const setSignedIn = useCallback((user, csrfToken, isAdmin) => {
     csrfRef.current = csrfToken ?? null
     userIdRef.current = user.id
-    setState((prev) => ({ status: 'authenticated', user, notice: prev.user?.id === user.id ? prev.notice : null }))
+    setState((prev) => ({ status: 'authenticated', user, isAdmin: isAdmin === true, notice: prev.user?.id === user.id ? prev.notice : null }))
   }, [])
 
   const setSignedOut = useCallback((notice = null) => {
     epochRef.current += 1
     csrfRef.current = null
     userIdRef.current = null
-    setState({ status: 'anonymous', user: null, notice })
+    setState({ status: 'anonymous', user: null, isAdmin: false, notice })
   }, [])
 
   /** GET /auth/session. Returns the session data, or null if the API couldn't be reached. */
@@ -75,18 +82,18 @@ export default function AuthProvider({ children, api = authApi }) {
           lastCheckedRef.current = Date.now()
           if (epoch !== epochRef.current) return data // a login/logout happened meanwhile
           if (data?.authenticated && data.user) {
-            setSignedIn(data.user, data.csrfToken)
+            setSignedIn(data.user, data.csrfToken, data.isAdmin)
           } else {
             const wasSignedIn = userIdRef.current !== null
             csrfRef.current = null
             userIdRef.current = null
-            setState((prev) => ({ status: 'anonymous', user: null, notice: wasSignedIn ? 'expired' : prev.notice }))
+            setState((prev) => ({ status: 'anonymous', user: null, isAdmin: false, notice: wasSignedIn ? 'expired' : prev.notice }))
           }
           return data
         },
         () => {
           // Keep a known session through a temporary outage; only a first load becomes 'unavailable'.
-          if (epoch === epochRef.current) setState((prev) => (prev.status === 'loading' ? { status: 'unavailable', user: null, notice: null } : prev))
+          if (epoch === epochRef.current) setState((prev) => (prev.status === 'loading' ? { status: 'unavailable', user: null, isAdmin: false, notice: null } : prev))
           return null
         },
       )
@@ -136,7 +143,7 @@ export default function AuthProvider({ children, api = authApi }) {
     (data) => {
       epochRef.current += 1
       lastCheckedRef.current = Date.now()
-      setSignedIn(data.user, data.csrfToken)
+      setSignedIn(data.user, data.csrfToken, data.isAdmin)
       notify('session-changed')
     },
     [notify, setSignedIn],
@@ -174,7 +181,7 @@ export default function AuthProvider({ children, api = authApi }) {
     async ({ email, password }) => {
       const data = await api.login({ email, password })
       startSession(data)
-      return data.user
+      return { user: data.user, isAdmin: data.isAdmin === true }
     },
     [api, startSession],
   )

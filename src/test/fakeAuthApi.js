@@ -44,8 +44,9 @@ export function createFakeAuthApi() {
   const publicUser = (u) => ({ id: u.id, email: u.email, displayName: u.displayName, emailVerified: u.emailVerified, createdAt: '2026-11-01T10:00:00.000Z' })
   const currentUser = () => (state.session ? state.users.find((u) => u.id === state.session.userId) : null)
 
-  function addUser({ email, password = 'correct horse battery', displayName = 'Ana', emailVerified = false }) {
-    const user = { id: `user${nextUserId++}`, email, password, displayName, emailVerified }
+  /** `admin: true` makes the account the admin as the real server would report it (isAdmin). */
+  function addUser({ email, password = 'correct horse battery', displayName = 'Ana', emailVerified = false, admin = false }) {
+    const user = { id: `user${nextUserId++}`, email, password, displayName, emailVerified, admin }
     state.users.push(user)
     return user
   }
@@ -82,7 +83,7 @@ export function createFakeAuthApi() {
     'GET /auth/session': async () => {
       // The answer reflects the moment the request arrived, even if it is delivered late.
       const user = currentUser()
-      const response = ok(user ? { authenticated: true, user: publicUser(user), csrfToken: state.session.csrfToken } : { authenticated: false, user: null, csrfToken: null })
+      const response = ok(user ? { authenticated: true, user: publicUser(user), isAdmin: user.admin === true, csrfToken: state.session.csrfToken } : { authenticated: false, user: null, isAdmin: false, csrfToken: null })
       if (state.sessionDelay) await new Promise((r) => setTimeout(r, state.sessionDelay))
       return response
     },
@@ -106,7 +107,7 @@ export function createFakeAuthApi() {
       const user = state.users.find((u) => u.email === String(body.email).toLowerCase())
       if (!user || user.password !== body.password) return fail(401, 'INVALID_CREDENTIALS', 'Email or password is incorrect.')
       const csrfToken = signIn(user)
-      return ok({ user: publicUser(user), csrfToken })
+      return ok({ user: publicUser(user), isAdmin: user.admin === true, csrfToken })
     },
     'POST /auth/logout': ({ headers }) => {
       const denied = requireSession(headers)

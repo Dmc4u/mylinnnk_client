@@ -23,7 +23,7 @@ describe('authApi requests', () => {
   it('maps every endpoint to the API contract', async () => {
     const api = withFakeApi()
     const ana = api.addUser({ email: 'ana@example.com' })
-    expect(await authApi.getSession()).toEqual({ authenticated: false, user: null, csrfToken: null })
+    expect(await authApi.getSession()).toEqual({ authenticated: false, user: null, isAdmin: false, csrfToken: null })
 
     const login = await authApi.login({ email: 'ana@example.com', password: 'correct horse battery' })
     expect(login.user).toMatchObject({ id: ana.id, email: 'ana@example.com' })

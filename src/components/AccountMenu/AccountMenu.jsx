@@ -49,7 +49,9 @@ export default function AuthNav({ onNavigate }) {
  * shown inline inside the mobile navigation instead.
  */
 export function AccountMenu({ onNavigate }) {
-  const { user } = useAuth()
+  // isAdmin is the server's answer for this session (see AuthProvider); it only shows the link. The
+  // admin pages and APIs check every request on the server themselves.
+  const { user, isAdmin } = useAuth()
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
   const toggleRef = useRef(null)
@@ -122,6 +124,13 @@ export function AccountMenu({ onNavigate }) {
           </p>
         )}
         <ul className="account-menu__items">
+          {isAdmin && (
+            <li>
+              <Link className="account-menu__item account-menu__item--admin" to="/admin" onClick={close}>
+                Admin Dashboard
+              </Link>
+            </li>
+          )}
           <li>
             <Link className="account-menu__item" to="/account" onClick={close}>
               Account
