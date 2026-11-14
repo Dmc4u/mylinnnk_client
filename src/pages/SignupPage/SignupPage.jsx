@@ -34,7 +34,9 @@ export default function SignupPage() {
   const onSubmit = handleSubmit(async ({ displayName, email, password }) => {
     try {
       const { verificationEmailSent } = await register({ displayName: displayName.trim(), email: email.trim(), password })
-      navigate(safeNextPath(next), { replace: true, state: { welcome: true, verificationEmailSent } })
+      // Enter the emailed code first (or skip); then on to where they were going.
+      const after = safeNextPath(next, '')
+      navigate(after ? `/verify-email?next=${encodeURIComponent(after)}` : '/verify-email', { replace: true, state: { welcome: true, verificationEmailSent } })
     } catch (error) {
       if (error.code === 'VALIDATION_FAILED') {
         showFieldErrors(
@@ -98,7 +100,7 @@ export default function SignupPage() {
           value={values.email}
           onChange={setField}
           error={errors.email}
-          hint="We’ll send a link to confirm it’s yours."
+          hint="We’ll email you a 6-digit code to confirm it’s yours."
           maxLength={254}
         />
         <PasswordField

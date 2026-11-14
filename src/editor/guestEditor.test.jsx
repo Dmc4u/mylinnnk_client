@@ -116,6 +116,9 @@ describe('auth actions never touch guest drafts', () => {
     await user.type(screen.getByLabelText('Email'), 'ana@example.com')
     await user.type(screen.getByLabelText('Password'), PASSWORD)
     await user.click(screen.getByRole('button', { name: 'Create account' }))
+    await waitFor(() => expect(location()).toBe('/verify-email')) // enter the emailed code, or skip it
+    expect(snapshotStorage()).toEqual(before)
+    await user.click(await screen.findByRole('link', { name: 'Skip for now' }))
     await waitFor(() => expect(location()).toBe('/account'))
     expect(snapshotStorage()).toEqual(before)
 

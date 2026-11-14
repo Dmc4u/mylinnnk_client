@@ -1,4 +1,4 @@
-import { configure, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, configure, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { createFakeAuthApi } from '../test/fakeAuthApi.js'
 import { renderApp } from '../test/renderApp.jsx'
@@ -109,17 +109,36 @@ describe('sign up', () => {
     expect(within(alert).getByRole('link', { name: 'reset your password' })).toHaveAttribute('href', '/forgot-password')
   })
 
-  it('creates the account, signs in and welcomes the user on the account page', async () => {
+  it('creates the account, signs in and asks for the emailed code, then goes to the account', async () => {
     const { user, location, api } = renderApp('/signup')
     await user.type(await screen.findByLabelText('Your name'), '  Bea Costa ')
     await user.type(screen.getByLabelText('Email'), 'bea@example.com')
     await user.type(screen.getByLabelText('Password'), PASSWORD)
     await user.click(screen.getByRole('button', { name: 'Create account' }))
-    await waitFor(() => expect(location()).toBe('/account'))
+    await waitFor(() => expect(location()).toBe('/verify-email'))
     expect(screen.getByText('Welcome to MyLinnnk, Bea Costa!')).toBeInTheDocument()
-    expect(screen.getByText(/We’ve sent a link to bea@example.com/)).toBeInTheDocument()
-    expect(screen.getByText('Not confirmed yet')).toBeInTheDocument()
+    expect(screen.getByText(/Enter the 6-digit code we sent to bea@example.com/)).toBeInTheDocument()
     expect(api.requestsTo('/auth/register')[0].body).toEqual({ displayName: 'Bea Costa', email: 'bea@example.com', password: PASSWORD })
+
+    const input = await screen.findByLabelText('6-digit code')
+    expect(input).toHaveAttribute('inputmode', 'numeric')
+    expect(input).toHaveAttribute('autocomplete', 'one-time-code')
+    await user.type(input, api.lastEmail('email_verification_code').code)
+    await user.click(screen.getByRole('button', { name: 'Confirm email' }))
+    expect(await screen.findByText('Thanks, your email address is confirmed.')).toBeInTheDocument()
+    await user.click(screen.getByRole('link', { name: 'Go to your account' }))
+    await waitFor(() => expect(location()).toBe('/account'))
+    expect(screen.getByText('Confirmed')).toBeInTheDocument()
+  })
+
+  it('keeps where the visitor was going: the code page continues (or skips) to it', async () => {
+    const { user, location } = renderApp('/signup?next=%2Ftemplates')
+    await user.type(await screen.findByLabelText('Your name'), 'Bea')
+    await user.type(screen.getByLabelText('Email'), 'bea@example.com')
+    await user.type(screen.getByLabelText('Password'), PASSWORD)
+    await user.click(screen.getByRole('button', { name: 'Create account' }))
+    await waitFor(() => expect(location()).toBe('/verify-email?next=%2Ftemplates'))
+    expect(await screen.findByRole('link', { name: 'Skip for now' })).toHaveAttribute('href', '/templates')
   })
 })
 
@@ -188,16 +207,19 @@ describe('email verification', () => {
     expect(document.body.textContent).not.toContain(token)
   })
 
-  it('offers a new link (sent with the CSRF token) when a signed-in user’s link has expired', async () => {
+  it('offers a code instead (sent with the CSRF token) when a signed-in user’s old link has expired', async () => {
     const { api, ana } = apiWithAna()
     api.signIn(ana)
     const token = api.issueToken(ana, 'email_verification')
     api.state.tokens.get(token).expired = true
     const { user } = renderApp(`/verify-email?token=${token}`, { api })
     expect(await screen.findByText('This verification link is invalid or has expired.')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Send a new verification email' }))
-    expect(await screen.findByText(/We’ve sent a new link to ana@example.com/)).toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: 'Send a new code' }))
+    expect(await screen.findByText(/We’ve sent a new code to ana@example.com/)).toBeInTheDocument()
     expect(api.requestsTo('/auth/resend-verification')[0].headers['X-CSRF-Token']).toBe(api.state.session.csrfToken)
+    await user.type(screen.getByLabelText('6-digit code'), api.lastEmail('email_verification_code').code)
+    await user.click(screen.getByRole('button', { name: 'Confirm email' }))
+    expect(await screen.findByText('Your email address is already confirmed.')).toBeInTheDocument()
   })
 
   it('asks signed-out visitors with an expired link to log in for a new one', async () => {
@@ -207,7 +229,7 @@ describe('email verification', () => {
     renderApp(`/verify-email?token=${token}`, { api })
     expect(await screen.findByText('This verification link is invalid or has expired.')).toBeInTheDocument()
     expect(within(screen.getByRole('main')).getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login?next=%2Faccount')
-    expect(screen.getByText(/to get a new verification link/)).toBeInTheDocument()
+    expect(screen.getByText(/to get a verification code/)).toBeInTheDocument()
   })
 
   it('lets the visitor retry when the API can’t be reached', async () => {
@@ -219,6 +241,108 @@ describe('email verification', () => {
     api.state.down = false
     await user.click(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByText('Thanks, your email address is confirmed.')).toBeInTheDocument()
+  })
+})
+
+describe('email verification code', () => {
+  const signedInAnaWithCode = () => {
+    const { api, ana } = apiWithAna()
+    api.signIn(ana)
+    const code = api.issueCode(ana)
+    return { api, ana, code }
+  }
+  const wrong = (code) => (code === '111111' ? '222222' : '111111')
+
+  it('accepts a pasted code with spaces or dashes, and never shows it in the address bar', async () => {
+    const { api, code } = signedInAnaWithCode()
+    const { user, location } = renderApp('/verify-email', { api })
+    const input = await screen.findByLabelText('6-digit code')
+    await user.click(input)
+    await user.paste(`${code.slice(0, 3)} - ${code.slice(3)}`)
+    expect(input).toHaveValue(code)
+    await user.click(screen.getByRole('button', { name: 'Confirm email' }))
+    expect(await screen.findByText('Thanks, your email address is confirmed.')).toBeInTheDocument()
+    expect(api.requestsTo('/auth/verify-email-code')[0].body).toEqual({ code })
+    expect(location()).toBe('/verify-email')
+  })
+
+  it('explains a wrong code with the attempts left, without sending incomplete codes', async () => {
+    const { api, code } = signedInAnaWithCode()
+    const { user } = renderApp('/verify-email', { api })
+    const input = await screen.findByLabelText('6-digit code')
+    expect(await screen.findByText(/It expires in (10:00|9:5\d)/)).toBeInTheDocument()
+    await user.type(input, '123')
+    await user.click(screen.getByRole('button', { name: 'Confirm email' }))
+    expect(screen.getByText('Enter the 6-digit code from the email.')).toBeInTheDocument()
+    expect(api.requestsTo('/auth/verify-email-code')).toHaveLength(0)
+
+    await user.clear(input)
+    await user.type(input, wrong(code))
+    await user.click(screen.getByRole('button', { name: 'Confirm email' }))
+    expect(await screen.findByText('That code isn’t right. 4 attempts left.')).toBeInTheDocument()
+    expect(screen.getByText(/4 attempts left\.$/, { selector: '.field__hint' })).toBeInTheDocument()
+  })
+
+  it('after 5 wrong codes asks for a new one, and the resend button waits for the cooldown', async () => {
+    const { api, ana, code } = signedInAnaWithCode()
+    api.state.codes.get(ana.id).attempts = 4
+    const { user } = renderApp('/verify-email', { api })
+    const input = await screen.findByLabelText('6-digit code')
+    await user.type(input, wrong(code))
+    await user.click(screen.getByRole('button', { name: 'Confirm email' }))
+    expect(await screen.findByText('Too many incorrect attempts. Send a new code to try again.')).toBeInTheDocument()
+    const resend = screen.getByRole('button', { name: /^Send a new code in / })
+    expect(resend).toBeDisabled()
+    expect(api.requestsTo('/auth/resend-verification')).toHaveLength(0)
+  })
+
+  it('an expired code asks for a new one, which then works', async () => {
+    const { api, ana, code } = signedInAnaWithCode()
+    api.ageCode(ana, 11 * 60_000)
+    const { user } = renderApp('/verify-email', { api })
+    expect(await screen.findByText(/You need a new code/)).toBeInTheDocument()
+    await user.type(screen.getByLabelText('6-digit code'), code)
+    await user.click(screen.getByRole('button', { name: 'Confirm email' }))
+    expect(await screen.findByText('This code has expired. Send a new code to try again.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Send a new code' }))
+    expect(await screen.findByText(/We’ve sent a new code to ana@example.com/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Send a new code in / })).toBeDisabled()
+    await user.type(screen.getByLabelText('6-digit code'), api.lastEmail('email_verification_code').code)
+    await user.click(screen.getByRole('button', { name: 'Confirm email' }))
+    expect(await screen.findByText('Thanks, your email address is confirmed.')).toBeInTheDocument()
+  })
+
+  it('shows the server’s wait time when a new code is asked for too soon', async () => {
+    const { api, ana } = signedInAnaWithCode()
+    api.ageCode(ana, 61_000) // the page loads with the cooldown over…
+    const { user } = renderApp('/verify-email', { api })
+    const resend = await screen.findByRole('button', { name: 'Send a new code' })
+    api.state.codes.get(ana.id).lastSentAt = Date.now() - 15_000 // …but another tab just asked for a code
+    await user.click(resend)
+    expect(await screen.findByText('Please wait 45 seconds before asking for another code.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Send a new code in (45|44) s$/ })).toBeDisabled()
+  })
+
+  it('asks signed-out visitors to log in, and tells verified users they’re done', async () => {
+    const { api, ana } = apiWithAna({ emailVerified: true })
+    renderApp('/verify-email', { api })
+    expect(await screen.findByText(/to enter the code from your verification email/)).toBeInTheDocument()
+    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login?next=%2Faccount')
+
+    api.signIn(ana)
+    cleanup()
+    renderApp('/verify-email', { api })
+    expect(await screen.findByText('Your email address is already confirmed.')).toBeInTheDocument()
+  })
+
+  it('can be entered on the account page too', async () => {
+    const { api, code } = signedInAnaWithCode()
+    const { user } = renderApp('/account', { api })
+    expect(await screen.findByText('Not confirmed yet')).toBeInTheDocument()
+    await user.type(screen.getByLabelText('6-digit code'), code)
+    await user.click(screen.getByRole('button', { name: 'Confirm email' }))
+    expect(await screen.findByText('Confirmed')).toBeInTheDocument()
+    expect(screen.queryByLabelText('6-digit code')).not.toBeInTheDocument()
   })
 })
 
@@ -256,7 +380,7 @@ describe('account page and header', () => {
     const { api, ana } = apiWithAna()
     api.signIn(ana)
     const { user, location } = renderApp('/account', { api })
-    const resend = await screen.findByRole('button', { name: 'Send a new verification email' })
+    const resend = await screen.findByRole('button', { name: 'Send a new code' })
     api.state.session = { userId: 'revoked', csrfToken: 'x' }
     await user.click(resend)
     await waitFor(() => expect(location()).toBe('/login?next=%2Faccount'))

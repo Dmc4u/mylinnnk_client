@@ -2,8 +2,10 @@
  * In-memory stand-in for the MyLinnnk API's /api/v1/auth endpoints, used as
  * `fetch` in tests. It follows the real contract (mylinnnk_api, Stage 2):
  * { data } / { error: { code, message, details?, requestId } }, an HttpOnly
- * session the client can't see, and a CSRF token required by logout and
- * resend-verification. Every request is recorded for assertions.
+ * session the client can't see, and a CSRF token required by logout,
+ * resend-verification and verify-email-code. Email verification uses 6-digit
+ * codes (10 minutes, 5 attempts, 60 s between codes), like the real API.
+ * Every request is recorded for assertions.
  */
 import PLANS_FIXTURE from './fixtures/plans.json'
 
@@ -16,6 +18,8 @@ export function createFakeAuthApi() {
     users: [],
     session: null, // { userId, csrfToken } — the browser's cookie, invisible to the app
     tokens: new Map(), // raw token → { type, userId, used, expired }
+    codes: new Map(), // userId → { code, attempts, expiresAt, lastSentAt } (email verification codes)
+    resendCooldownMs: 60_000,
     requests: [],
     down: false, // network failure (fetch rejects)
     proxyError: false, // non-JSON 502, like Vite's proxy when the API is stopped
@@ -64,6 +68,25 @@ export function createFakeAuthApi() {
     return raw
   }
 
+  const CODE_TTL_MS = 10 * 60 * 1000
+  const MAX_ATTEMPTS = 5
+  let codeSeq = 0
+  /** Emails a new verification code (replacing the previous one). */
+  function issueCode(user, { now = Date.now() } = {}) {
+    const code = String(204816 + 7919 * codeSeq++).slice(-6).padStart(6, '0')
+    state.codes.set(user.id, { code, attempts: 0, expiresAt: now + CODE_TTL_MS, lastSentAt: now })
+    state.emails.push({ to: user.email, type: 'email_verification_code', code })
+    return code
+  }
+  const seconds = (ms) => Math.max(0, Math.ceil(ms / 1000))
+  function verificationState(user, now = Date.now()) {
+    if (user.emailVerified) return { verified: true, pending: false, expiresIn: 0, resendAfter: 0, attemptsLeft: 0 }
+    const c = state.codes.get(user.id)
+    if (!c) return { verified: false, pending: false, expiresIn: 0, resendAfter: 0, attemptsLeft: 0 }
+    const expiresIn = seconds(c.expiresAt - now)
+    return { verified: false, pending: expiresIn > 0 && c.attempts < MAX_ATTEMPTS, expiresIn, resendAfter: seconds(c.lastSentAt + state.resendCooldownMs - now), attemptsLeft: MAX_ATTEMPTS - c.attempts }
+  }
+
   function consume(raw, type) {
     const t = state.tokens.get(raw)
     if (!t || t.type !== type || t.used || t.expired) return null
@@ -99,8 +122,8 @@ export function createFakeAuthApi() {
       }
       const user = addUser({ email, password: body.password, displayName: body.displayName })
       const csrfToken = signIn(user)
-      issueToken(user, 'email_verification')
-      return ok({ user: publicUser(user), csrfToken, verificationEmailSent: true }, 201)
+      issueCode(user)
+      return ok({ user: publicUser(user), csrfToken, verificationEmailSent: true, verification: verificationState(user) }, 201)
     },
     'POST /auth/login': ({ body }) => {
       if (state.rateLimited) return fail(429, 'RATE_LIMITED', 'Too many attempts. Please wait a little and try again.')
@@ -120,15 +143,47 @@ export function createFakeAuthApi() {
       if (!t) return fail(400, 'INVALID_TOKEN', 'This link is invalid or has expired. Please request a new one.')
       const user = state.users.find((u) => u.id === t.userId)
       user.emailVerified = true
+      state.codes.delete(user.id)
       return ok({ verified: true, user: publicUser(user) })
+    },
+    'POST /auth/verify-email-code': ({ headers, body }) => {
+      const denied = requireSession(headers)
+      if (denied) return denied
+      if (typeof body.code !== 'string' || !/^\d{6}$/.test(body.code)) {
+        return fail(400, 'VALIDATION_FAILED', 'The request is invalid.', [{ location: 'body', path: 'code', message: 'Enter the 6-digit code from the email.' }])
+      }
+      const user = currentUser()
+      if (user.emailVerified) return ok({ verified: true, user: publicUser(user) })
+      const c = state.codes.get(user.id)
+      if (!c) return fail(400, 'NO_CODE', 'There is no active code. Ask for a new one.')
+      if (c.attempts >= MAX_ATTEMPTS) return fail(400, 'TOO_MANY_ATTEMPTS', 'Too many incorrect attempts. Ask for a new code.', [{ attemptsLeft: 0 }])
+      if (c.expiresAt <= Date.now()) return fail(400, 'CODE_EXPIRED', 'This code has expired. Ask for a new one.')
+      c.attempts += 1
+      if (body.code !== c.code) {
+        const attemptsLeft = MAX_ATTEMPTS - c.attempts
+        if (attemptsLeft === 0) return fail(400, 'TOO_MANY_ATTEMPTS', 'Too many incorrect attempts. Ask for a new code.', [{ attemptsLeft: 0 }])
+        return fail(400, 'INVALID_CODE', `That code isn’t right. ${attemptsLeft} ${attemptsLeft === 1 ? 'attempt' : 'attempts'} left.`, [{ attemptsLeft }])
+      }
+      user.emailVerified = true
+      state.codes.delete(user.id)
+      return ok({ verified: true, user: publicUser(user) })
+    },
+    'GET /auth/verification': () => {
+      const user = currentUser()
+      if (!user) return fail(401, 'UNAUTHENTICATED', 'You need to sign in.')
+      return ok(verificationState(user))
     },
     'POST /auth/resend-verification': ({ headers }) => {
       const denied = requireSession(headers)
       if (denied) return denied
       const user = currentUser()
       if (user.emailVerified) return ok({ sent: false, alreadyVerified: true })
-      issueToken(user, 'email_verification')
-      return ok({ sent: true, alreadyVerified: false }, 202)
+      const resendAfter = verificationState(user).resendAfter
+      if (state.codes.has(user.id) && resendAfter > 0) {
+        return fail(429, 'RESEND_COOLDOWN', `Please wait ${resendAfter} seconds before asking for another code.`, [{ retryAfter: resendAfter }])
+      }
+      issueCode(user)
+      return ok({ sent: true, alreadyVerified: false, verification: verificationState(user) }, 202)
     },
     'POST /auth/forgot-password': ({ body }) => {
       const user = state.users.find((u) => u.email === String(body.email).toLowerCase())
@@ -346,6 +401,12 @@ export function createFakeAuthApi() {
     addUser,
     signIn,
     issueToken,
+    issueCode,
+    /** The code's timers move on, as if `ms` had passed (expiry and the resend cooldown). */
+    ageCode: (user, ms) => {
+      const c = state.codes.get(user.id)
+      if (c) Object.assign(c, { expiresAt: c.expiresAt - ms, lastSentAt: c.lastSentAt - ms })
+    },
     /** The server-side session ends (expiry, revocation) without the client knowing. */
     expireSession: () => {
       state.session = null

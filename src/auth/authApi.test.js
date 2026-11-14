@@ -29,17 +29,27 @@ describe('authApi requests', () => {
     expect(login.user).toMatchObject({ id: ana.id, email: 'ana@example.com' })
     expect(login.csrfToken).toHaveLength(43)
 
-    await authApi.resendVerification(login.csrfToken)
-    await authApi.verifyEmail(api.lastEmail('email_verification').token)
+    const resent = await authApi.resendVerification(login.csrfToken)
+    expect(resent).toMatchObject({ sent: true, alreadyVerified: false, verification: { pending: true, attemptsLeft: 5 } })
+    expect(await authApi.getVerification()).toMatchObject({ verified: false, pending: true, expiresIn: 600, resendAfter: 60 })
+    const code = api.lastEmail('email_verification_code').code
+    expect(await authApi.verifyEmailCode(code, login.csrfToken)).toMatchObject({ verified: true, user: { emailVerified: true } })
+    await authApi.verifyEmail(api.issueToken(ana, 'email_verification')) // links sent before codes still work
     await authApi.logout(login.csrfToken)
 
     expect(api.state.requests.map((r) => `${r.method} ${r.path}`)).toEqual([
       'GET /auth/session',
       'POST /auth/login',
       'POST /auth/resend-verification',
+      'GET /auth/verification',
+      'POST /auth/verify-email-code',
       'POST /auth/verify-email',
       'POST /auth/logout',
     ])
+    const codeRequest = api.requestsTo('/auth/verify-email-code')[0]
+    expect(codeRequest.body).toEqual({ code })
+    expect(codeRequest.headers['X-CSRF-Token']).toBe(login.csrfToken)
+    expect(codeRequest.url).not.toContain(code)
     expect(api.state.requests.every((r) => r.credentials === 'include')).toBe(true)
   })
 

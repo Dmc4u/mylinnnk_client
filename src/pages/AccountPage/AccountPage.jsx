@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate, useLocation } from 'react-router'
 import AuthLayout, { AuthPending } from '../../components/AuthLayout/AuthLayout.jsx'
 import { ActionButton, FormAlert } from '../../components/Form/Form.jsx'
-import ResendVerification from '../../components/ResendVerification/ResendVerification.jsx'
+import VerifyEmailCode from '../../components/VerifyEmailCode/VerifyEmailCode.jsx'
 import { useGuardedLogout } from '../../auth/useGuardedLogout.jsx'
 import AccountDrafts from './AccountDrafts.jsx'
 import AccountOrders from './AccountOrders.jsx'
@@ -67,8 +67,8 @@ export default function AccountPage() {
         <FormAlert tone={verificationEmailSent ? 'success' : 'warn'} title={`Welcome to MyLinnnk, ${user.displayName}!`}>
           <p>
             {verificationEmailSent
-              ? `We’ve sent a link to ${user.email}. Open it to confirm your email address.`
-              : 'We couldn’t send your verification email just now. You can send a new one below.'}
+              ? `We’ve sent a 6-digit code to ${user.email}. Enter it below to confirm your email address.`
+              : 'We couldn’t send your verification email just now. You can ask for a new code below.'}
           </p>
         </FormAlert>
       )}
@@ -107,8 +107,8 @@ export default function AccountPage() {
       {!user.emailVerified && (
         <section className="account-section" aria-labelledby="verify-heading">
           <h2 id="verify-heading">Confirm your email</h2>
-          <p>Confirming your email lets you recover your account. Check your inbox for our link, or send a new one.</p>
-          <ResendVerification />
+          <p>Confirming your email lets you recover your account. Enter the 6-digit code from our email, or ask for a new one.</p>
+          <VerifyEmailCode />
         </section>
       )}
 

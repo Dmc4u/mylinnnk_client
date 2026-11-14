@@ -219,6 +219,32 @@ export default function AuthProvider({ children, api = authApi }) {
     [api, notify],
   )
 
+  /** Confirms the signed-in user's email with the 6-digit code (CSRF). */
+  const verifyEmailCode = useCallback(
+    async (code) => {
+      const data = await withCsrf((csrfToken) => api.verifyEmailCode(code, csrfToken))
+      setState((prev) =>
+        prev.status === 'authenticated' && (!data?.user || prev.user?.id === data.user.id) ? { ...prev, user: { ...prev.user, emailVerified: true } } : prev,
+      )
+      notify('session-changed')
+      return data
+    },
+    [api, notify, withCsrf],
+  )
+
+  /** The pending code's timers (never the code). A 401 means the session ended. */
+  const getVerification = useCallback(async () => {
+    try {
+      return await api.getVerification()
+    } catch (error) {
+      if (error?.status === 401 && userIdRef.current) {
+        setSignedOut('expired')
+        notify('session-changed')
+      }
+      throw error
+    }
+  }, [api, notify, setSignedOut])
+
   const resendVerification = useCallback(async () => {
     const data = await withCsrf((csrfToken) => api.resendVerification(csrfToken))
     if (data?.alreadyVerified) setState((prev) => (prev.user ? { ...prev, user: { ...prev.user, emailVerified: true } } : prev))
@@ -249,13 +275,15 @@ export default function AuthProvider({ children, api = authApi }) {
       register,
       logout,
       verifyEmail,
+      verifyEmailCode,
+      getVerification,
       resendVerification,
       forgotPassword,
       resetPassword,
       clearNotice,
       withCsrf,
     }),
-    [state, refreshSession, login, register, logout, verifyEmail, resendVerification, forgotPassword, resetPassword, clearNotice, withCsrf],
+    [state, refreshSession, login, register, logout, verifyEmail, verifyEmailCode, getVerification, resendVerification, forgotPassword, resetPassword, clearNotice, withCsrf],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -122,7 +122,7 @@ describe('login, logout and CSRF', () => {
     await waitFor(() => expect(tab.text()).toMatch(/^authenticated/))
     api.signIn(ana) // e.g. logged in again in another tab: new session, new CSRF token
     const result = await act(() => tab.auth.resendVerification())
-    expect(result).toEqual({ sent: true, alreadyVerified: false })
+    expect(result).toMatchObject({ sent: true, alreadyVerified: false })
     const calls = api.state.requests.map((r) => `${r.method} ${r.path}`)
     expect(calls.slice(-3)).toEqual(['POST /auth/resend-verification', 'GET /auth/session', 'POST /auth/resend-verification'])
   })
@@ -136,6 +136,34 @@ describe('login, logout and CSRF', () => {
     await expect(tab.auth.resendVerification()).rejects.toMatchObject({ code: 'SESSION_CHANGED' })
     expect(api.requestsTo('/auth/resend-verification')).toHaveLength(1)
     await waitFor(() => expect(tab.text()).toBe('authenticated|ben@example.com|-'))
+  })
+})
+
+describe('email verification code', () => {
+  it('marks the signed-in user verified after a correct code (sent with the CSRF token)', async () => {
+    const api = setup()
+    const ana = api.addUser({ email: 'ana@example.com' })
+    api.signIn(ana)
+    const code = api.issueCode(ana)
+    const tab = renderTab()
+    await waitFor(() => expect(tab.text()).toMatch(/^authenticated/))
+    expect(tab.auth.user.emailVerified).toBe(false)
+    await expect(tab.auth.verifyEmailCode('000000')).rejects.toMatchObject({ code: 'INVALID_CODE', details: [{ attemptsLeft: 4 }] })
+    expect(tab.auth.user.emailVerified).toBe(false)
+    await act(() => tab.auth.verifyEmailCode(code))
+    expect(tab.auth.user.emailVerified).toBe(true)
+    expect(api.requestsTo('/auth/verify-email-code').every((r) => r.headers['X-CSRF-Token'] === api.state.session.csrfToken)).toBe(true)
+    expect(JSON.stringify(tab.auth)).not.toContain(code)
+  })
+
+  it('a 401 while reading the code timers signs out with an "expired" notice', async () => {
+    const api = setup()
+    api.signIn(api.addUser({ email: 'ana@example.com' }))
+    const tab = renderTab()
+    await waitFor(() => expect(tab.text()).toMatch(/^authenticated/))
+    api.expireSession()
+    await expect(tab.auth.getVerification()).rejects.toMatchObject({ status: 401 })
+    await waitFor(() => expect(tab.text()).toBe('anonymous|-|expired'))
   })
 })
 

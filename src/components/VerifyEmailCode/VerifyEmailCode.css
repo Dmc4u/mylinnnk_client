@@ -1,0 +1,24 @@
+.verify-code {
+  display: grid;
+  gap: 18px;
+}
+
+/* Large, evenly spaced digits that are easy to check against the email. */
+.verify-code__input {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.45em;
+  text-align: center;
+  text-indent: 0.45em; /* balances the trailing letter-spacing */
+}
+
+.verify-code__input::placeholder {
+  letter-spacing: 0.45em;
+}
+
+.verify-code__resend {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}

@@ -88,15 +88,22 @@ const post = (path, body = {}, csrfToken) => apiRequest(path, { method: 'POST', 
 export const authApi = {
   /** → { authenticated, user, csrfToken } */
   getSession: () => apiRequest('/auth/session'),
-  /** → { user, csrfToken, verificationEmailSent } */
+  /** → { user, csrfToken, verificationEmailSent, verification } (a 6-digit code is emailed) */
   register: ({ email, password, displayName }) => post('/auth/register', { email, password, displayName }),
   /** → { user, csrfToken } */
   login: ({ email, password }) => post('/auth/login', { email, password }),
   /** → { loggedOut: true } (signed in + CSRF) */
   logout: (csrfToken) => post('/auth/logout', {}, csrfToken),
-  /** → { verified: true, user } */
+  /** → { verified: true, user } (links sent before codes existed) */
   verifyEmail: (token) => post('/auth/verify-email', { token }),
-  /** → { sent, alreadyVerified } (signed in + CSRF) */
+  /**
+   * → { verified: true, user } (signed in + CSRF). Errors: INVALID_CODE (details[0].attemptsLeft),
+   * TOO_MANY_ATTEMPTS, CODE_EXPIRED, NO_CODE, CODE_REPLACED. The code is never logged or kept.
+   */
+  verifyEmailCode: (code, csrfToken) => post('/auth/verify-email-code', { code }, csrfToken),
+  /** → { verified, pending, expiresIn, resendAfter, attemptsLeft } (seconds; signed in) */
+  getVerification: () => apiRequest('/auth/verification'),
+  /** → { sent, alreadyVerified, verification? } (signed in + CSRF); 429 RESEND_COOLDOWN (details[0].retryAfter) */
   resendVerification: (csrfToken) => post('/auth/resend-verification', {}, csrfToken),
   /** → { message } (same answer whether or not the account exists) */
   forgotPassword: (email) => post('/auth/forgot-password', { email }),
