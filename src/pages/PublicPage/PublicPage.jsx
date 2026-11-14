@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import TemplateRender from '../../components/TemplateRender/TemplateRender.jsx'
 import BrandMark from '../../components/Brand/BrandMark.jsx'
+import NeonRingLoader from '../../components/Loading/NeonRingLoader.jsx'
+import useDelayedLoading from '../../hooks/useDelayedLoading.js'
 import { loadPublishedPage } from './publicPage.js'
 import './PublicPage.css'
 
@@ -31,6 +33,7 @@ export default function PublicPage() {
 
   // A new address (client-side navigation) starts in the loading state.
   const current = state.slug === slug ? state : { status: 'loading', slug }
+  const showLoader = useDelayedLoading(current.status === 'loading')
 
   if (current.status === 'ready') {
     return (
@@ -43,11 +46,9 @@ export default function PublicPage() {
 
   if (current.status === 'loading') {
     return (
-      <main className="public-state">
+      <main className="public-page neon-loading-region" aria-busy="true">
         <title>Loading… · MyLinnnk</title>
-        <p className="public-state__loading" role="status">
-          Loading page…
-        </p>
+        {showLoader && <NeonRingLoader mode="full-page" size="lg" message="Loading page…" />}
       </main>
     )
   }

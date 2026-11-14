@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import BrandMark from '../../components/Brand/BrandMark.jsx'
+import NeonRingLoader from '../../components/Loading/NeonRingLoader.jsx'
+import useDelayedLoading from '../../hooks/useDelayedLoading.js'
 import { TEMPLATES, getTemplateBySlug } from '../../data/templates.js'
 import { authHref } from '../../auth/redirects.js'
 import { useAuth } from '../../auth/useAuth.js'
@@ -60,6 +62,7 @@ export default function EditorPage() {
   const userId = user?.id ?? null
 
   const [state, setState] = useState({ phase: 'loading' })
+  const showLoader = useDelayedLoading(state.phase === 'loading')
   const [drafts, setDrafts] = useState([])
   const [cloudDrafts, setCloudDrafts] = useState(null)
   const [reloadKey, setReloadKey] = useState(0)
@@ -172,7 +175,13 @@ export default function EditorPage() {
     )
   }
 
-  if (state.phase === 'loading') return <div className="ed-loading" role="status">Opening the editor…</div>
+  if (state.phase === 'loading') {
+    return (
+      <main className="neon-loading-region" aria-busy="true">
+        {showLoader && <NeonRingLoader mode="full-page" size="lg" message="Opening the editor…" />}
+      </main>
+    )
+  }
 
   if (state.phase === 'signin') {
     return (

@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import MagneticButton from '../UI/MagneticButton.jsx'
 import './Form.css'
 
 /**
@@ -98,6 +99,13 @@ export function FormAlert({ tone = 'error', title, children, id }) {
 
 /** Primary submit button with a loading state. */
 export function SubmitButton({ busy, busyLabel, children, variant = 'primary', className = '', ...rest }) {
+  if (variant === 'primary') {
+    return (
+      <MagneticButton type="submit" className={`btn btn--primary btn--md btn--block ${className}`.trim()} loading={busy} loadingLabel={busyLabel} {...rest}>
+        <span className="btn__label">{children}</span>
+      </MagneticButton>
+    )
+  }
   return (
     <button type="submit" className={`btn btn--${variant} btn--md btn--block ${className}`.trim()} disabled={busy} aria-busy={busy || undefined} {...rest}>
       {busy && <span className="btn__spinner" aria-hidden="true" />}

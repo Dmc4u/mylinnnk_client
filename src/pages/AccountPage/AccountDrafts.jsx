@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog.jsx'
+import DraftListSkeleton from '../../components/Loading/DraftListSkeleton.jsx'
+import MagneticButton from '../../components/UI/MagneticButton.jsx'
 import { ActionButton, FormAlert } from '../../components/Form/Form.jsx'
 import { errorMessage } from '../../auth/messages.js'
 import { useAuth } from '../../auth/useAuth.js'
@@ -74,11 +76,11 @@ function CloudDrafts() {
   }
 
   return (
-    <section className="account-section" aria-labelledby="cloud-drafts-heading">
+    <section className="account-section" aria-labelledby="cloud-drafts-heading" aria-busy={state.phase === 'loading'}>
       <h2 id="cloud-drafts-heading">Your pages</h2>
       <p>Drafts saved to your account. Open them on any device after logging in.</p>
       {notice && <FormAlert tone={notice.tone}>{notice.text}</FormAlert>}
-      {state.phase === 'loading' && <p className="account-drafts__empty">Loading your drafts…</p>}
+      {state.phase === 'loading' && <DraftListSkeleton />}
       {state.phase === 'error' && (
         <FormAlert tone="warn" title="Your drafts couldn’t be loaded.">
           <p>{state.message}</p>
@@ -297,9 +299,9 @@ function ImportGuestDrafts() {
       </ul>
       {damaged.length === candidates.length ? null : (
         <div className="auth-actions auth-actions--start">
-          <ActionButton variant="primary" size="sm" busy={running} busyLabel="Importing…" disabled={toImport.length === 0} onClick={() => setConfirming(true)}>
+          <MagneticButton variant="secondary" size="sm" className="btn btn--sm" loading={running} loadingLabel="Importing…" disabled={toImport.length === 0} onClick={() => setConfirming(true)}>
             {toImport.length > 1 ? `Import ${toImport.length} drafts` : 'Import selected draft'}
-          </ActionButton>
+          </MagneticButton>
           <ActionButton
             size="sm"
             disabled={running}

@@ -1,0 +1,134 @@
+.neon-ring-loader {
+  --neon-ring-size: 3rem;
+  --neon-ring-stroke: 3px;
+  --neon-ring-cyan: #22d3ee;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.875rem;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  vertical-align: middle;
+  color: var(--muted, #59627a);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+.neon-ring-loader--sm {
+  --neon-ring-size: 1.5rem;
+  --neon-ring-stroke: 2px;
+  gap: 0.625rem;
+}
+
+.neon-ring-loader--lg {
+  --neon-ring-size: 4.5rem;
+  --neon-ring-stroke: 4px;
+}
+
+.neon-ring-loader__ring {
+  position: relative;
+  box-sizing: border-box;
+  flex: none;
+  inline-size: var(--neon-ring-size);
+  block-size: var(--neon-ring-size);
+  border-width: var(--neon-ring-stroke);
+  border-style: solid;
+  border-color: rgb(139 92 246 / 0.16);
+  border-top-color: var(--neon-ring-cyan);
+  border-bottom-color: var(--purple-500, #8b5cf6);
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgb(34 211 238 / 0.3), inset 0 0 6px rgb(139 92 246 / 0.18);
+  pointer-events: none;
+}
+
+.neon-ring-loader__message {
+  min-inline-size: 0;
+  max-inline-size: 28rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.neon-ring-loader__message--sr-only {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.neon-ring-loader--centered,
+.neon-ring-loader--full-page {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  min-block-size: 10rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.neon-ring-loader--full-page {
+  min-block-size: 100vh;
+  min-block-size: 100svh;
+  gap: 1.5rem;
+  color: #c7cee0;
+  background: radial-gradient(ellipse at 50% 45%, rgb(45 212 191 / 0.06), transparent 55%), var(--navy-950, #070f22);
+}
+
+.neon-loading-region {
+  display: grid;
+  place-items: center;
+  min-block-size: 100vh;
+  min-block-size: 100svh;
+  background: var(--navy-950, #070f22);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .neon-ring-loader {
+    animation: mylinnnk-neon-loader-appear 160ms ease-out both;
+  }
+
+  .neon-ring-loader__ring {
+    animation: mylinnnk-neon-ring-turn 1s linear infinite;
+  }
+}
+
+@keyframes mylinnnk-neon-loader-appear {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes mylinnnk-neon-ring-turn {
+  to { transform: rotate(1turn); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neon-ring-loader { animation: none; }
+  .neon-ring-loader__ring {
+    animation: none;
+    transform: none;
+  }
+
+  .neon-ring-loader__message--sr-only {
+    position: static;
+    inline-size: auto;
+    block-size: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+}
+
+@media (forced-colors: active) {
+  .neon-ring-loader__ring {
+    border: var(--neon-ring-stroke) solid GrayText;
+    border-inline-end-color: Highlight;
+    box-shadow: none;
+  }
+  .neon-ring-loader--full-page { color: CanvasText; background: Canvas; }
+}

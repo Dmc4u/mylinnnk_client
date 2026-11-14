@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import { Link } from 'react-router'
 import BrandMark from '../../components/Brand/BrandMark.jsx'
+import MagneticButton from '../../components/UI/MagneticButton.jsx'
 import { DEVICES } from '../config/devices.js'
 import Icon from './icons.jsx'
 
@@ -97,9 +98,9 @@ export default function Toolbar({ title, onTitle, history, device, onDevice, zoo
         <button type="button" className="ed-btn ed-btn--ghost ed-btn--sm" onClick={onSave}>
           <span>Save draft</span>
         </button>
-        <button type="button" className="ed-btn ed-btn--primary ed-btn--sm" onClick={onPublish}>
+        <MagneticButton variant="navy" size="sm" className="ed-btn ed-btn--primary ed-btn--sm" onClick={onPublish}>
           <span>Publish</span>
-        </button>
+        </MagneticButton>
       </div>
     </header>
   )

@@ -1,0 +1,39 @@
+.draft-list-skeleton {
+  display: grid;
+  gap: 10px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.draft-list-skeleton__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  min-block-size: 76px;
+  padding: 14px 16px;
+  border: 1px solid var(--line, #e6e8ee);
+  border-radius: 14px;
+  background: var(--surface, #fff);
+}
+
+.draft-list-skeleton__text {
+  display: grid;
+  flex: 1 1 180px;
+  gap: 10px;
+  min-inline-size: 0;
+}
+
+.draft-list-skeleton__title,
+.draft-list-skeleton__meta,
+.draft-list-skeleton__action {
+  display: block;
+  max-inline-size: 100%;
+  border-radius: 6px;
+  background: rgb(10 22 48 / 0.08);
+}
+
+.draft-list-skeleton__title { inline-size: 55%; block-size: 1rem; }
+.draft-list-skeleton__meta { inline-size: 80%; block-size: 0.75rem; }
+.draft-list-skeleton__action { inline-size: 5rem; block-size: 2.5rem; border-radius: 999px; }

@@ -1,5 +1,5 @@
 import { useId } from 'react'
-import { Link } from 'react-router'
+import MagneticButton from '../UI/MagneticButton.jsx'
 import { CREATE_PAGE_HREF } from '../../utils/navigation.js'
 import { formatAmount, planTerms, priceDescription, priceParts } from '../../editor/config/plans.js'
 
@@ -95,13 +95,13 @@ export default function PlanCard({ plan, currency, index, offset, selected, onSe
 
         <div className="plan-card__action">
           {paid ? (
-            <button type="button" className="plan-btn" aria-pressed={selected} onClick={() => onSelect(plan.id)}>
+            <MagneticButton className="plan-btn" aria-pressed={selected} onClick={() => onSelect(plan.id)}>
               Choose <span className="sr-only">{plan.name}</span> plan
-            </button>
+            </MagneticButton>
           ) : (
-            <Link to={CREATE_PAGE_HREF} className="plan-btn plan-btn--quiet">
+            <MagneticButton to={CREATE_PAGE_HREF} variant="secondary" className="plan-btn plan-btn--quiet">
               Start free
-            </Link>
+            </MagneticButton>
           )}
         </div>
       </article>

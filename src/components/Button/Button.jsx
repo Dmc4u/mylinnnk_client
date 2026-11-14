@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import MagneticButton from '../UI/MagneticButton.jsx'
 import './Button.css'
 
 /**
@@ -18,6 +19,10 @@ export default function Button({ to, href = '#', variant = 'primary', size = 'md
       )}
     </>
   )
+
+  if (variant === 'primary') {
+    return <MagneticButton to={to} href={href} size={size} className={classes} {...rest}>{inner}</MagneticButton>
+  }
 
   if (to) {
     return (
