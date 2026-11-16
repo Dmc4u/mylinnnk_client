@@ -1,31 +1,33 @@
-import { useState } from 'react'
-import { Link, Navigate, useLocation } from 'react-router'
+import { useCallback, useEffect, useState } from 'react'
+import { Navigate, NavLink, Outlet, useLocation } from 'react-router'
 import AuthLayout, { AuthPending } from '../../components/AuthLayout/AuthLayout.jsx'
 import { ActionButton, FormAlert } from '../../components/Form/Form.jsx'
-import VerifyEmailCode from '../../components/VerifyEmailCode/VerifyEmailCode.jsx'
 import { useGuardedLogout } from '../../auth/useGuardedLogout.jsx'
-import AccountDrafts from './AccountDrafts.jsx'
-import AccountOrders from './AccountOrders.jsx'
+import { cloudDraftApi } from '../../editor/services/cloudDrafts.js'
+import { useDashboardData } from './dashboardData.js'
 import { authHref } from '../../auth/redirects.js'
 import { useAuth } from '../../auth/useAuth.js'
 import './AccountPage.css'
 
-const formatDate = (iso) => {
-  const date = new Date(iso)
-  return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
-}
+/** The dashboard's views (React Router routes under /dashboard, see App.jsx). */
+const DASHBOARD_VIEWS = [
+  { to: '/dashboard', label: 'Overview', end: true },
+  { to: '/dashboard/publications', label: 'Published pages' },
+  { to: '/dashboard/drafts', label: 'Drafts' },
+  { to: '/dashboard/payments', label: 'Payments' },
+  { to: '/dashboard/support', label: 'Help & support' },
+  { to: '/dashboard/account', label: 'Account' },
+]
 
 /**
- * /account: who is signed in, email verification and log out.
- * (The full dashboard with saved pages comes in a later stage.)
+ * /dashboard/*: the customer dashboard layout. Checks the session (log in first if needed), then shows a
+ * persistent navigation with the active view highlighted and the view itself (<Outlet>). The account's
+ * publications, orders and drafts are loaded once here (owner-only endpoints) and shared with the views.
  */
 export default function AccountPage() {
   const { status, user, notice, refreshSession } = useAuth()
-  const guardedLogout = useGuardedLogout()
-  const location = useLocation()
+  const { pathname } = useLocation()
   const [retrying, setRetrying] = useState(false)
-  const welcome = location.state?.welcome === true
-  const verificationEmailSent = location.state?.verificationEmailSent !== false
 
   if (status === 'loading') {
     return (
@@ -56,74 +58,70 @@ export default function AccountPage() {
   }
 
   // Just logged out here or in another tab: go home. Otherwise (never signed in, expired): log in first.
-  if (status !== 'authenticated') return <Navigate to={notice === 'signed-out' ? '/' : authHref('login', '/account')} replace />
+  if (status !== 'authenticated') return <Navigate to={notice === 'signed-out' ? '/' : authHref('login', pathname)} replace />
 
-  const memberSince = formatDate(user.createdAt)
+  return <DashboardShell user={user} />
+}
+
+/** Signed in: the layout and the shared data (rendered only once the session is known). */
+function DashboardShell({ user }) {
+  const data = useDashboardData()
+  const guardedLogout = useGuardedLogout()
+  const [drafts, setDrafts] = useState(null)
+  const location = useLocation()
+
+  const loadDrafts = useCallback(async () => {
+    try {
+      setDrafts(await cloudDraftApi.list())
+    } catch {
+      setDrafts(null) // the count shows as not loaded; the Drafts view explains the problem
+    }
+  }, [])
+  useEffect(() => {
+    queueMicrotask(loadDrafts)
+  }, [loadDrafts])
+
   const initial = (user.displayName.trim()[0] ?? '?').toUpperCase()
+  const context = {
+    user,
+    data,
+    drafts,
+    onDrafts: setDrafts,
+    guardedLogout,
+    welcome: location.state?.welcome === true,
+    verificationEmailSent: location.state?.verificationEmailSent !== false,
+  }
 
   return (
-    <AuthLayout title="Your account" pageTitle="Account" wide>
-      {welcome && (
-        <FormAlert tone={verificationEmailSent ? 'success' : 'warn'} title={`Welcome to MyLinnnk, ${user.displayName}!`}>
-          <p>
-            {verificationEmailSent
-              ? `We’ve sent a 6-digit code to ${user.email}. Enter it below to confirm your email address.`
-              : 'We couldn’t send your verification email just now. You can ask for a new code below.'}
-          </p>
-        </FormAlert>
-      )}
-      <FormAlert>{guardedLogout.error}</FormAlert>
-      {guardedLogout.dialog}
-
-      <div className="account-profile">
-        <span className="account-profile__avatar" aria-hidden="true">
-          {initial}
-        </span>
-        <div className="account-profile__text">
-          <p className="account-profile__name">{user.displayName}</p>
-          <p className="account-profile__email">{user.email}</p>
-        </div>
-      </div>
-
-      <dl className="account-details">
-        <div>
-          <dt>Email</dt>
-          <dd>
-            {user.emailVerified ? (
-              <span className="account-badge account-badge--ok">Confirmed</span>
-            ) : (
-              <span className="account-badge account-badge--pending">Not confirmed yet</span>
-            )}
-          </dd>
-        </div>
-        {memberSince && (
-          <div>
-            <dt>Member since</dt>
-            <dd>{memberSince}</dd>
+    <div className="dash">
+      <aside className="dash__side">
+        <div className="dash__who">
+          <span className="account-profile__avatar" aria-hidden="true">
+            {initial}
+          </span>
+          <div className="dash__who-text">
+            <p className="dash__who-name">{user.displayName}</p>
+            <p className="dash__who-email">{user.email}</p>
           </div>
-        )}
-      </dl>
-
-      {!user.emailVerified && (
-        <section className="account-section" aria-labelledby="verify-heading">
-          <h2 id="verify-heading">Confirm your email</h2>
-          <p>Confirming your email lets you recover your account. Enter the 6-digit code from our email, or ask for a new one.</p>
-          <VerifyEmailCode />
-        </section>
-      )}
-
-      <AccountDrafts />
-
-      <AccountOrders />
-
-      <div className="account-footer">
-        <ActionButton busy={guardedLogout.busy} busyLabel="Logging out…" onClick={guardedLogout.requestLogout}>
+        </div>
+        <nav className="dash__nav" aria-label="Dashboard">
+          {DASHBOARD_VIEWS.map((v) => (
+            <NavLink key={v.to} to={v.to} end={v.end}>
+              {v.label}
+            </NavLink>
+          ))}
+        </nav>
+        {/* Logging out is available from every view (it warns first if this device holds unsaved changes). */}
+        <ActionButton className="dash__logout" busy={guardedLogout.busy} busyLabel="Logging out…" onClick={guardedLogout.requestLogout}>
           Log out
         </ActionButton>
-        <p className="auth-note">
-          Forgot your password? <Link to="/forgot-password">Reset it</Link>
-        </p>
+      </aside>
+
+      <div className="dash__main" key={location.pathname}>
+        <FormAlert>{guardedLogout.error}</FormAlert>
+        {guardedLogout.dialog}
+        <Outlet context={context} />
       </div>
-    </AuthLayout>
+    </div>
   )
 }

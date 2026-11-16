@@ -35,16 +35,7 @@ export default function TemplatesPage() {
     setParams(next, { replace: true, preventScrollReset: true })
   }
 
-  // Counts reflect the current search, so chips show what each filter would return.
   const searchMatches = useMemo(() => TEMPLATES.filter((t) => matchesQuery(t, query)), [query])
-  const counts = useMemo(() => {
-    const byCategory = Object.fromEntries(CATEGORIES.map((c) => [c.id, 0]))
-    searchMatches.forEach((t) => {
-      byCategory[t.category] += 1
-    })
-    return byCategory
-  }, [searchMatches])
-
   const results = category === 'all' ? searchMatches : searchMatches.filter((t) => t.category === category)
   const hasFilters = query || category !== 'all'
 
@@ -100,7 +91,7 @@ export default function TemplatesPage() {
               aria-pressed={category === 'all'}
               onClick={() => updateParams({ category: 'all' })}
             >
-              All <span className="gallery__chip-count">{searchMatches.length}</span>
+              All
             </button>
             {CATEGORIES.map((c) => (
               <button
@@ -110,15 +101,16 @@ export default function TemplatesPage() {
                 aria-pressed={category === c.id}
                 onClick={() => updateParams({ category: c.id })}
               >
-                {c.label} <span className="gallery__chip-count">{counts[c.id]}</span>
+                {c.label}
               </button>
             ))}
           </div>
 
-          <p className="gallery__status" role="status">
-            {results.length === 1 ? '1 template' : `${results.length} templates`}
-            {category !== 'all' && ` in ${CATEGORY_LABELS[category]}`}
-            {query && ` matching “${query}”`}
+          {/* Announced to screen readers when the filter changes; no counts are shown to visitors. */}
+          <p className="sr-only" role="status">
+            {results.length === 0
+              ? 'No templates found'
+              : `Showing ${category === 'all' ? 'all templates' : `${CATEGORY_LABELS[category]} templates`}${query ? ` matching “${query}”` : ''}`}
           </p>
 
           {results.length > 0 ? (

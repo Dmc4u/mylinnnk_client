@@ -63,7 +63,7 @@ function VerifyWithCode() {
     return (
       <AuthLayout title="Confirm your email" pageTitle="Verify email">
         <p className="auth-note">
-          <Link to={authHref('login', '/account')}>Log in</Link> to enter the code from your verification email.
+          <Link to={authHref('login', '/dashboard')}>Log in</Link> to enter the code from your verification email.
         </p>
       </AuthLayout>
     )
@@ -133,7 +133,7 @@ function VerifyWithLink({ token }) {
       <AuthLayout title="Email confirmed" pageTitle="Verify email">
         <FormAlert tone="success" title="Thanks, your email address is confirmed." />
         <div className="auth-actions">
-          {signedIn ? <Button to="/account">Go to your account</Button> : <Button to="/login">Log in</Button>}
+          {signedIn ? <Button to="/dashboard">Go to your account</Button> : <Button to="/login">Log in</Button>}
           <Button to="/templates" variant="ghost">
             Browse templates
           </Button>
@@ -162,7 +162,7 @@ function VerifyWithLink({ token }) {
         <>
           <FormAlert tone="success" title="Your email address is already confirmed." />
           <div className="auth-actions">
-            <Button to="/account">Go to your account</Button>
+            <Button to="/dashboard">Go to your account</Button>
           </div>
         </>
       ) : (
@@ -174,7 +174,7 @@ function VerifyWithLink({ token }) {
             <VerifyEmailCode resendVariant="primary" />
           ) : (
             <p className="auth-note">
-              <Link to={authHref('login', '/account')}>Log in</Link> to get a verification code.
+              <Link to={authHref('login', '/dashboard')}>Log in</Link> to get a verification code.
             </p>
           )}
         </>

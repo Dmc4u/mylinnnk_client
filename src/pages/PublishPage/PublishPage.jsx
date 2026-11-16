@@ -2,10 +2,14 @@ import { useEffect, useId, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router'
 import { authHref } from '../../auth/redirects.js'
 import { useAuth } from '../../auth/useAuth.js'
+import CountryDialog from '../../components/CountryDialog/CountryDialog.jsx'
 import usePlans from '../../components/Pricing/usePlans.js'
+import { contactHref, quoteRequestHref } from '../../utils/contact.js'
 import { formatAmount, planTerms } from '../../editor/config/plans.js'
 import { publishingApi } from '../../services/publishingApi.js'
 import '../OrderPage/OrderPage.css'
+import AdminPublishPanel from './AdminPublishPanel.jsx'
+import { savePriceCountry } from '../../components/Pricing/priceDisplay.js'
 
 /**
  * /publish/:pageId — the customer's publishing journey for one cloud draft:
@@ -15,10 +19,10 @@ import '../OrderPage/OrderPage.css'
  */
 export default function PublishPage() {
   const { pageId } = useParams()
-  const { status: authStatus, user, withCsrf } = useAuth()
+  const { status: authStatus, user, isAdmin, withCsrf } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
-  const plans = usePlans()
+  const plans = usePlans({ fresh: true }) // the server's current payment mode, not a copy from earlier
   const slugId = useId()
   const [publication, setPublication] = useState({ status: 'loading' })
   const [slugInput, setSlugInput] = useState('')
@@ -26,6 +30,8 @@ export default function PublishPage() {
   const [planId, setPlanId] = useState(null)
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState(null)
+  const [countryDialog, setCountryDialog] = useState(null) // null | { error, unavailable }
+  const [country, setCountry] = useState(null) // the last answer, kept in memory only for this page
 
   useEffect(() => {
     if (authStatus !== 'authenticated') return undefined
@@ -63,18 +69,37 @@ export default function PublishPage() {
     }
   }
 
-  const order = async () => {
+  // "Get payment details" first asks for the customer's country (the dialog keeps this page, its
+  // address and the chosen plan underneath); the API decides whether payment is possible there.
+  const openCountryDialog = () => {
+    setError(null)
+    setCountryDialog({ error: null, unavailable: false })
+  }
+
+  const order = async (country) => {
     setBusy('order')
     setError(null)
+    setCountry(country)
+    savePriceCountry(country) // the country confirmed here also sets how prices are shown on this device
+    setCountryDialog({ error: null, unavailable: false })
     try {
-      const data = await withCsrf((csrf) => publishingApi.createOrder(csrf, pageId, planId))
+      const data = await withCsrf((csrf) => publishingApi.createOrder(csrf, pageId, planId, country))
+      setCountryDialog(null)
       navigate(`/orders/${data.order.reference}`)
     } catch (err) {
-      setError(err)
+      if (err.code === 'PAYMENT_NOT_AVAILABLE_IN_COUNTRY') setCountryDialog({ error: null, unavailable: true })
+      else if (err.code === 'VALIDATION_FAILED' && err.details?.some((d) => d.path === 'country')) setCountryDialog({ error: 'Choose your country from the list.', unavailable: false })
+      else {
+        setCountryDialog(null)
+        setError(err)
+      }
     } finally {
       setBusy(null)
     }
   }
+
+  const chosenPlan = paidPlans.find((p) => p.id === planId)
+  const quoteHref = (country) => quoteRequestHref({ planId: chosenPlan?.id, pageAddress: pub?.slug ? `mylinnnk.com/p/${pub.slug}` : null, country })
 
   return (
     <main className="order-page">
@@ -114,6 +139,10 @@ export default function PublishPage() {
           )}
         </section>
 
+        {isAdmin && publication.status === 'ready' && (
+          <AdminPublishPanel pageId={pageId} publication={pub} withCsrf={withCsrf} onChange={(value) => setPublication({ status: 'ready', value })} />
+        )}
+
         <section className="order-section" aria-labelledby={`${slugId}-plans`}>
           <h2 id={`${slugId}-plans`}>2. Plan</h2>
           {plans.status === 'loading' && <p role="status">Loading prices…</p>}
@@ -131,26 +160,45 @@ export default function PublishPage() {
           </fieldset>
         </section>
 
+        {chosenPlan?.price && (
+          <p className="order-payable" role="status">
+            Amount payable: <strong>{formatAmount(chosenPlan.price.amountMinor, plans.data.currency)}</strong> (NGN), by bank transfer. This is the exact amount you’ll
+            transfer; any price shown in US dollars elsewhere is only an estimate.
+          </p>
+        )}
         {error && (
           <p className="order-error" role="alert">
             {error.message}
             {error.code === 'ORDER_ALREADY_OPEN' && (
               <>
                 {' '}
-                <Link to="/account#payments">See your payments</Link>
+                <Link to="/dashboard/payments">See your payments</Link>
               </>
             )}
           </p>
         )}
         <div className="order-actions">
-          <button type="button" className="order-btn order-btn--primary" onClick={order} disabled={!checkout?.available || !pub || !planId || busy === 'order'}>
+          <button type="button" className="order-btn order-btn--primary" onClick={openCountryDialog} disabled={!checkout?.available || !pub || !planId || busy === 'order'}>
             {busy === 'order' ? 'Creating…' : 'Get payment details'}
           </button>
-          <Link to="/account" className="order-link">
+          <Link to="/dashboard" className="order-link">
             Back to my account
           </Link>
         </div>
       </div>
+      {countryDialog && (
+        <CountryDialog
+          initialCountry={country}
+          busy={busy === 'order'}
+          error={countryDialog.error}
+          unavailable={countryDialog.unavailable}
+          quoteHref={quoteHref}
+          contactHref={contactHref()}
+          onContinue={order}
+          onChange={() => setCountryDialog((d) => (d && (d.unavailable || d.error) ? { error: null, unavailable: false } : d))}
+          onClose={() => setCountryDialog(null)}
+        />
+      )}
     </main>
   )
 }

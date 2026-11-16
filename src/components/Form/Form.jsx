@@ -51,6 +51,94 @@ export function TextField({ label, name, type = 'text', value, onChange, error, 
 }
 
 /** Password input with a show/hide toggle. */
+/** A labelled <select> with the same hint / error pattern as TextField. options: [[value, label], …]. */
+export function SelectField({ label, name, value, onChange, error, hint, options, placeholder = 'Choose…', required = true, ...rest }) {
+  const id = useId()
+  const hintId = hint ? `${id}-hint` : undefined
+  const errorId = error ? `${id}-error` : undefined
+  return (
+    <div className={`field${error ? ' field--invalid' : ''}`}>
+      <label className="field__label" htmlFor={id}>
+        {label}
+      </label>
+      <div className="field__control">
+        <select
+          id={id}
+          name={name}
+          className="field__input field__select"
+          value={value}
+          onChange={(event) => onChange(name, event.target.value)}
+          required={required}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={[hintId, errorId].filter(Boolean).join(' ') || undefined}
+          {...rest}
+        >
+          <option value="">{placeholder}</option>
+          {options.map(([v, text]) => (
+            <option key={v} value={v}>
+              {text}
+            </option>
+          ))}
+        </select>
+      </div>
+      {hint && (
+        <p className="field__hint" id={hintId}>
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p className="field__error" id={errorId}>
+          <ErrorIcon />
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/** A labelled <textarea> with a live character count. */
+export function TextAreaField({ label, name, value, onChange, error, hint, maxLength, rows = 6, required = true, ...rest }) {
+  const id = useId()
+  const hintId = `${id}-hint`
+  const errorId = error ? `${id}-error` : undefined
+  return (
+    <div className={`field${error ? ' field--invalid' : ''}`}>
+      <label className="field__label" htmlFor={id}>
+        {label}
+      </label>
+      <div className="field__control">
+        <textarea
+          id={id}
+          name={name}
+          className="field__input field__textarea"
+          value={value}
+          rows={rows}
+          maxLength={maxLength}
+          onChange={(event) => onChange(name, event.target.value)}
+          required={required}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={[hintId, errorId].filter(Boolean).join(' ')}
+          {...rest}
+        />
+      </div>
+      <p className="field__hint field__hint--split" id={hintId}>
+        <span>{hint}</span>
+        {maxLength && (
+          <span className="field__count">
+            {value.length}/{maxLength}
+          </span>
+        )}
+      </p>
+      {error && (
+        <p className="field__error" id={errorId}>
+          <ErrorIcon />
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export function PasswordField({ label = 'Password', autoComplete = 'current-password', ...props }) {
   const [visible, setVisible] = useState(false)
   return (

@@ -44,6 +44,8 @@ afterEach(async () => {
   // The price list is shared by the page's components (module state) too.
   const { resetPlansCache } = await import('../components/Pricing/usePlans.js')
   resetPlansCache()
+  const { resetDetectedCountry } = await import('../components/Pricing/priceDisplay.js')
+  resetDetectedCountry()
   vi.unstubAllGlobals()
   localStorage.clear()
   sessionStorage.clear()

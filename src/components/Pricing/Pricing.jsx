@@ -2,8 +2,12 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '../../auth/useAuth.js'
 import { CREATE_PAGE_HREF } from '../../utils/navigation.js'
+import { quoteRequestHref } from '../../utils/contact.js'
 import { planTerms, priceParts } from '../../editor/config/plans.js'
 import PlanCard, { Check } from './PlanCard.jsx'
+import PriceCountry from './PriceCountry.jsx'
+import { displayPrice, usePriceCountry } from './priceDisplay.js'
+import { displayCurrencyFor } from '../../config/countryCurrency.js'
 import useAutoCycle from './useAutoCycle.js'
 import usePlans from './usePlans.js'
 import './Pricing.css'
@@ -39,7 +43,9 @@ const shortName = (plan) => plan.name.replace(/^Professional /, '').replace(/ Ed
  * Props: selected (plan id | null), onSelect(planId).
  */
 export default function Pricing({ selected = null, onSelect }) {
-  const { status, data, error, retry } = usePlans()
+  const [priceCountry, setPriceCountry, { detected: countryDetected }] = usePriceCountry()
+  // Estimates in the chosen country's currency (USD when none is chosen); prices to pay stay NGN.
+  const { status, data, error, retry } = usePlans({ display: displayCurrencyFor(priceCountry) })
   const deckRef = useRef(null)
   const stackRef = useRef(null)
   const swipe = useRef(null)
@@ -149,6 +155,11 @@ export default function Pricing({ selected = null, onSelect }) {
     if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(e.clientY - start.y)) browse(front + (dx < 0 ? 1 : -1))
   }
 
+  const chosenPrice = chosen?.price ? displayPrice(chosen, data, priceCountry) : null
+  // The rate provider's terms ask for attribution wherever its rates are used: shown only while
+  // US-dollar estimates from it are on screen (never for NGN prices or a manual rate).
+  const providerAttribution = data.estimate?.source === 'exchangerate-api' && fixed.some((p) => displayPrice(p, data, priceCountry).mode === 'estimate')
+
   return (
     <div className="pricing">
       {data.checkout?.available === false && (
@@ -157,6 +168,8 @@ export default function Pricing({ selected = null, onSelect }) {
           nothing can be bought yet.
         </p>
       )}
+
+      <PriceCountry country={priceCountry} onChange={setPriceCountry} detected={countryDetected} />
 
       <div
         ref={stackRef}
@@ -179,6 +192,7 @@ export default function Pricing({ selected = null, onSelect }) {
               key={plan.id}
               plan={plan}
               currency={data.currency}
+              display={displayPrice(plan, data, priceCountry)}
               index={i}
               offset={offsetFrom(i, front, fixed.length)}
               selected={selected === plan.id}
@@ -241,6 +255,14 @@ export default function Pricing({ selected = null, onSelect }) {
         </div>
       </div>
 
+      {providerAttribution && (
+        <p className="price-attribution">
+          <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">
+            Rates By Exchange Rate API
+          </a>
+        </p>
+      )}
+
       {custom && (
         <section className={`plan-custom${selected === custom.id ? ' is-selected' : ''}`} aria-labelledby={`${noticeId}-custom`}>
           <div className="plan-custom__text">
@@ -275,22 +297,30 @@ export default function Pricing({ selected = null, onSelect }) {
               {chosen.price && (
                 <span>
                   {' '}
-                  · {priceParts(chosen, data.currency).amount} {priceParts(chosen, data.currency).per}
+                  · {chosenPrice.amount} {chosenPrice.per}
+                  {chosenPrice.mode === 'estimate' && ` (estimate; you pay ${chosenPrice.payable} in NGN)`}
                 </span>
               )}
             </p>
             <p>
               {chosen.billing === 'custom_quote'
-                ? 'Custom quotes open soon. Nothing has been requested or charged.'
-                : 'Paid publishing is coming soon, so nothing is charged and no page is published yet.'}{' '}
-              You can build and save your page for free in the meantime.
+                ? 'Tell us what you have in mind and we’ll reply with a quote. Nothing is charged until you agree.'
+                : data.checkout?.available
+                  ? 'To publish with this plan, build your page, save it to your account, then choose Publish. You pay by bank transfer, and your page goes live once we confirm the payment.'
+                  : 'Paid publishing is coming soon, so nothing is charged and no page is published yet. You can build and save your page for free in the meantime.'}
             </p>
             <div className="pricing-notice__actions">
-              <Link to={CREATE_PAGE_HREF} className="plan-btn plan-btn--inline">
-                Start with a template
-              </Link>
+              {chosen.billing === 'custom_quote' ? (
+                <Link to={quoteRequestHref({ planId: chosen.id })} className="plan-btn plan-btn--inline">
+                  Request a quote
+                </Link>
+              ) : (
+                <Link to={CREATE_PAGE_HREF} className="plan-btn plan-btn--inline">
+                  Start with a template
+                </Link>
+              )}
               {user && (
-                <Link to="/account" className="plan-btn plan-btn--inline plan-btn--outline">
+                <Link to="/dashboard/drafts" className="plan-btn plan-btn--inline plan-btn--outline">
                   Go to my drafts
                 </Link>
               )}

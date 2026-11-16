@@ -52,7 +52,7 @@ describe('guest draft import', () => {
     const second = await guestDraft('confetti-pop', 'Party (guest)')
     const before = guestDraftStorage()
     const { api, ana } = signedInApi()
-    const { user } = renderApp('/account', { api })
+    const { user } = renderApp('/dashboard/drafts', { api })
 
     const section = await screen.findByRole('region', { name: 'Drafts on this device' })
     expect(within(section).getByText('Wedding (guest)')).toBeInTheDocument()
@@ -81,7 +81,7 @@ describe('guest draft import', () => {
   it('cancelling the confirmation imports nothing', async () => {
     await guestDraft('garden-vows', 'Maybe later')
     const { api } = signedInApi()
-    const { user } = renderApp('/account', { api })
+    const { user } = renderApp('/dashboard/drafts', { api })
     const section = await screen.findByRole('region', { name: 'Drafts on this device' })
     await user.click(within(section).getByRole('button', { name: 'Import selected draft' }))
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancel' }))
@@ -113,7 +113,7 @@ describe('guest draft import', () => {
   it('an interrupted import can be retried', async () => {
     await guestDraft('garden-vows', 'Flaky network')
     const { api } = signedInApi()
-    const { user } = renderApp('/account', { api })
+    const { user } = renderApp('/dashboard/drafts', { api })
     const section = await screen.findByRole('region', { name: 'Drafts on this device' })
     api.state.pagesDown = true
     await user.click(within(section).getByRole('button', { name: 'Import selected draft' }))
@@ -130,7 +130,7 @@ describe('guest draft import', () => {
   it('“Not now” postpones the offer for this session', async () => {
     await guestDraft('garden-vows', 'Later please')
     const { api } = signedInApi()
-    const { user } = renderApp('/account', { api })
+    const { user } = renderApp('/dashboard/drafts', { api })
     const section = await screen.findByRole('region', { name: 'Drafts on this device' })
     await user.click(within(section).getByRole('button', { name: 'Not now' }))
     expect(within(importSection()).queryByRole('checkbox')).not.toBeInTheDocument()
@@ -149,13 +149,13 @@ describe('cloud drafts on the account page', () => {
     party.title = 'Leo’s party'
     const weddingDraft = api.seedPage(ana, wedding.id, editable(wedding))
     api.seedPage(ana, party.id, editable(party))
-    const { user } = renderApp('/account', { api })
+    const { user } = renderApp('/dashboard/drafts', { api })
 
     const list = await screen.findByRole('list', { name: 'Drafts in your account' })
     const items = within(list).getAllByRole('listitem')
     expect(items.map((li) => li.querySelector('.account-drafts__title').textContent)).toEqual(['Leo’s party', 'Our wedding'])
     expect(within(items[1]).getByText(/Garden Vows · updated/)).toBeInTheDocument()
-    expect(within(items[1]).getByRole('link', { name: 'Open Our wedding' })).toHaveAttribute('href', `/editor/garden-vows?page=${weddingDraft.id}`)
+    expect(within(items[1]).getByRole('link', { name: 'Continue editing Our wedding' })).toHaveAttribute('href', `/editor/garden-vows?page=${weddingDraft.id}`)
 
     await user.click(within(items[1]).getByRole('button', { name: 'Delete Our wedding' }))
     const dialog = await screen.findByRole('dialog', { name: 'Delete this draft?' })
@@ -172,7 +172,7 @@ describe('cloud drafts on the account page', () => {
     const { api, ana } = signedInApi()
     const page = createPageFromTemplate(getTemplateBySlug('garden-vows'))
     const draft = api.seedPage(ana, page.id, editable(page))
-    const { user } = renderApp('/account', { api })
+    const { user } = renderApp('/dashboard/drafts', { api })
     const list = await screen.findByRole('list', { name: 'Drafts in your account' })
     api.editPageElsewhere(draft.id, (d) => (d.title = 'Changed on phone'))
     await user.click(within(list).getByRole('button', { name: /^Delete/ }))
@@ -195,7 +195,7 @@ describe('unsaved changes and logout', () => {
   it('lists this account’s unsaved changes with a way to open them', async () => {
     const { api, ana } = signedInApi()
     const page = recoveryFor(ana, 'Typed on the train')
-    renderApp('/account', { api })
+    renderApp('/dashboard/drafts', { api })
     const section = await screen.findByRole('region', { name: 'Unsaved changes on this device' })
     expect(within(section).getByText('Typed on the train')).toBeInTheDocument()
     expect(within(section).getByRole('link', { name: 'Open' })).toHaveAttribute('href', `/editor/garden-vows?recover=${page.id}`)
@@ -204,7 +204,7 @@ describe('unsaved changes and logout', () => {
   it('warns before logging out with unsaved changes, and keeps them', async () => {
     const { api, ana } = signedInApi()
     recoveryFor(ana, 'Not saved yet')
-    const { user, location } = renderApp('/account', { api })
+    const { user, location } = renderApp('/dashboard/drafts', { api })
     await user.click(await screen.findByRole('button', { name: 'Log out' }))
     const dialog = await screen.findByRole('dialog', { name: 'Log out with unsaved changes?' })
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
@@ -219,7 +219,7 @@ describe('unsaved changes and logout', () => {
 
   it('logs out without a warning when everything is saved', async () => {
     const { api } = signedInApi()
-    const { user, location } = renderApp('/account', { api })
+    const { user, location } = renderApp('/dashboard/drafts', { api })
     await user.click(await screen.findByRole('button', { name: 'Log out' }))
     await waitFor(() => expect(location()).toBe('/'))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -242,8 +242,8 @@ describe('recovery copies stay with their account', () => {
 
   it('another account’s account page, logout and editor links never show them, and they are kept', async () => {
     const { api, key, raw } = anaWithRecovery()
-    const { user, location } = renderApp('/account', { api })
-    await screen.findByRole('region', { name: 'Your pages' })
+    const { user, location } = renderApp('/dashboard/drafts', { api })
+    await screen.findByRole('region', { name: 'My drafts' })
     expect(screen.queryByRole('region', { name: 'Unsaved changes on this device' })).not.toBeInTheDocument()
     expect(screen.queryByText(/Ana’s private draft/)).not.toBeInTheDocument()
 

@@ -53,11 +53,13 @@ describe('header navigation', () => {
 })
 
 describe('footer navigation', () => {
-  it('keeps every link, homepage sections included, in two groups', () => {
+  it('keeps every link, homepage sections, support and legal pages included, in four groups', () => {
     renderApp('/templates')
     const nav = within(footer()).getByRole('navigation', { name: 'Footer' })
     expect(within(nav).getByRole('list', { name: 'Create' })).toBeInTheDocument()
     expect(within(nav).getByRole('list', { name: 'Discover' })).toBeInTheDocument()
+    expect(within(nav).getByRole('list', { name: 'Support' })).toBeInTheDocument()
+    expect(within(nav).getByRole('list', { name: 'Legal' })).toBeInTheDocument()
     const hrefs = Object.fromEntries(within(nav).getAllByRole('link').map((a) => [a.textContent.trim(), a.getAttribute('href')]))
     expect(hrefs).toEqual({
       Templates: '/templates',
@@ -66,6 +68,11 @@ describe('footer navigation', () => {
       Features: '/#features',
       Moments: '/#moments',
       'How it works': '/#how',
+      'Contact us': '/contact',
+      'Request a quote': '/request-quote',
+      'Privacy policy': '/privacy-policy',
+      'Terms of service': '/terms-of-service',
+      'Cookie settings': '/cookie-settings',
     })
     expect(within(footer()).getByText(/© \d{4} MyLinnnk\. All rights reserved\./)).toBeInTheDocument()
   })

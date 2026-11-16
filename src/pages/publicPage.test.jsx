@@ -4,7 +4,7 @@
  * unknown, unavailable and unreachable pages.
  */
 import 'fake-indexeddb/auto'
-import { screen, waitFor, within } from '@testing-library/react'
+import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { getTemplateBySlug } from '../data/templates.js'
 import { createPageFromTemplate } from '../editor/model/page.js'
@@ -109,6 +109,36 @@ describe('published page /p/:slug', () => {
   it('explains a page that is no longer live (expired, in grace or unpublished)', async () => {
     openPublic('was-live', (a) => (a.state.publicPages['was-live'] = { gone: true }))
     expect(await screen.findByRole('heading', { name: 'This page isn’t available right now' })).toBeInTheDocument()
+  })
+
+  it('regression: a pasted link with extra characters at the end (“moses**”) opens the page meant', async () => {
+    for (const pasted of ['moses**', 'moses.', 'moses)', 'moses%2A%2A', 'moses%22']) {
+      const { location, api } = openPublic(pasted, (a) => (a.state.publicPages.moses = published('moses')))
+      await waitFor(() => expect(location()).toBe('/p/moses'))
+      expect(await screen.findByRole('main', { name: 'Sam & Alex' })).toBeInTheDocument()
+      expect(screen.queryByText(/check your connection/i)).not.toBeInTheDocument()
+      expect(api.requestsTo('/public/pages/moses').length).toBeGreaterThan(0)
+      expect(api.state.requests.some((r) => r.path !== '/public/pages/moses' && r.path.startsWith('/public/pages/'))).toBe(false) // the bad address is never requested
+      cleanup()
+    }
+  })
+
+  it('an address that can’t be a page says “not found”, never “check your connection”', async () => {
+    const { api } = openPublic('mo*ses')
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(api.state.requests.filter((r) => r.path.startsWith('/public/pages/'))).toHaveLength(0)
+  })
+
+  it('a 400 from the server (an address it refuses) is shown as not found too', async () => {
+    const api = createFakeAuthApi()
+    const base = api.fetch
+    api.fetch = (url, init) =>
+      String(url).includes('/public/pages/odd-one')
+        ? Promise.resolve(new Response(JSON.stringify({ error: { code: 'VALIDATION_FAILED', message: 'The request is invalid.' } }), { status: 400, headers: { 'content-type': 'application/json' } }))
+        : base(url, init)
+    renderApp('/p/odd-one', { api })
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
   })
 
   it('offers a retry when the server can’t be reached', async () => {

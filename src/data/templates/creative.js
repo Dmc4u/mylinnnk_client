@@ -28,7 +28,8 @@ export const frameAndField = {
       },
     },
     {
-      id: 'work', type: 'gallery', variant: 'masonry',
+      // Full-width featured work: the lead image runs edge to edge, the series beneath.
+      id: 'work', type: 'gallery', variant: 'feature',
       content: {
         eyebrow: 'Selected work',
         title: 'Portfolio 2024–2027',
@@ -106,7 +107,8 @@ export const studioMono = {
       },
     },
     {
-      id: 'about', type: 'text', variant: 'split', tone: 'surface', options: { imageSide: 'right' },
+      // Editorial photo essay
+      id: 'about', type: 'text', variant: 'essay', tone: 'surface',
       content: {
         eyebrow: '// about',
         title: 'Design is mostly listening',
@@ -159,16 +161,16 @@ export const summerSessions = {
       },
     },
     {
-      id: 'lineup', type: 'list', variant: 'lineup',
+      // Performer cards with photos
+      id: 'lineup', type: 'list', variant: 'people',
       content: {
         eyebrow: 'Line-up',
+        title: 'Who’s playing',
         items: [
-          { title: 'The Velvet Tides', meta: 'Friday' },
-          { title: 'Nova Lane', meta: 'Friday' },
-          { title: 'Mira & the Moths', meta: 'Saturday' },
-          { title: 'Low Orbit', meta: 'Saturday' },
-          { title: 'Harbour Lights', meta: 'Sunday' },
-          { title: 'Sun Club', meta: 'Sunday' },
+          { title: 'The Velvet Tides', meta: 'Friday · Main stage', text: 'Dreamy surf-pop to open the weekend.', image: summer('guitarist', 'A guitarist performing under a spotlight') },
+          { title: 'Nova Lane', meta: 'Friday · River stage', text: 'Big choruses, bigger crowds.', image: summer('stage', 'A stage glowing with coloured lights') },
+          { title: 'Mira & the Moths', meta: 'Saturday · Main stage', text: 'Folk songs with a dance-floor heart.', image: summer('hands', 'Hands raised towards a lit stage') },
+          { title: 'Sun Club', meta: 'Sunday · Closing set', text: 'The sunset party you’ll talk about all year.', image: summer('confetti-crowd', 'A crowd with confetti falling') },
         ],
       },
     },
@@ -214,7 +216,7 @@ export const charityRun = {
   },
   sections: [
     {
-      id: 'hero', type: 'hero', variant: 'cover', options: { align: 'start', overlay: 'gradient' },
+      id: 'hero', type: 'hero', variant: 'cover', options: { align: 'start', overlay: 'gradient', height: 'full' },
       content: {
         eyebrow: 'Sunday 12 April · 9 am',
         title: 'Run 10K.\nRaise hope.',
@@ -235,24 +237,30 @@ export const charityRun = {
       },
     },
     {
-      id: 'distances', type: 'list', variant: 'columns',
+      // Race-day programme grid
+      id: 'distances', type: 'timeline', variant: 'programme',
       content: {
-        eyebrow: 'Choose your distance',
-        title: 'Three ways to take part',
+        eyebrow: 'Race day',
+        title: 'The programme',
         items: [
-          { title: '10K', meta: 'Flat river loop', text: 'Chip-timed, with water stations every 2.5 km and a medal at the finish.' },
-          { title: '5K fun run', meta: 'Families & walkers', text: 'Strollers, dogs on leads and fancy dress all very welcome.' },
-          { title: 'Cheer squad', meta: 'No running required', text: 'Bring a sign and a loud voice to the finish line.' },
+          { label: '7:30', title: 'Bag drop opens', text: 'In the park, by the library tent.' },
+          { label: '9:00', title: '10K start', text: 'Chip-timed flat river loop, water every 2.5 km.' },
+          { label: '9:20', title: '5K fun run', text: 'Families, walkers, strollers and dogs on leads.' },
+          { label: '11:00', title: 'Music & medals', text: 'Food stalls, live music and story time.' },
         ],
       },
     },
     {
-      id: 'raceday', type: 'text', variant: 'split', options: { imageSide: 'right' },
+      // Runner ambassadors as people cards
+      id: 'raceday', type: 'list', variant: 'people', tone: 'surface',
       content: {
-        eyebrow: 'Race day',
-        title: 'What to expect',
-        body: 'Bag drop opens at 7:30 am in the park. The 10K starts at 9 am, followed by the 5K at 9:20.\n\nAfter the race there is live music, food stalls and story time at the library tent for younger runners.',
-        image: run('runners-river', 'Runners passing along a riverside road'),
+        eyebrow: 'Running for the library',
+        title: 'Meet our ambassadors',
+        items: [
+          { title: 'Ana', meta: '10K · first race', text: 'Running for the reading corner she grew up in.', image: run('runner', 'A runner with a race number on a city road') },
+          { title: 'Jo & Sam', meta: '5K · together', text: 'Training every Sunday since January.', image: run('runners-pair', 'Two runners side by side') },
+          { title: 'The river crew', meta: '10K · team', text: 'Twelve neighbours, one goal.', image: run('runners-river', 'Runners passing along a riverside road') },
+        ],
       },
     },
     { id: 'cta', type: 'cta', variant: 'banner', tone: 'accent', content: { title: 'Every step counts', text: 'Can’t run? You can still help us reach the goal.', button: 'Donate' } },

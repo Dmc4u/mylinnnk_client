@@ -79,7 +79,7 @@ export default function TemplatePreviewPage() {
               <span className="preview__url">mylinnnk.com/{template.slug}</span>
             </div>
             <div className="preview__page" role="region" aria-label={`Full preview of the ${template.name} template`}>
-              <TemplateRender template={template} />
+              <TemplateRender template={template} motion="play" />
             </div>
           </div>
           {photoCredits.length > 0 && (

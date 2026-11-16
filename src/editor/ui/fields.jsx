@@ -48,7 +48,11 @@ export function LinkField({ label, value, onChange }) {
         }}
       />
       <p id={`${id}-hint`} className={`ed-field__hint${valid ? '' : ' is-error'}`}>
-        {valid ? 'Where the button will go on your published page.' : 'Use a link starting with https://, mailto:, tel: or #.'}
+        {!valid
+          ? 'Use a link starting with https://, mailto:, tel: or #.'
+          : draft
+            ? 'Where the button will go on your published page.'
+            : 'No link yet: this button is left off your published page until you add one.'}
       </p>
     </div>
   )

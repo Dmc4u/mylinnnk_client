@@ -3,7 +3,7 @@
  * accepted, so a crafted link like /login?next=https://evil.example can't
  * send people elsewhere.
  */
-export const DEFAULT_AFTER_AUTH = '/account'
+export const DEFAULT_AFTER_AUTH = '/dashboard'
 /** Where the admin goes after logging in when no (safe) `next` path was given. */
 export const ADMIN_HOME = '/admin'
 

@@ -1,0 +1,101 @@
+.share-links {
+  display: grid;
+  gap: 12px;
+}
+
+.share-links__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Share options as labelled chips with recognisable icons */
+.share-links__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.share-chip {
+  --chip: var(--navy-900);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 14px 8px 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--chip);
+  text-decoration: none;
+  background: color-mix(in srgb, var(--chip) 7%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--chip) 22%, transparent);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    translate 200ms var(--ease-out),
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.share-chip--whatsapp { --chip: #128c4b; }
+.share-chip--facebook { --chip: #1a5fd0; }
+.share-chip--email { --chip: var(--purple-600); }
+.share-chip--more { --chip: var(--teal-600); }
+
+.share-chip__icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.share-chip:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--chip) 45%, transparent);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .share-chip:hover {
+    translate: 0 -2px;
+    background: color-mix(in srgb, var(--chip) 13%, var(--surface));
+    box-shadow: 0 8px 18px -12px var(--chip);
+  }
+}
+
+.share-links__note {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.share-links__note--dev {
+  padding: 10px 12px;
+  color: var(--ink);
+  background: rgb(245 158 11 / 0.1);
+  border: 1px solid rgb(245 158 11 / 0.35);
+  border-radius: 10px;
+}
+
+@media (max-width: 520px) {
+  .share-links__row > * {
+    flex: 1 1 calc(50% - 10px);
+    justify-content: center;
+  }
+  .share-links__chips {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .share-chip {
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .share-chip {
+    transition: none;
+  }
+}

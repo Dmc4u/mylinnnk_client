@@ -1,4 +1,4 @@
-import { Action, Eyebrow, Img, Ornament } from '../primitives.jsx'
+import { Action, Eyebrow, Img, MenuLink, Ornament } from '../primitives.jsx'
 
 const Heading = ({ eyebrow, title, className = '' }) =>
   eyebrow || title ? (
@@ -20,6 +20,24 @@ const Paragraphs = ({ text, className = 'ts-body' }) =>
 
 /* ---------------- Navigation ---------------- */
 export function Nav({ variant, content: c }) {
+  if (variant === 'chapters') {
+    // Chapter menu: real links (usually to #sections); scrolls sideways on narrow screens.
+    const items = (c.items ?? []).filter((item) => item?.label)
+    return (
+      <nav className="ts-nav__row" aria-label="Chapters">
+        {c.brand && <strong className="ts-nav__brand">{c.brand}</strong>}
+        {items.length > 0 && (
+          <ul className="ts-nav__chapters">
+            {items.map((item, i) => (
+              <li key={`${i}:${item.label}`}>
+                <MenuLink href={item.href}>{item.label}</MenuLink>
+              </li>
+            ))}
+          </ul>
+        )}
+      </nav>
+    )
+  }
   const links = c.links ?? []
   if (variant === 'centered') {
     const half = Math.ceil(links.length / 2)
@@ -68,7 +86,22 @@ export function Text({ variant, content: c, options = {} }) {
         <div className="ts-text__copy">
           <Heading eyebrow={c.eyebrow} title={c.title} />
           <Paragraphs text={c.body} />
-          <Action variant="outline">{c.cta}</Action>
+          <Action variant="outline" href={c.ctaHref}>{c.cta}</Action>
+        </div>
+      </div>
+    )
+  }
+  if (variant === 'essay') {
+    // Editorial photo essay: a full-width photograph, then a narrow reading column.
+    return (
+      <div className="ts-text__essay">
+        <figure className="ts-text__essay-figure">
+          <Img image={c.image} className="ts-text__essay-img" />
+          {c.image?.caption && <figcaption>{c.image.caption}</figcaption>}
+        </figure>
+        <div className="ts-text__essay-copy">
+          <Heading eyebrow={c.eyebrow} title={c.title} />
+          <Paragraphs text={c.body} />
         </div>
       </div>
     )
@@ -96,7 +129,7 @@ export function Text({ variant, content: c, options = {} }) {
     <div className="ts-text__center">
       <Heading eyebrow={c.eyebrow} title={c.title} />
       <Paragraphs text={c.body} />
-      <Action variant="outline">{c.cta}</Action>
+      <Action variant="outline" href={c.ctaHref}>{c.cta}</Action>
     </div>
   )
 }
@@ -149,7 +182,8 @@ export function List({ variant, content: c }) {
       <ul className={`ts-list__items ts-list__items--${variant}`}>
         {(c.items ?? []).map((item, i) => (
           <li key={item.title} className="ts-list__item">
-            {variant === 'numbered' && <span className="ts-list__num">{String(i + 1).padStart(2, '0')}</span>}
+            {(variant === 'tiles' || variant === 'people') && item.image && (item.image.src || item.image.mediaId) && <Img image={item.image} className="ts-list__img" />}
+            {(variant === 'numbered' || variant === 'tiles') && <span className="ts-list__num">{String(i + 1).padStart(2, '0')}</span>}
             <span className="ts-list__title">{item.title}</span>
             {variant === 'menu' && <span className="ts-list__leader" aria-hidden="true" />}
             {item.meta && <span className="ts-list__meta">{item.meta}</span>}
@@ -162,15 +196,21 @@ export function List({ variant, content: c }) {
 }
 
 /* ---------------- Stats ---------------- */
-export function Stats({ content: c }) {
+export function Stats({ variant = 'big', content: c }) {
   return (
     <>
       <Heading eyebrow={c.eyebrow} title={c.title} />
-      <dl className="ts-stats__row">
+      <dl className={`ts-stats__row ts-stats__row--${variant}`}>
         {(c.items ?? []).map((s) => (
           <div key={s.label} className="ts-stats__item">
             <dt>{s.label}</dt>
-            <dd className="ts-display">{s.value}</dd>
+            {/* The value as text for assistive technology; the visible copy may count up to it (motion). */}
+            <dd className="ts-display">
+              <span className="sr-only">{s.value}</span>
+              <span aria-hidden="true" data-countup={s.value}>
+                {s.value}
+              </span>
+            </dd>
           </div>
         ))}
       </dl>
@@ -235,7 +275,7 @@ export function Cta({ variant, content: c }) {
         <h3 className="ts-display ts-cta__title">{c.title}</h3>
       )}
       {c.text && <p className="ts-body">{c.text}</p>}
-      <Action variant={variant === 'banner' ? 'inverse' : 'solid'}>{c.button}</Action>
+      <Action variant={variant === 'banner' ? 'inverse' : 'solid'} href={c.buttonHref}>{c.button}</Action>
     </div>
   )
 }

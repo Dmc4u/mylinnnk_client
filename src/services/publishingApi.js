@@ -9,13 +9,22 @@ const json = (method, path, csrfToken, body = {}) => apiRequest(path, { method, 
 
 export const publishingApi = {
   getPublication: (pageId) => apiRequest(`/pages/${pageId}/publication`),
+  /** → { publications: [...], site: { origin, local } }: the account's paid-for pages with their real address and state. */
+  listPublications: () => apiRequest('/publications'),
   slugAvailability: (slug) => apiRequest(`/publications/slug-availability?slug=${encodeURIComponent(slug)}`),
   reserveSlug: (csrfToken, pageId, slug) => json('PUT', `/pages/${pageId}/publication/slug`, csrfToken, { slug }),
-  createOrder: (csrfToken, pageId, planId) => json('POST', `/pages/${pageId}/orders`, csrfToken, { planId }),
+  /**
+   * Publishing or renewal order. `country` (ISO 3166-1 alpha-2) is the customer's answer to
+   * "What is your country?"; the API refuses countries where payment isn't offered
+   * (403 PAYMENT_NOT_AVAILABLE_IN_COUNTRY) without saying which ones are.
+   */
+  createOrder: (csrfToken, pageId, planId, country) => json('POST', `/pages/${pageId}/orders`, csrfToken, { planId, country }),
   listOrders: () => apiRequest('/orders'),
   getOrder: (reference) => apiRequest(`/orders/${encodeURIComponent(reference)}`),
   submitPayment: (csrfToken, reference, { payerName, transferDate, note }) => json('POST', `/orders/${encodeURIComponent(reference)}/submit`, csrfToken, { payerName, transferDate, note }),
   cancelOrder: (csrfToken, reference) => json('POST', `/orders/${encodeURIComponent(reference)}/cancel`, csrfToken),
+  // "Try again" after an order expired: a new order (new reference, fresh deadline) for the same page and plan.
+  retryOrder: (csrfToken, reference) => json('POST', `/orders/${encodeURIComponent(reference)}/retry`, csrfToken),
   uploadReceipt: (csrfToken, reference, file) =>
     apiRequest(`/orders/${encodeURIComponent(reference)}/receipts`, { method: 'PUT', rawBody: file, contentType: file.type, csrfToken }),
   receiptUrl: (reference, receiptId) => `${API_BASE}/orders/${encodeURIComponent(reference)}/receipts/${encodeURIComponent(receiptId)}`,
@@ -24,9 +33,9 @@ export const publishingApi = {
 export const ORDER_STATUS_LABELS = {
   created: 'Saved',
   awaiting_transfer: 'Waiting for your transfer',
-  submitted: 'Payment reported',
-  under_review: 'Being checked',
-  approved: 'Paid · published',
+  submitted: 'Payment Under Review',
+  under_review: 'Payment Under Review',
+  approved: 'Payment confirmed', // whether the page is live comes from its publication, not the order
   rejected: 'Needs attention',
   expired: 'Expired',
   cancelled: 'Cancelled',

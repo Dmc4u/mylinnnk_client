@@ -1,0 +1,222 @@
+/*
+ * MyLinnnk template motion (see presets.js, resolveMotion.js, useTemplateMotion.js).
+ *
+ * Contract
+ * - The root (.tpl) carries data-motion (preset), data-m-* (the preset's choices), CSS variables, and
+ *   data-motion-play on published pages and previews only (never the editing canvas or thumbnails).
+ * - Hiding happens only under [data-motion-ready], set by the script before the first paint, so
+ *   content is visible whenever the script isn't running.
+ * - Entrances are keyframes with fill-mode "backwards": after they finish the element is exactly as
+ *   the template styles it (nothing stays clipped, blurred or moved).
+ * - Only opacity, translate, scale, rotate, clip-path and filter are animated; individual transform
+ *   properties compose with the templates' own transforms.
+ */
+
+.tpl[data-motion-play] {
+  --m-dist: var(--m-dist-base, 24px);
+}
+
+/* ---------- Waiting (only while the script runs) ---------- */
+.tpl[data-motion-ready] .m-wait [data-m] {
+  opacity: 0;
+}
+
+/* Keyboard focus inside a waiting section shows it at once (the script also reveals it). */
+.tpl[data-motion-ready] .m-wait:focus-within [data-m] {
+  opacity: 1;
+}
+
+/* ---------- Entrances ---------- */
+.tpl[data-motion-ready] .m-in [data-m] {
+  animation-duration: var(--m-dur, 900ms);
+  animation-timing-function: var(--m-ease, ease-out);
+  animation-delay: calc(var(--m-i, 0) * var(--m-stagger, 80ms));
+  animation-fill-mode: backwards;
+  animation-name: m-fade;
+}
+
+.tpl[data-m-heading='rise'] .m-in [data-m='heading'],
+.tpl[data-m-text='rise'] .m-in [data-m='text'],
+.tpl[data-m-item='rise'] .m-in [data-m='item'],
+.tpl[data-m-hover] .m-in [data-m='action'] {
+  animation-name: m-rise;
+}
+.tpl[data-m-heading='pop'] .m-in [data-m='heading'],
+.tpl[data-m-text='pop'] .m-in [data-m='text'],
+.tpl[data-m-item='pop'] .m-in [data-m='item'],
+.tpl[data-m-media='pop'] .m-in [data-m='media'],
+.tpl[data-m-hover='spring'] .m-in [data-m='action'] {
+  animation-name: m-pop;
+}
+.tpl[data-m-heading='blur'] .m-in [data-m='heading'],
+.tpl[data-m-text='blur'] .m-in [data-m='text'] {
+  animation-name: m-blur;
+}
+.tpl[data-m-heading='mask'] .m-in [data-m='heading'] {
+  animation-name: m-mask;
+}
+.tpl[data-m-heading='slide'] .m-in [data-m='heading'],
+.tpl[data-m-text='slide'] .m-in [data-m='text'],
+.tpl[data-m-item='slide'] .m-in [data-m='item'] {
+  animation-name: m-slide;
+}
+.tpl[data-m-media='settle'] .m-in [data-m='media'] {
+  animation-name: m-settle;
+  animation-duration: calc(var(--m-dur, 900ms) * 1.4);
+}
+.tpl[data-m-media='curtain'] .m-in [data-m='media'] {
+  animation-name: m-curtain;
+  animation-duration: calc(var(--m-dur, 900ms) * 1.2);
+}
+
+/* The progress bar fills when its section appears. */
+.tpl[data-motion-ready] .m-in .ts-progress__track > span {
+  animation: m-fill calc(var(--m-dur, 900ms) * 1.8) var(--m-ease, ease-out) calc(var(--m-stagger, 80ms) * 3) backwards;
+  transform-origin: left center;
+}
+
+@keyframes m-fade {
+  from { opacity: 0; }
+}
+@keyframes m-rise {
+  from { opacity: 0; translate: 0 var(--m-dist); }
+}
+@keyframes m-pop {
+  from { opacity: 0; scale: 0.9; translate: 0 calc(var(--m-dist) / 2); }
+}
+@keyframes m-blur {
+  from { opacity: 0; filter: blur(var(--m-blur, 6px)); translate: 0 calc(var(--m-dist) / 3); }
+}
+@keyframes m-mask {
+  from { opacity: 0; clip-path: inset(-25% -10% 100% -10%); translate: 0 calc(var(--m-dist) / 2); }
+  to { clip-path: inset(-25% -10% -25% -10%); }
+}
+@keyframes m-slide {
+  from { opacity: 0; translate: calc(var(--m-dist) * -1) 0; }
+}
+@keyframes m-settle {
+  from { opacity: 0; scale: 1.08; }
+}
+@keyframes m-curtain {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes m-fill {
+  from { scale: 0 1; }
+}
+
+/* ---------- Scroll parallax (native scroll-driven animation; no scroll listeners) ---------- */
+/* Browsers without animation-timeline (e.g. Firefox today) simply show the page still. */
+@supports (animation-timeline: view()) {
+  .tpl[data-motion-play] .ts-hero img {
+    animation: m-parallax linear both;
+    animation-timeline: view();
+    animation-range: exit -10% exit 100%;
+  }
+  /* While the hero image makes its entrance, run both (each on its own timeline). */
+  .tpl[data-motion-ready][data-m-media='settle'] .m-in .ts-hero img[data-m] {
+    animation: m-settle calc(var(--m-dur, 900ms) * 1.4) var(--m-ease, ease-out) backwards, m-parallax linear both;
+    animation-timeline: auto, view();
+    animation-range: normal, exit -10% exit 100%;
+  }
+  .tpl[data-motion-ready][data-m-media='curtain'] .m-in .ts-hero img[data-m] {
+    animation: m-curtain calc(var(--m-dur, 900ms) * 1.2) var(--m-ease, ease-out) backwards, m-parallax linear both;
+    animation-timeline: auto, view();
+    animation-range: normal, exit -10% exit 100%;
+  }
+  .tpl[data-motion-ready][data-m-media='fade'] .m-in .ts-hero img[data-m],
+  .tpl[data-motion-ready][data-m-media='pop'] .m-in .ts-hero img[data-m] {
+    animation: m-fade var(--m-dur, 900ms) var(--m-ease, ease-out) backwards, m-parallax linear both;
+    animation-timeline: auto, view();
+    animation-range: normal, exit -10% exit 100%;
+  }
+}
+@keyframes m-parallax {
+  to { translate: 0 var(--m-parallax, 40px); }
+}
+
+/* ---------- Ambient ornament motion (only while its section is on screen) ---------- */
+.tpl[data-motion-ready][data-m-ambient='sway'] .m-on .ts-ornament { animation: m-sway 7s ease-in-out infinite alternate; transform-origin: 50% 100%; }
+.tpl[data-motion-ready][data-m-ambient='float'] .m-on .ts-ornament { animation: m-float 5s ease-in-out infinite alternate; }
+.tpl[data-motion-ready][data-m-ambient='twinkle'] .m-on .ts-ornament { animation: m-twinkle 3.2s ease-in-out infinite alternate; }
+.tpl[data-motion-ready][data-m-ambient='drift'] .m-on .ts-ornament { animation: m-drift 9s ease-in-out infinite alternate; }
+
+@keyframes m-sway { from { rotate: -2.5deg; } to { rotate: 2.5deg; } }
+@keyframes m-float { from { translate: 0 -5px; } to { translate: 0 6px; } }
+@keyframes m-twinkle { from { opacity: 0.55; scale: 0.96; } to { opacity: 1; scale: 1.03; } }
+@keyframes m-drift { from { translate: -8px 0; } to { translate: 8px 0; } }
+
+/* ---------- Buttons and images: hover and press (mouse and keyboard; never on touch hover) ---------- */
+.tpl[data-motion-play] a.ts-action {
+  transition:
+    translate 220ms var(--m-ease, ease-out),
+    scale 220ms var(--m-ease, ease-out),
+    box-shadow 220ms ease,
+    filter 220ms ease;
+}
+.tpl[data-motion-play] a.ts-action:active {
+  scale: 0.97;
+}
+@media (hover: hover) {
+  .tpl[data-motion-play][data-m-hover='lift'] a.ts-action:hover {
+    translate: 0 -3px;
+    box-shadow: 0 12px 24px -12px color-mix(in srgb, var(--t-ink) 45%, transparent);
+  }
+  .tpl[data-motion-play][data-m-hover='spring'] a.ts-action:hover {
+    scale: 1.06;
+  }
+  .tpl[data-motion-play][data-m-hover='glow'] a.ts-action:hover {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--t-accent) 22%, transparent);
+  }
+  .tpl[data-motion-play][data-m-hover='sheen'] a.ts-action {
+    background-image: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.35) 50%, transparent 65%);
+    background-size: 250% 100%;
+    background-position: 120% 0;
+    background-repeat: no-repeat;
+    transition: background-position 700ms ease, translate 220ms ease;
+  }
+  .tpl[data-motion-play][data-m-hover='sheen'] a.ts-action:hover {
+    background-position: -20% 0;
+    translate: 0 -2px;
+  }
+  .tpl[data-motion-play] .ts-gallery__item img {
+    transition: scale 700ms var(--m-ease, ease-out);
+  }
+  .tpl[data-motion-play] .ts-gallery__item:hover img {
+    scale: 1.05;
+  }
+}
+.tpl[data-motion-play] a.ts-action:focus-visible {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--t-accent) 35%, transparent);
+}
+
+/* ---------- Phones: shorter travel, lighter parallax ---------- */
+@media (max-width: 640px) {
+  .tpl[data-motion-play] {
+    --m-dist: calc(var(--m-dist-base, 24px) * 0.6);
+    --m-parallax: 18px;
+  }
+}
+
+/* ---------- Reduced motion and print: everything still and visible ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .tpl [data-m],
+  .tpl .ts-ornament,
+  .tpl .ts-hero img,
+  .tpl .ts-progress__track > span {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  .tpl a.ts-action,
+  .tpl .ts-gallery__item img {
+    transition: none !important;
+  }
+}
+@media print {
+  .tpl [data-m],
+  .tpl .ts-ornament,
+  .tpl .ts-hero img {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}

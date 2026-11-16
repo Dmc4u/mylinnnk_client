@@ -75,7 +75,8 @@
   border-top: 1px solid var(--line);
 }
 
-.auth-card a:not(.btn) {
+/* Text links only: buttons rendered as links (.btn, MagneticButton) keep their own colours. */
+.auth-card a:not(.btn):not(.magnetic-button):not(.share-chip) {
   font-weight: 600;
   color: var(--purple-600);
   text-decoration: underline;
@@ -83,7 +84,7 @@
   text-underline-offset: 3px;
 }
 
-.auth-card a:not(.btn):hover {
+.auth-card a:not(.btn):not(.magnetic-button):not(.share-chip):hover {
   text-decoration-color: currentColor;
 }
 

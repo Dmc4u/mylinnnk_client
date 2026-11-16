@@ -82,7 +82,7 @@
 
 .site-footer__nav {
   display: grid;
-  grid-template-columns: repeat(2, minmax(150px, auto));
+  grid-template-columns: repeat(4, minmax(120px, auto));
   gap: 28px clamp(40px, 6vw, 88px);
 }
 
@@ -133,6 +133,12 @@
   border-top: 1px solid rgb(255 255 255 / 0.08);
   font-size: 0.875rem;
   color: #8a95b2;
+}
+
+@media (max-width: 1024px) {
+  .site-footer__nav {
+    grid-template-columns: repeat(2, minmax(140px, auto));
+  }
 }
 
 @media (max-width: 720px) {

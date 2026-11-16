@@ -10,13 +10,13 @@ describe('safeNextPath', () => {
 
   it('refuses anything that could leave the site', () => {
     for (const bad of ['https://evil.example', '//evil.example', '/\\evil.example', 'javascript:alert(1)', 'templates', '', null, undefined, '/x\u0000y']) {
-      expect(safeNextPath(bad)).toBe('/account')
+      expect(safeNextPath(bad)).toBe('/dashboard')
     }
   })
 
   it('never redirects back into an auth screen', () => {
     for (const loop of ['/login', '/signup?next=/x', '/reset-password?token=abc', '/verify-email', '/forgot-password']) {
-      expect(safeNextPath(loop)).toBe('/account')
+      expect(safeNextPath(loop)).toBe('/dashboard')
     }
   })
 

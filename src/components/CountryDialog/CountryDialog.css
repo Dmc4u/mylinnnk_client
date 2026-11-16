@@ -1,0 +1,211 @@
+/* Same surface, backdrop and entrance as ConfirmDialog, a little wider for the country list. */
+.country-dialog {
+  width: min(520px, calc(100% - 32px));
+  max-height: calc(100svh - 48px);
+  padding: 28px 26px 22px;
+  overflow: visible;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.country-dialog[open] {
+  animation: country-dialog-in 220ms var(--ease-out);
+}
+
+.country-dialog::backdrop {
+  background: rgb(7 15 34 / 0.45);
+  backdrop-filter: blur(3px);
+}
+
+.country-dialog__eyebrow {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal-600);
+}
+
+.country-dialog__title {
+  margin-top: 4px;
+  font-size: 1.35rem;
+  font-weight: 720;
+  letter-spacing: -0.025em;
+}
+
+.country-dialog__lead,
+.country-dialog__hint {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.country-dialog__form,
+.country-dialog__unavailable {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.country-dialog__label {
+  font-weight: 650;
+}
+
+.country-dialog__error {
+  color: var(--danger-600);
+  font-weight: 600;
+}
+
+.country-dialog__message {
+  padding: 14px 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ink);
+  background: rgb(20 184 166 / 0.08);
+  border: 1px solid rgb(20 184 166 / 0.25);
+  border-radius: 12px;
+}
+
+.country-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.country-dialog__unavailable .country-dialog__actions {
+  justify-content: flex-start;
+}
+
+.country-dialog__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.country-dialog__text-btn {
+  padding: 4px 0;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.country-dialog__text-btn:hover,
+.country-dialog__text-btn:focus-visible {
+  color: var(--ink);
+}
+
+/* Searchable country list (ARIA combobox + listbox). */
+.country-combo {
+  position: relative;
+}
+
+.country-combo__input {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 40px 11px 14px;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid #cfd4df;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgb(10 22 48 / 0.04);
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.country-combo__input:focus {
+  outline: none;
+  border-color: var(--teal-600);
+  box-shadow: 0 0 0 4px rgb(20 184 166 / 0.18);
+}
+
+.country-combo.is-invalid .country-combo__input {
+  border-color: var(--danger-600);
+}
+
+.country-combo__chevron {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.country-combo__list {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: min(280px, 40svh);
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+}
+
+.country-combo__list[hidden] {
+  display: none;
+}
+
+.country-combo__option {
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.country-combo__option.is-active {
+  background: rgb(20 184 166 / 0.12);
+}
+
+.country-combo__option[aria-selected='true'] {
+  font-weight: 650;
+}
+
+@keyframes country-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@media (max-width: 520px) {
+  .country-dialog {
+    padding: 24px 18px 18px;
+  }
+
+  .country-dialog__actions > * {
+    flex: 1 1 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .country-dialog[open] {
+    animation: none;
+  }
+
+  .country-combo__input {
+    transition: none;
+  }
+}

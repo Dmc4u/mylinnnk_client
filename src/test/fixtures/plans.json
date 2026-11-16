@@ -8,6 +8,13 @@
     "available": false,
     "message": "Paid publishing is coming soon. Nothing can be bought yet."
   },
+  "estimate": {
+    "available": false,
+    "currency": {
+      "code": "USD",
+      "minorUnit": 100
+    }
+  },
   "plans": [
     {
       "id": "free",
@@ -16,19 +23,22 @@
       "billing": "free",
       "publishing": false,
       "featured": false,
+      "badge": null,
       "summary": "Build, edit and save your pages for free.",
       "features": [
         "Every template and theme",
         "Save drafts to your account",
         "Edit on any device; no publishing"
       ],
+      "branding": false,
       "validity": null,
       "price": {
         "id": "free:NGN:v1",
         "currency": "NGN",
         "amountMinor": 0
       },
-      "savings": null
+      "savings": null,
+      "estimate": null
     },
     {
       "id": "celebration",
@@ -37,12 +47,15 @@
       "billing": "one_time",
       "publishing": true,
       "featured": false,
-      "summary": "For birthdays, anniversaries and weddings.",
+      "badge": null,
+      "summary": "For one special occasion: a birthday, wedding or anniversary, live for a month.",
       "features": [
         "Your page live for 30 days",
         "One shareable web address",
-        "Pay once; nothing renews"
+        "Pay once; nothing renews",
+        "A small “Created with MyLinnnk” credit at the bottom of your page"
       ],
+      "branding": true,
       "validity": {
         "days": 30
       },
@@ -51,7 +64,8 @@
         "currency": "NGN",
         "amountMinor": 250000
       },
-      "savings": null
+      "savings": null,
+      "estimate": null
     },
     {
       "id": "pro-starter",
@@ -60,12 +74,15 @@
       "billing": "one_time",
       "publishing": true,
       "featured": false,
-      "summary": "Try a business or portfolio page for three months.",
+      "badge": null,
+      "summary": "For a launch, an event season or a trial: three months, paid once, no branding.",
       "features": [
         "Your page live for 90 days",
         "One shareable web address",
-        "Pay once; nothing renews"
+        "Pay once; nothing renews",
+        "No MyLinnnk branding on your page"
       ],
+      "branding": false,
       "validity": {
         "days": 90
       },
@@ -74,7 +91,8 @@
         "currency": "NGN",
         "amountMinor": 750000
       },
-      "savings": null
+      "savings": null,
+      "estimate": null
     },
     {
       "id": "pro-monthly",
@@ -83,12 +101,15 @@
       "billing": "manual_renewal",
       "publishing": true,
       "featured": true,
-      "summary": "Keep a professional page live, one month at a time.",
+      "badge": "Most flexible",
+      "summary": "Keep a professional page live month by month, and renew only when you need to.",
       "features": [
         "Your page live for 30 days per payment",
         "Renew whenever you are ready",
-        "Never charged automatically"
+        "Never charged automatically",
+        "No MyLinnnk branding on your page"
       ],
+      "branding": false,
       "validity": {
         "days": 30
       },
@@ -97,7 +118,8 @@
         "currency": "NGN",
         "amountMinor": 300000
       },
-      "savings": null
+      "savings": null,
+      "estimate": null
     },
     {
       "id": "pro-annual",
@@ -106,12 +128,15 @@
       "billing": "manual_renewal",
       "publishing": true,
       "featured": false,
-      "summary": "A full year of your professional page.",
+      "badge": "Best value",
+      "summary": "A full year for a long-term page, at the lowest cost per day.",
       "features": [
         "Your page live for 365 days per payment",
         "Best value for long-term pages",
-        "Never charged automatically"
+        "Never charged automatically",
+        "No MyLinnnk branding on your page"
       ],
+      "branding": false,
       "validity": {
         "days": 365
       },
@@ -126,7 +151,8 @@
         "regularAmountMinor": 3600000,
         "amountMinor": 1200000,
         "percent": 33
-      }
+      },
+      "estimate": null
     },
     {
       "id": "special-request",
@@ -135,14 +161,17 @@
       "billing": "custom_quote",
       "publishing": true,
       "featured": false,
+      "badge": null,
       "summary": "Something bespoke? We will quote it for you.",
       "features": [
         "Custom design or content help",
         "Price and duration agreed with you"
       ],
+      "branding": false,
       "validity": null,
       "price": null,
-      "savings": null
+      "savings": null,
+      "estimate": null
     }
   ]
 }

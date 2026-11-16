@@ -120,7 +120,7 @@ export function AccountMenu({ onNavigate }) {
         </div>
         {!user.emailVerified && (
           <p className="account-menu__hint">
-            Please confirm your email. <Link to="/account" onClick={close}>Details</Link>
+            Please confirm your email. <Link to="/dashboard/account" onClick={close}>Details</Link>
           </p>
         )}
         <ul className="account-menu__items">
@@ -132,7 +132,7 @@ export function AccountMenu({ onNavigate }) {
             </li>
           )}
           <li>
-            <Link className="account-menu__item" to="/account" onClick={close}>
+            <Link className="account-menu__item" to="/dashboard" onClick={close}>
               Account
             </Link>
           </li>

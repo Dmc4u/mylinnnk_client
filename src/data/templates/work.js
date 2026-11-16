@@ -20,18 +20,25 @@ export const townHall = {
   sections: [
     { id: 'nav', type: 'nav', variant: 'split', content: { brand: 'Greener Riverside', links: ['Projects', 'Events', 'About'], cta: 'Volunteer' } },
     {
-      id: 'hero', type: 'hero', variant: 'split', options: { imageSide: 'right', imageShape: 'rect' },
+      // Editorial leadership grid: a community "front page" with an asymmetric photo layout.
+      id: 'hero', type: 'hero', variant: 'magazine',
       content: {
         eyebrow: 'Community initiative',
+        meta: '400+ volunteers · since 2023',
         title: 'Cleaner streets.\nGreener parks.\nStronger neighbours.',
         subtitle: 'Join residents improving Riverside one Saturday at a time.',
         cta: 'Join a clean-up',
-        badge: '400+ volunteers',
-        image: town('gardening', 'A volunteer watering newly planted shrubs'),
+        ctaHref: '#join',
+        images: [
+          town('gardening', 'A volunteer watering newly planted shrubs'),
+          media('paper-and-petals')('flowers-bed', 'A bed of colourful flowers in a park'),
+          media('mentor-circle')('workshop-table', 'Neighbours planning around a table'),
+        ],
       },
     },
     {
-      id: 'impact', type: 'stats', variant: 'big', tone: 'accent',
+      // Community impact cards
+      id: 'impact', type: 'stats', variant: 'cards',
       content: {
         items: [
           { value: '12', label: 'parks restored with local volunteers' },
@@ -53,16 +60,16 @@ export const townHall = {
       },
     },
     {
-      id: 'meetings', type: 'text', variant: 'split', tone: 'surface', options: { imageSide: 'left' },
+      // Editorial photo essay
+      id: 'meetings', type: 'text', variant: 'essay', tone: 'surface',
       content: {
         eyebrow: 'Open meetings',
         title: 'Every first Tuesday at the library',
         body: 'We plan everything together. Bring a neighbour, bring an idea, or just come for the biscuits.\n\nMeetings start at 7 pm in the Riverside Library community room and finish by 8:30.',
-        cta: 'See the agenda',
-        image: town('meeting', 'Neighbours gathered around a long table at a community meeting'),
+        image: town('meeting', 'Neighbours gathered around a long table at a community meeting', { caption: 'Riverside Library, first Tuesday of the month' }),
       },
     },
-    { id: 'join', type: 'cta', variant: 'banner', tone: 'inverse', content: { title: 'Riverside is better together', text: 'Next clean-up: Saturday at 9 am, meet at the river path.', button: 'Count me in' } },
+    { id: 'join', type: 'cta', variant: 'banner', tone: 'inverse', content: { title: 'Riverside is better together', text: 'Next clean-up: Saturday at 9 am, meet at the river path.', button: 'Count me in', buttonHref: 'mailto:volunteer@example.com' } },
   ],
 }
 
@@ -95,14 +102,15 @@ export const mentorCircle = {
     },
     { id: 'praise', type: 'quote', variant: 'banner', tone: 'inverse', content: { text: 'Elena helped our new managers lead with confidence and kindness.', author: 'Head of People, Northwind Studio' } },
     {
-      id: 'programmes', type: 'list', variant: 'columns',
+      // Programme grid
+      id: 'programmes', type: 'timeline', variant: 'programme',
       content: {
         eyebrow: 'Programmes',
         title: 'Ways we can work together',
         items: [
-          { title: 'Keynotes', meta: '45–60 minutes', text: 'Energising talks on confident, kind leadership for conferences and offsites.' },
-          { title: 'Workshops', meta: 'Half or full day', text: 'Hands-on sessions for new managers, built around real situations.' },
-          { title: 'Mentoring', meta: 'Six weeks', text: 'One-to-one sessions with a clear plan and honest feedback.' },
+          { label: '45–60 min', title: 'Keynotes', text: 'Energising talks on confident, kind leadership for conferences and offsites.' },
+          { label: 'Half / full day', title: 'Workshops', text: 'Hands-on sessions for new managers, built around real situations.' },
+          { label: 'Six weeks', title: 'Mentoring', text: 'One-to-one sessions with a clear plan and honest feedback.' },
         ],
       },
     },
@@ -161,7 +169,8 @@ export const northwindStudio = {
     },
     { id: 'marquee', type: 'marquee', variant: 'band', tone: 'accent', content: { items: ['Identity', 'Packaging', 'Websites', 'Motion', 'Campaigns'] } },
     {
-      id: 'work', type: 'gallery', variant: 'mosaic',
+      // Asymmetric company showcase: one project full width, the rest beneath.
+      id: 'work', type: 'gallery', variant: 'feature',
       content: {
         eyebrow: 'Selected work',
         title: 'Recent projects',
@@ -169,6 +178,20 @@ export const northwindStudio = {
           northwind('brand-flatlay', 'Printed brand guidelines and stationery on a desk', { caption: 'Atlas Coffee · Identity' }),
           northwind('desk', 'A minimal desk with a laptop in a dark room', { caption: 'Halden · Website' }),
           northwind('laptop-coffee', 'A laptop and a cup of coffee on a wooden table', { caption: 'Ferro · Campaign' }),
+          media('studio-mono')('desk-light', 'A desk lamp lighting a workspace', { caption: 'Lumen · Packaging' }),
+        ],
+      },
+    },
+    {
+      // The studio team as people cards
+      id: 'team', type: 'list', variant: 'people', tone: 'surface',
+      content: {
+        eyebrow: 'Studio',
+        title: 'The people behind the work',
+        items: [
+          { title: 'Inês Duarte', meta: 'Creative director', text: 'Fifteen years of identities that last.', image: media('mentor-circle')('portrait', 'Portrait of a smiling woman outdoors') },
+          { title: 'Tomás Reis', meta: 'Design lead', text: 'Type nerd, packaging obsessive.', image: media('frame-and-field')('tailor', 'A craftsman at work in his studio') },
+          { title: 'Sara & Leo', meta: 'Strategy', text: 'Turning briefs into ideas worth making.', image: media('paper-and-petals')('kitchen-laugh', 'Two colleagues laughing together') },
         ],
       },
     },
@@ -242,14 +265,27 @@ export const cornerCafe = {
       },
     },
     {
-      id: 'gallery', type: 'gallery', variant: 'masonry',
+      // Modular product cards with photos
+      id: 'favourites', type: 'list', variant: 'tiles',
       content: {
-        images: [
-          cafe('bakery-shelves', 'Shelves of freshly baked bread and pastries'),
-          cafe('latte', 'A latte in a teal cup on a wooden counter'),
-          cafe('croissant-plate', 'A croissant on a plate with a knife'),
-          cafe('latte-art', 'A cappuccino with leaf latte art'),
+        eyebrow: 'House favourites',
+        title: 'What people come back for',
+        items: [
+          { title: 'The morning box', meta: 'Order by 8 am', text: 'Four pastries, two coffees and the day’s first loaf.', image: cafe('bakery-shelves', 'Shelves of freshly baked bread and pastries') },
+          { title: 'Butter croissant', meta: '€2.20', text: '27 layers of French butter.', image: cafe('croissant-plate', 'A croissant on a plate with a knife') },
+          { title: 'Flat white', meta: '€2.80', text: 'Single-origin, roasted nearby.', image: cafe('latte-art', 'A cappuccino with leaf latte art') },
+          { title: 'Fresh croissants', meta: 'From 7 am', text: 'Out of the oven every hour until noon.', image: cafe('croissants', 'A pile of golden, flaky croissants') },
         ],
+      },
+    },
+    {
+      // Our story, as an editorial photo essay
+      id: 'story', type: 'text', variant: 'essay', tone: 'surface',
+      content: {
+        eyebrow: 'Our story',
+        title: 'Twenty-five years on the same corner',
+        body: 'My grandmother opened the doors in 1998 with one oven and a recipe book. The oven has changed; the recipes haven’t.\n\nWe still start at four every morning, so the street smells of bread by six.',
+        image: cafe('latte', 'A latte in a teal cup on a wooden counter', { caption: 'The counter, 7 am' }),
       },
     },
     {

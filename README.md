@@ -20,3 +20,5 @@ git push origin main
 
 Project: MyLinnnk — Brand Identity and Animated Homepage
 MyLinnnk — Phase 2: Template Gallery
+Phase 4, Stage 4: Final Implementation Authorization
+Stage 5 — Cloud Media Storage

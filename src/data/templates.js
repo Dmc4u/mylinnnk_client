@@ -12,6 +12,26 @@ import { coastalEvening, gardenVows } from './templates/weddings.js'
 import { cornerCafe, mentorCircle, northwindStudio, townHall } from './templates/work.js'
 import { charityRun, frameAndField, studioMono, summerSessions } from './templates/creative.js'
 import { graduationDay, helloBaby, lettersHome, yearInLisbon } from './templates/stories.js'
+import {
+  atelierBloom,
+  caseStudy,
+  cityHallVows,
+  civicForward,
+  fieldNotes,
+  fieldhouse,
+  firstTrip,
+  galleryWall,
+  goldenJubilee,
+  inkAndLine,
+  ivoryEditorial,
+  ledgerAndCo,
+  neonThirty,
+  nightMarket,
+  rivieraWeekend,
+  rubyYears,
+  scrapbookSixteen,
+  stillUs,
+} from './templates/premium.js'
 
 export const CATEGORIES = [
   { id: 'birthdays', label: 'Birthdays' },
@@ -46,6 +66,25 @@ export const TEMPLATES = [
   lettersHome,
   graduationDay,
   helloBaby,
+  // Premium expansion (November 2026)
+  goldenJubilee,
+  neonThirty,
+  ivoryEditorial,
+  rubyYears,
+  civicForward,
+  atelierBloom,
+  galleryWall,
+  nightMarket,
+  fieldNotes,
+  scrapbookSixteen,
+  firstTrip,
+  rivieraWeekend,
+  cityHallVows,
+  stillUs,
+  ledgerAndCo,
+  fieldhouse,
+  caseStudy,
+  inkAndLine,
 ]
 
 if (import.meta.env.DEV) {

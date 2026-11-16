@@ -157,7 +157,7 @@ export default function EditorBanners({
       <div key="local" className="ed-banner ed-banner--info" role="status">
         <Icon name="folder" size={18} />
         <p>
-          This draft is saved on this device only. To keep it in your account, import it from <a href="/account">your account page</a>.
+          This draft is saved on this device only. To keep it in your account, import it from <a href="/dashboard/drafts">your dashboard</a>.
         </p>
       </div>,
     )

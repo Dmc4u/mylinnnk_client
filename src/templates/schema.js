@@ -28,16 +28,27 @@ export const IMAGE = 'image'
 export const SECTION_TYPES = {
   nav: {
     label: 'Navigation',
-    variants: ['split', 'centered'],
-    fields: { brand: 'text', links: 'strings', cta: 'text' },
+    variants: ['split', 'centered', 'chapters'],
+    fields: {
+      brand: 'text', links: 'strings', cta: 'text',
+      // Chapter menu: each entry is a real link (usually #section) on the published page.
+      items: { kind: 'list', of: { label: 'text', href: 'link' } },
+    },
+    variantFields: {
+      split: ['brand', 'links', 'cta'],
+      centered: ['brand', 'links', 'cta'],
+      chapters: ['brand', 'items'],
+    },
+    /** Field labels specific to this section type. */
+    labels: { items: 'Menu links', label: 'Menu label', href: 'Goes to (e.g. #chapter-1)' },
   },
   hero: {
     label: 'Hero',
-    variants: ['cover', 'split', 'arch', 'poster', 'collage', 'editorial', 'framed'],
+    variants: ['cover', 'split', 'arch', 'poster', 'collage', 'editorial', 'framed', 'magazine'],
     options: {
       align: ['center', 'start', 'end'],
       overlay: ['dark', 'light', 'gradient'],
-      height: ['tall', 'medium'],
+      height: ['tall', 'medium', 'full'],
       imageSide: ['left', 'right'],
       imageShape: ['rect', 'arch', 'circle', 'bleed'],
       ctaStyle: ['solid', 'outline', 'inverse'],
@@ -56,6 +67,7 @@ export const SECTION_TYPES = {
       collage: ['eyebrow', 'title', 'subtitle', 'cta', 'ctaHref', 'images'],
       editorial: ['eyebrow', 'title', 'subtitle', 'tags'],
       framed: ['eyebrow', 'title', 'subtitle', 'image'],
+      magazine: ['eyebrow', 'title', 'subtitle', 'meta', 'cta', 'ctaHref', 'images'],
     },
     variantOptions: {
       cover: ['align', 'overlay', 'height', 'ctaStyle'],
@@ -75,7 +87,7 @@ export const SECTION_TYPES = {
   },
   text: {
     label: 'Text',
-    variants: ['centered', 'split', 'dropcap', 'letter'],
+    variants: ['centered', 'split', 'dropcap', 'letter', 'essay'],
     options: { imageSide: ['left', 'right'] },
     fields: { eyebrow: 'text', title: 'text', body: 'richtext', image: IMAGE, cta: 'text', ctaHref: 'link', signature: 'text' },
     variantFields: {
@@ -83,17 +95,18 @@ export const SECTION_TYPES = {
       split: ['eyebrow', 'title', 'body', 'cta', 'ctaHref', 'image'],
       dropcap: ['eyebrow', 'title', 'body'],
       letter: ['eyebrow', 'title', 'body', 'signature'],
+      essay: ['eyebrow', 'title', 'body', 'image'],
     },
     variantOptions: { split: ['imageSide'] },
   },
   gallery: {
     label: 'Gallery',
-    variants: ['masonry', 'filmstrip', 'polaroids', 'mosaic'],
+    variants: ['masonry', 'filmstrip', 'polaroids', 'mosaic', 'bento', 'scrapbook', 'feature'],
     fields: { eyebrow: 'text', title: 'text', images: { kind: 'list', of: IMAGE } },
   },
   timeline: {
     label: 'Timeline',
-    variants: ['vertical', 'schedule', 'years'],
+    variants: ['vertical', 'schedule', 'years', 'alternating', 'programme'],
     fields: {
       eyebrow: 'text', title: 'text',
       items: { kind: 'list', of: { label: 'text', title: 'text', text: 'text', image: IMAGE } },
@@ -101,15 +114,17 @@ export const SECTION_TYPES = {
   },
   list: {
     label: 'List',
-    variants: ['numbered', 'menu', 'columns', 'lineup'],
+    variants: ['numbered', 'menu', 'columns', 'lineup', 'tiles', 'people'],
     fields: {
       eyebrow: 'text', title: 'text', intro: 'text',
-      items: { kind: 'list', of: { title: 'text', text: 'text', meta: 'text' } },
+      // image: optional, shown by the Tiles and People layouts (older items simply have none).
+      items: { kind: 'list', of: { title: 'text', text: 'text', meta: 'text', image: IMAGE } },
     },
+    labels: { image: 'Photo (Modular tiles and People cards layouts)' },
   },
   stats: {
     label: 'Numbers',
-    variants: ['big'],
+    variants: ['big', 'cards'],
     fields: { eyebrow: 'text', title: 'text', items: { kind: 'list', of: { value: 'text', label: 'text' } } },
   },
   quote: { label: 'Quote', variants: ['large', 'banner'], fields: { text: 'text', author: 'text' } },
@@ -167,6 +182,9 @@ export const VARIANT_LABELS = {
   masonry: 'Masonry', filmstrip: 'Filmstrip', polaroids: 'Polaroids', mosaic: 'Mosaic', vertical: 'Vertical',
   schedule: 'Schedule', years: 'Years', numbered: 'Numbered', menu: 'Menu', columns: 'Columns', lineup: 'Line-up',
   big: 'Big numbers', large: 'Large', banner: 'Banner', boxes: 'Boxes', bar: 'Progress bar', band: 'Band',
+  chapters: 'Chapter menu', magazine: 'Magazine cover', bento: 'Bento grid', alternating: 'Alternating rows',
+  tiles: 'Modular tiles', people: 'People cards', scrapbook: 'Scrapbook', feature: 'Featured work', programme: 'Programme grid',
+  essay: 'Photo essay',
 }
 
 export const OPTION_LABELS = {
@@ -174,8 +192,9 @@ export const OPTION_LABELS = {
   imageShape: 'Image shape', ctaStyle: 'Button style', spacing: 'Spacing', tone: 'Background',
 }
 
-/** Readable label for a content field key. */
-export const fieldLabel = (key) => FIELD_LABELS[key] ?? key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())
+/** Readable label for a content field key (a section type may name its own fields differently). */
+export const fieldLabel = (key, type) =>
+  SECTION_TYPES[type]?.labels?.[key] ?? FIELD_LABELS[key] ?? key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())
 
 /** Fields that apply to a section's current variant (all fields when unspecified). */
 export function fieldsForVariant(type, variant) {

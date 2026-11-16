@@ -38,7 +38,7 @@ export default function Hero({ variant, content: c, options = {}, ornament }) {
             </h2>
             {c.subtitle && <p className="ts-hero__subtitle">{c.subtitle}</p>}
             {c.meta && <p className="ts-hero__meta">{c.meta}</p>}
-            <Action>{c.cta}</Action>
+            <Action href={c.ctaHref}>{c.cta}</Action>
           </div>
           <div className="ts-hero__media">
             <Img image={c.image} eager />
@@ -95,7 +95,7 @@ export default function Hero({ variant, content: c, options = {}, ornament }) {
               <Lines text={c.title} />
             </h2>
             {c.subtitle && <p className="ts-hero__subtitle">{c.subtitle}</p>}
-            <Action>{c.cta}</Action>
+            <Action href={c.ctaHref}>{c.cta}</Action>
           </div>
         </div>
       )
@@ -136,6 +136,40 @@ export default function Hero({ variant, content: c, options = {}, ornament }) {
         </div>
       )
 
+    case 'magazine': {
+      // Asymmetric magazine cover: oversized title over a tall lead photo, a smaller offset photo,
+      // and the standfirst in its own column.
+      const [lead, inset, third] = c.images ?? []
+      return (
+        <div className="ts-hero__magazine">
+          <div className="ts-hero__magazine-head">
+            <Eyebrow>{c.eyebrow}</Eyebrow>
+            {c.meta && <p className="ts-hero__meta">{c.meta}</p>}
+          </div>
+          <h2 className="ts-display ts-hero__title" style={{ '--title-longest': longestWord(c.title) }}>
+            <Lines text={c.title} />
+          </h2>
+          <div className="ts-hero__magazine-lead">
+            <Img image={lead} eager />
+          </div>
+          {inset && (
+            <div className="ts-hero__magazine-inset">
+              <Img image={inset} />
+            </div>
+          )}
+          {third && (
+            <div className="ts-hero__magazine-third">
+              <Img image={third} />
+            </div>
+          )}
+          <div className="ts-hero__magazine-copy">
+            {c.subtitle && <p className="ts-hero__subtitle">{c.subtitle}</p>}
+            <Action href={c.ctaHref}>{c.cta}</Action>
+          </div>
+        </div>
+      )
+    }
+
     case 'cover':
     default:
       return (
@@ -151,7 +185,7 @@ export default function Hero({ variant, content: c, options = {}, ornament }) {
             </h2>
             {c.subtitle && <p className="ts-hero__subtitle">{c.subtitle}</p>}
             {c.meta && <p className="ts-hero__meta">{c.meta}</p>}
-            <Action variant={options.ctaStyle ?? 'solid'}>{c.cta}</Action>
+            <Action variant={options.ctaStyle ?? 'solid'} href={c.ctaHref}>{c.cta}</Action>
           </div>
         </div>
       )

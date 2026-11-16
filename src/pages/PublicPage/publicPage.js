@@ -40,17 +40,33 @@ export function preparePublishedPage(raw) {
   })
   const urls = new Map([...ids].map((id) => [id, publicMediaUrl(slug, id)]))
   const { page } = resolveMediaForRender(checked.page, urls)
-  return { title: checked.page.title, render: pageForRender(page) }
+  // The MyLinnnk credit comes from the server (the plan that was bought), next to the content, never from it.
+  return { title: checked.page.title, render: pageForRender(page), branding: raw.branding === 'credit' ? 'credit' : 'none' }
+}
+
+/** Characters a page address (slug) can contain; the API refuses anything else. */
+export const SLUG_PATTERN = /^[A-Za-z0-9-]+$/
+
+/**
+ * The address meant by a pasted link that picked up characters at the end (e.g. "moses**" copied from
+ * bold text, "moses." or "moses)" from a chat message): those trailing characters removed, or null when
+ * the rest still isn't a valid address.
+ */
+export function cleanedSlug(raw) {
+  const cleaned = String(raw ?? '').replace(/[^A-Za-z0-9-]+$/, '')
+  return SLUG_PATTERN.test(cleaned) ? cleaned : null
 }
 
 /** → { status: 'ready', page } | { status: 'not_found' | 'unavailable' | 'error', error } */
 export async function loadPublishedPage(slug) {
+  if (!SLUG_PATTERN.test(slug ?? '')) return { status: 'not_found' } // can't be a page address: no request
   try {
     const data = await apiRequest(`/public/pages/${encodeURIComponent(slug)}`)
     const prepared = preparePublishedPage(data?.page)
     return prepared ? { status: 'ready', page: prepared } : { status: 'unavailable' }
   } catch (error) {
-    if (error?.status === 404) return { status: 'not_found' }
+    // 400: the server says this isn't a valid page address, so it's "not found", not a connection problem.
+    if (error?.status === 404 || error?.status === 400) return { status: 'not_found' }
     if (error?.status === 410) return { status: 'unavailable' }
     return { status: 'error', error }
   }

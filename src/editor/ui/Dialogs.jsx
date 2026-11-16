@@ -1,6 +1,8 @@
 import { CATEGORY_LABELS } from '../../data/templates.js'
-import { PUBLISHING_GUARANTEES, planTerms, priceDescription, priceParts } from '../config/plans.js'
+import { PUBLISHING_GUARANTEES, planTerms } from '../config/plans.js'
 import usePlans from '../../components/Pricing/usePlans.js'
+import { displayPrice, usePriceCountry } from '../../components/Pricing/priceDisplay.js'
+import { displayCurrencyFor } from '../../config/countryCurrency.js'
 import Modal from './Modal.jsx'
 import Icon from './icons.jsx'
 
@@ -123,15 +125,26 @@ const FAMILIES = [
 ]
 
 /**
- * Publish: shows the server's plans and prices (GET /plans) honestly. Paid
- * publishing doesn't exist yet: no payment, no order, no fake live URL.
+ * Publish: shows the server's plans and prices (GET /plans, asked afresh each time the dialog opens,
+ * so it follows the server's current payment mode). "Continue to publishing" opens /publish/:pageId
+ * only when the server takes payments and the page is saved in the signed-in user's account; the
+ * server still checks everything again there.
  */
 export function PublishDialog({ suggested, category, signedIn, cloudPageId = null, onClose }) {
-  const { status, data, retry } = usePlans()
+  const [priceCountry] = usePriceCountry()
+  const { status, data, retry } = usePlans({ fresh: true, display: displayCurrencyFor(priceCountry) })
   const plans = data?.plans ?? []
   const custom = plans.find((p) => p.billing === 'custom_quote')
+  const checkoutAvailable = data?.checkout?.available === true
   // Only when the server offers checkout, for a page saved in the signed-in user's account.
-  const canPublish = Boolean(data?.checkout?.available && signedIn && cloudPageId)
+  const canPublish = Boolean(checkoutAvailable && signedIn && cloudPageId)
+  let note
+  if (status !== 'ready') note = status === 'loading' ? 'Checking whether publishing is available…' : 'We couldn’t check whether publishing is available right now.'
+  else if (!checkoutAvailable) note = 'Paid publishing is coming soon. Nothing is charged and your page is not published yet.'
+  else if (!signedIn) note = 'Log in or create a free account, save this page to your account, then publish it from here.'
+  else if (!cloudPageId) note = 'Save this page to your account first, then publish it from here.'
+  else if (data.checkout.test) note = 'Test mode: payment details are placeholders. Don’t transfer real money.'
+  else note = 'You’ll choose an address and a plan, then pay by bank transfer. Your page goes live once we confirm the payment.'
   return (
     <Modal
       size="lg"
@@ -186,8 +199,8 @@ export function PublishDialog({ suggested, category, signedIn, cloudPageId = nul
                       <span className="ed-plan__terms">{planTerms(plan)}</span>
                     </span>
                     <span className="ed-plan__price">
-                      <span aria-hidden="true">{priceParts(plan, data.currency).amount}</span>
-                      <span className="sr-only">{priceDescription(plan, data.currency)}</span>
+                      <span aria-hidden="true">{displayPrice(plan, data, priceCountry).amount}</span>
+                      <span className="sr-only">{displayPrice(plan, data, priceCountry).sr}</span>
                     </span>
                   </li>
                 ))}
@@ -212,14 +225,7 @@ export function PublishDialog({ suggested, category, signedIn, cloudPageId = nul
         The plan that applies is confirmed when you publish, based on how the page will be used.
       </p>
       <p className="ed-soon" id="publish-soon">
-        <Icon name="lock" size={16} />{' '}
-        {canPublish
-          ? data.checkout.test
-            ? 'Test mode: payment details are placeholders. Don’t transfer real money.'
-            : 'You’ll choose an address and a plan, then pay by bank transfer. Your page goes live once we confirm the payment.'
-          : data?.checkout?.available && !cloudPageId
-            ? 'Save this page to your account first, then publish it from here.'
-            : 'Paid publishing is coming soon. Nothing is charged and your page is not published yet.'}
+        <Icon name="lock" size={16} /> {note}
       </p>
     </Modal>
   )

@@ -23,17 +23,18 @@ const images = (n) => `${n} uploaded image${n === 1 ? '' : 's'}`
  * - unsaved changes kept on this device for cloud drafts;
  * - guest drafts on this device that can be imported (explicitly confirmed).
  */
-export default function AccountDrafts() {
+export default function AccountDrafts({ onDrafts }) {
   return (
     <>
-      <CloudDrafts />
+      <CloudDrafts onDrafts={onDrafts} />
       <UnsavedChanges />
       <ImportGuestDrafts />
     </>
   )
 }
 
-function CloudDrafts() {
+/** `onDrafts(list)` (optional): told about the account's drafts whenever the list loads (dashboard counts). */
+function CloudDrafts({ onDrafts }) {
   const { withCsrf } = useAuth()
   const [state, setState] = useState({ phase: 'loading', drafts: [] })
   const [confirm, setConfirm] = useState(null)
@@ -42,11 +43,13 @@ function CloudDrafts() {
 
   const load = useCallback(async () => {
     try {
-      setState({ phase: 'ready', drafts: await cloudDraftApi.list() })
+      const drafts = await cloudDraftApi.list()
+      setState({ phase: 'ready', drafts })
+      onDrafts?.(drafts)
     } catch (error) {
       setState((prev) => ({ ...prev, phase: 'error', message: errorMessage(error) }))
     }
-  }, [])
+  }, [onDrafts])
 
   useEffect(() => {
     queueMicrotask(load)
@@ -77,7 +80,7 @@ function CloudDrafts() {
 
   return (
     <section className="account-section" aria-labelledby="cloud-drafts-heading" aria-busy={state.phase === 'loading'}>
-      <h2 id="cloud-drafts-heading">Your pages</h2>
+      <h2 id="cloud-drafts-heading">My drafts</h2>
       <p>Drafts saved to your account. Open them on any device after logging in.</p>
       {notice && <FormAlert tone={notice.tone}>{notice.text}</FormAlert>}
       {state.phase === 'loading' && <DraftListSkeleton />}
@@ -111,8 +114,11 @@ function CloudDrafts() {
                 )}
               </div>
               <div className="account-drafts__actions">
-                <Link className="btn btn--ghost btn--sm" to={`/editor/${d.templateSlug}?page=${d.id}`} aria-label={`Open ${d.title || 'Untitled page'}`}>
-                  Open
+                <Link className="btn btn--ghost btn--sm" to={`/editor/${d.templateSlug}?page=${d.id}`} aria-label={`Continue editing ${d.title || 'Untitled page'}`}>
+                  Continue editing
+                </Link>
+                <Link className="btn btn--ghost btn--sm" to={`/publish/${d.id}`} aria-label={`Publish ${d.title || 'Untitled page'}`}>
+                  Publish
                 </Link>
                 <button type="button" className="btn btn--ghost btn--sm account-drafts__delete" onClick={() => setConfirm(d)} aria-label={`Delete ${d.title || 'Untitled page'}`}>
                   Delete

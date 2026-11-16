@@ -1,0 +1,5 @@
+.copy-button { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; vertical-align: middle; }
+.copy-button__status { font-size: 0.85rem; font-weight: 600; color: var(--teal-600); }
+.copy-button__status:empty { display: none; }
+.order-facts .copy-button { margin-left: 8px; }
+.copy-button .is-copied { color: var(--teal-600); border-color: color-mix(in srgb, var(--teal-600) 45%, transparent); }

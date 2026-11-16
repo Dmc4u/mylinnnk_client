@@ -31,7 +31,8 @@ function buildEditedPage() {
 
 describe('templates', () => {
   it('every template passes the schema', () => {
-    expect(TEMPLATES.length).toBe(18)
+    expect(TEMPLATES.length).toBeGreaterThanOrEqual(19) // the original 18 plus the premium expansion
+    expect(new Set(TEMPLATES.map((t) => t.slug)).size).toBe(TEMPLATES.length)
     expect(TEMPLATES.flatMap(validateTemplate)).toEqual([])
   })
 })

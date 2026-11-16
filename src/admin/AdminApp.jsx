@@ -11,6 +11,7 @@ import NeonRingLoader from '../components/Loading/NeonRingLoader.jsx'
 import MagneticButton from '../components/UI/MagneticButton.jsx'
 import useDelayedLoading from '../hooks/useDelayedLoading.js'
 import { AdminPaymentDetail, AdminPayments } from './AdminPayments.jsx'
+import { AdminEnquiries, AdminEnquiryDetail } from './AdminEnquiries.jsx'
 import ReauthPrompt, { AdminNotice } from './ReauthPrompt.jsx'
 import { REAUTH_CODE, needsReauth } from './reauth.js'
 import StateView, { AdminHeading, StatusChip } from './StateView.jsx'
@@ -23,6 +24,7 @@ const NAV = [
   { to: '/admin/publications', label: 'Publications', icon: 'M5 4h14v16H5V4Zm3 4h8M8 12h8M8 16h5' },
   { to: '/admin/payments', label: 'Payment reviews', icon: 'M3 7h18v10H3V7Zm0 3h18M7 14h3' },
   { to: '/admin/transactions', label: 'Transactions', icon: 'M7 7h11l-3-3M17 17H6l3 3' },
+  { to: '/admin/enquiries', label: 'Enquiries', icon: 'M4 5h16v11H8l-4 4V5Zm4 4h8M8 12h5' },
   { to: '/admin/audit', label: 'Audit log', icon: 'M12 3 5 6v5c0 4.4 3 8.3 7 9.5 4-1.2 7-5.1 7-9.5V6l-7-3Zm-3 9 2 2 4-4' },
   { to: '/admin/settings', label: 'Settings', icon: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-3a7.4 7.4 0 0 0-.1-1.2l2-1.6-2-3.4-2.4.9a7.6 7.6 0 0 0-2-1.2L14.5 3h-5l-.4 2.5a7.6 7.6 0 0 0-2 1.2l-2.4-.9-2 3.4 2 1.6a7.4 7.4 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-.9c.6.5 1.3.9 2 1.2l.4 2.5h5l.4-2.5c.7-.3 1.4-.7 2-1.2l2.4.9 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z' },
 ]
@@ -169,7 +171,7 @@ function AdminShell({ user }) {
           </nav>
           <nav className="adm-side__exit" aria-label="Leave administration">
             <Link to="/" className="adm-side__link">← Back to MyLinnnk</Link>
-            <Link to="/account" className="adm-side__link">Your account</Link>
+            <Link to="/dashboard" className="adm-side__link">Your account</Link>
           </nav>
         </aside>
         {menuOpen && <div className="adm-scrim" aria-hidden="true" onClick={() => setMenuOpen(false)} />}
@@ -181,6 +183,8 @@ function AdminShell({ user }) {
             <Route path="payments" element={<AdminPayments />} />
             <Route path="payments/:reference" element={<AdminPaymentDetail />} />
             <Route path="transactions" element={<Transactions />} />
+            <Route path="enquiries" element={<AdminEnquiries />} />
+            <Route path="enquiries/:reference" element={<AdminEnquiryDetail />} />
             <Route path="audit" element={<Audit />} />
             <Route path="settings" element={<Settings />} />
             <Route path="*" element={<p className="adm-state">This page doesn’t exist.</p>} />

@@ -824,3 +824,47 @@
     opacity: 1;
   }
 }
+
+/* Prices for my country (above the plan stack; the stack is unchanged) */
+.price-country {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 18px;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+.price-country__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 5px 14px;
+  font: inherit;
+  color: inherit;
+  background: color-mix(in srgb, var(--surface, #fff) 80%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+.price-country__pill:hover,
+.price-country__pill:focus-visible { color: var(--navy-900, #0a1630); border-color: currentColor; }
+.price-country__name { font-weight: 600; color: var(--navy-900, #0a1630); }
+.price-country__name + .price-country__action::before { content: '·'; margin-right: 7px; color: var(--muted); }
+.price-country__action { text-decoration: underline; text-underline-offset: 3px; }
+.price-country__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 10px;
+  max-width: 720px;
+}
+.price-country__form select { max-width: 100%; min-height: 40px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface, #fff); color: inherit; }
+.price-country__save { min-height: 40px; padding: 6px 16px; border: 0; border-radius: 999px; font-weight: 600; color: #fff; background: var(--navy-900, #0a1630); cursor: pointer; }
+.price-country__cancel { min-height: 40px; padding: 6px 10px; font: inherit; color: inherit; text-decoration: underline; text-underline-offset: 3px; background: none; border: 0; cursor: pointer; }
+.price-country__privacy { flex-basis: 100%; margin: 4px 0 0; font-size: 0.8rem; text-align: center; }
+.plan-card__payable { margin: 4px 0 0; font-size: 0.85rem; color: var(--muted); }
+.price-attribution { margin: 10px 0 0; text-align: center; font-size: 0.72rem; opacity: 0.7; }
+.price-attribution a { color: var(--muted); text-decoration: none; }
+.price-attribution a:hover, .price-attribution a:focus-visible { text-decoration: underline; }

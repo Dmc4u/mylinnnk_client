@@ -202,3 +202,61 @@
   .order-facts div { grid-template-columns: 1fr; gap: 2px; }
   .order-form--inline { grid-template-columns: 1fr; }
 }
+
+/* Small buttons (copy account number / reference) */
+.order-btn--small { min-height: 32px; padding: 4px 12px; font-size: 0.85rem; }
+
+/* ---------- Payment confirmed: the page is live ---------- */
+.order-success { position: relative; overflow: hidden; display: grid; gap: 18px; }
+.order-success::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 6px;
+  background: linear-gradient(90deg, var(--purple-600), var(--teal-600), #f59e0b);
+}
+.order-success__title { font-size: clamp(1.6rem, 4.5vw, 2.2rem); line-height: 1.15; letter-spacing: -0.03em; }
+.order-success__lead { font-size: 1.05rem; line-height: 1.6; color: var(--muted); }
+.order-success__address { display: grid; gap: 6px; padding: 14px 16px; background: rgb(20 184 166 / 0.08); border: 1px solid rgb(20 184 166 / 0.28); border-radius: 14px; }
+.order-success__label { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--teal-600); }
+.order-success__url { font-family: var(--font-mono); font-size: 1rem; font-weight: 650; color: var(--navy-900); overflow-wrap: anywhere; }
+.order-success__live { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--teal-600); }
+.order-success__live::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px rgb(20 184 166 / 0.2); }
+.order-success__details { border-top: 1px solid var(--line); padding-top: 12px; }
+.order-success__details summary { cursor: pointer; font-weight: 650; color: var(--navy-900); }
+.order-success__details[open] summary { margin-bottom: 10px; }
+
+/* A few soft sparkles in the corner (decorative; still for reduced motion). */
+.order-success__burst { position: absolute; top: 14px; right: 18px; width: 90px; height: 70px; pointer-events: none; }
+.order-success__burst span { position: absolute; width: 8px; height: 8px; border-radius: 2px; opacity: 0; animation: order-sparkle 2.4s var(--ease-out) 0.2s both; }
+.order-success__burst span:nth-child(1) { left: 10px; top: 30px; background: var(--purple-600); }
+.order-success__burst span:nth-child(2) { left: 34px; top: 6px; background: var(--teal-600); animation-delay: 0.35s; }
+.order-success__burst span:nth-child(3) { left: 60px; top: 24px; background: #f59e0b; animation-delay: 0.5s; }
+.order-success__burst span:nth-child(4) { left: 78px; top: 4px; background: var(--purple-600); animation-delay: 0.65s; }
+.order-success__burst span:nth-child(5) { left: 46px; top: 48px; background: #f59e0b; animation-delay: 0.8s; }
+.order-success__burst span:nth-child(6) { left: 20px; top: 56px; background: var(--teal-600); animation-delay: 0.95s; }
+@keyframes order-sparkle {
+  0% { opacity: 0; transform: translateY(10px) scale(0.4) rotate(0deg); }
+  40% { opacity: 1; }
+  100% { opacity: 0.85; transform: translateY(0) scale(1) rotate(45deg); }
+}
+@media (max-width: 520px) { .order-success__burst { display: none; } }
+@media (prefers-reduced-motion: reduce) { .order-success__burst span { animation: none; opacity: 0.85; transform: rotate(45deg); } }
+
+/* Administrator-only panel on /publish/:pageId (own pages, no payment) */
+.order-admin {
+  padding: 18px 20px;
+  border: 1px dashed var(--teal-600, #0f766e);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--teal-600, #0f766e) 5%, transparent);
+}
+.order-admin .order-form { margin-top: 16px; padding-top: 14px; }
+.order-admin select, .order-admin input:not([type="checkbox"]) { max-width: 320px; }
+.order-check { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.order-payable { margin: 20px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--surface, #f7f7f9); }
+
+/* Payment window countdown and the expired-order panel */
+.order-countdown { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 1.35rem; font-weight: 700; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+.order-expired { margin-top: 22px; padding: 18px 20px; border-radius: 14px; border: 1px solid rgb(220 38 38 / 0.35); background: rgb(220 38 38 / 0.06); }
+.order-expired h2 { margin: 0 0 6px; }
+.order-expired p { margin: 0 0 10px; }

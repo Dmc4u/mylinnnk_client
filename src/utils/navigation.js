@@ -43,4 +43,19 @@ export const FOOTER_LINK_GROUPS = [
       { to: '/#how', label: 'How it works' },
     ],
   },
+  {
+    title: 'Support',
+    links: [
+      { to: '/contact', label: 'Contact us' },
+      { to: '/request-quote', label: 'Request a quote' },
+    ],
+  },
+  {
+    title: 'Legal',
+    links: [
+      { to: '/privacy-policy', label: 'Privacy policy' },
+      { to: '/terms-of-service', label: 'Terms of service' },
+      { to: '/cookie-settings', label: 'Cookie settings' },
+    ],
+  },
 ]

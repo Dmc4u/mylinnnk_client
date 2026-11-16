@@ -31,6 +31,15 @@ export const adminApi = {
   transactions: (page = 1) => apiRequest(`${base}/transactions?page=${page}`),
   audit: (action = '', page = 1) => apiRequest(`${base}/audit?${new URLSearchParams({ ...(action ? { action } : {}), page: String(page) })}`),
   settings: () => apiRequest(`${base}/settings`),
+  enquiries: ({ type = '', status = '', priority = '', q = '', page = 1 } = {}) =>
+    apiRequest(`${base}/enquiries?${new URLSearchParams({ ...(type ? { type } : {}), ...(status ? { status } : {}), ...(priority ? { priority } : {}), ...(q ? { q } : {}), page: String(page) })}`),
+  enquiry: (ref) => apiRequest(`${base}/enquiries/${encodeURIComponent(ref)}`),
+  updateEnquiry: (csrfToken, ref, body) => apiRequest(`${base}/enquiries/${encodeURIComponent(ref)}`, { method: 'PATCH', body, csrfToken }),
+  addEnquiryNote: (csrfToken, ref, text) => post(csrfToken, `/enquiries/${encodeURIComponent(ref)}/notes`, { text }),
+  // The administrator's own pages, without payment (the server only ever finds the admin's own pages).
+  publishOwn: (csrfToken, pageId, expiry, credit) => post(csrfToken, `/my-pages/${encodeURIComponent(pageId)}/publish`, { expiry, credit }),
+  updateOwnContent: (csrfToken, pageId, confirmSlug) => post(csrfToken, `/my-pages/${encodeURIComponent(pageId)}/update-content`, { confirmSlug }),
+  extendOwn: (csrfToken, pageId, expiry) => post(csrfToken, `/my-pages/${encodeURIComponent(pageId)}/extend`, { expiry }),
 }
 
 /** Loads `loader()` and reloads when `deps` change → { status, data, error, reload }. */

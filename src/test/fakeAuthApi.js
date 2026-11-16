@@ -34,6 +34,12 @@ export function createFakeAuthApi() {
     mediaDelay: 0, // ms before /media answers
     mediaFailures: 0, // the next N uploads answer 503 STORAGE_UNAVAILABLE
     plansDown: false, // GET /plans fails with a network error
+    checkout: null, // GET /plans `checkout` override, e.g. { available: true, test: false } (the server's PAYMENTS_MODE)
+    enquiries: [], // POST /enquiries bodies received (contact messages and quote requests)
+    enquiryFailure: false, // POST /enquiries answers 503 (email delivery failed)
+    orders: [], // GET /orders items (the customer's payment orders, newest first)
+    publications: [], // GET /publications items (the server's owner view of each paid-for page)
+    site: { origin: 'http://localhost:3002', local: true }, // the server's APP_URL, and whether it is local
     plansDelay: 0, // ms before GET /plans answers
     publicPages: {}, // slug → page (live), or { gone: true } (was live, not any more); anything else is 404
     publicDown: false, // /public requests fail with a network error
@@ -184,6 +190,21 @@ export function createFakeAuthApi() {
       }
       issueCode(user)
       return ok({ sent: true, alreadyVerified: false, verification: verificationState(user) }, 202)
+    },
+    'POST /enquiries': ({ body }) => {
+      // Like the API: emails the enquiry (recorded here) or answers 503 when delivery fails.
+      if (state.enquiryFailure) return fail(503, 'EMAIL_DELIVERY_FAILED', 'We couldn’t send your message just now. Please try again in a moment, or email support@dmclimited.net.')
+      if (!['contact', 'quote'].includes(body.type) || !body.email || typeof body.startedAt !== 'number') return fail(400, 'VALIDATION_FAILED', 'The request is invalid.', [{ location: 'body', path: 'email', message: 'is required' }])
+      state.enquiries.push(structuredClone(body))
+      return ok({ received: true, reference: `ENQ-TEST${String(state.enquiries.length).padStart(2, '0')}` }, 202)
+    },
+    'GET /orders': () => {
+      if (!currentUser()) return fail(401, 'UNAUTHENTICATED', 'You need to sign in.')
+      return ok({ orders: structuredClone(state.orders) })
+    },
+    'GET /publications': () => {
+      if (!currentUser()) return fail(401, 'UNAUTHENTICATED', 'You need to sign in.')
+      return ok({ publications: structuredClone(state.publications), site: { ...state.site } })
     },
     'POST /auth/forgot-password': ({ body }) => {
       const user = state.users.find((u) => u.email === String(body.email).toLowerCase())
@@ -361,16 +382,42 @@ export function createFakeAuthApi() {
       // Published pages (mylinnnk_api/routes/publication.js): no session, read-only.
       if (state.publicDown) throw new TypeError('Failed to fetch')
       const slug = decodeURIComponent(path.slice('/public/pages/'.length))
+      // Like the API's validator: an address is letters, digits and hyphens only.
+      if (!/^[A-Za-z0-9-]+$/.test(slug)) return fail(400, 'VALIDATION_FAILED', 'The request is invalid.', [{ location: 'params', path: 'slug', message: 'fails to match the required pattern' }])
       const entry = method === 'GET' ? state.publicPages[slug] : undefined
       if (!entry) return fail(404, 'NOT_FOUND', 'Page not found.')
       if (entry.gone) return fail(410, 'PAGE_UNAVAILABLE', 'This page isn’t available right now.')
       return ok({ page: structuredClone(entry) })
     }
+    if (path === '/plans/country') {
+      // GET /plans/country: what a trusted edge proxy reported (state.visitorCountry), else null.
+      const country = state.visitorCountry ?? null
+      return ok({ country, source: country ? 'edge' : null })
+    }
     if (path === '/plans') {
       // Public price list (mylinnnk_api/routes/plans.js); the fixture is the server's own output.
       if (state.plansDelay) await new Promise((r) => setTimeout(r, state.plansDelay))
       if (state.plansDown) throw new TypeError('Failed to fetch')
-      return method === 'GET' ? ok(structuredClone(PLANS_FIXTURE)) : fail(404, 'NOT_FOUND', `No route for ${method} ${path}.`)
+      if (method !== 'GET') return fail(404, 'NOT_FOUND', `No route for ${method} ${path}.`)
+      const plans = structuredClone(PLANS_FIXTURE)
+      if (state.checkout) plans.checkout = { ...state.checkout }
+      // state.estimate = { ngnPerUsd, rates?: { CODE: per USD }, asOf, source? }: as the server answers
+      // GET /plans?display=CODE with USD-based reference rates (mylinnnk_api/services/planService.js:
+      // (kobo ÷ 100) ÷ NGN per USD × CODE per USD, rounded to the currency's minor unit). Like the
+      // server, no rate is included in the response, and a currency without a rate gets no estimate.
+      const code = new URL(url, 'http://localhost').searchParams.get('display') ?? 'USD'
+      const digits = new Intl.NumberFormat('en', { style: 'currency', currency: code }).resolvedOptions().maximumFractionDigits
+      const shownCurrency = { code, minorUnit: 10 ** digits }
+      plans.estimate = { available: false, currency: shownCurrency }
+      if (state.estimate && code !== 'NGN') {
+        const rates = state.estimate.rates ?? (state.estimate.source === 'manual' ? { USD: 1 } : { USD: 1, NGN: state.estimate.ngnPerUsd })
+        const perUsd = rates[code]
+        if (Number.isFinite(perUsd)) {
+          plans.estimate = { available: true, currency: shownCurrency, asOf: state.estimate.asOf, source: state.estimate.source ?? 'exchangerate-api', rounding: 'nearest-minor-unit' }
+          plans.plans = plans.plans.map((p) => ({ ...p, estimate: p.price ? { amountMinor: Math.round((p.price.amountMinor / 100 / state.estimate.ngnPerUsd) * perUsd * 10 ** digits) } : null }))
+        }
+      }
+      return ok(plans)
     }
     if (path === '/media' || path.startsWith('/media/')) {
       if (state.mediaDelay) await new Promise((r) => setTimeout(r, state.mediaDelay))

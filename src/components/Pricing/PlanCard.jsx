@@ -32,9 +32,11 @@ function trackPointer(e) {
  *
  * Prices, terms and savings all come from the server's plan (GET /plans).
  */
-export default function PlanCard({ plan, currency, index, offset, selected, onSelect, onPeek }) {
+export default function PlanCard({ plan, currency, display, index, offset, selected, onSelect, onPeek }) {
   const nameId = useId()
-  const { amount, per } = priceParts(plan, currency)
+  // display: how to show the price (priceDisplay.js); without it, the plain server price.
+  const shown = display ?? { mode: 'ngn', ...priceParts(plan, currency), payable: null, sr: priceDescription(plan, currency) }
+  const { amount, per } = shown
   const paid = plan.billing !== 'free'
   const front = offset === 0
   const depth = Math.abs(offset)
@@ -50,7 +52,7 @@ export default function PlanCard({ plan, currency, index, offset, selected, onSe
       <article className="plan-card__inner" aria-labelledby={nameId} inert={!front}>
         <div className="plan-card__top">
           <p className="plan-card__family">{FAMILY_LABEL[plan.family] ?? ''}</p>
-          {plan.featured && <p className="plan-card__badge">Most popular</p>}
+          {plan.badge && <p className="plan-card__badge">{plan.badge}</p>}
           {selected && (
             <p className="plan-card__chosen">
               <Check /> Selected
@@ -71,17 +73,26 @@ export default function PlanCard({ plan, currency, index, offset, selected, onSe
               {per}
             </span>
           )}
-          <span className="sr-only">{priceDescription(plan, currency)}</span>
+          <span className="sr-only">{display ? shown.sr : priceDescription(plan, currency)}</span>
         </p>
+        {shown.mode === 'estimate' && shown.payable && (
+          <p className="plan-card__payable">
+            Estimate · you pay <strong>{shown.payable}</strong> (NGN)
+          </p>
+        )}
         <p className="plan-card__terms">{planTerms(plan)}</p>
 
         {plan.savings && (
           <p className="plan-card__save">
             <strong>Save {plan.savings.percent}%</strong>
-            <span>
-              {formatAmount(plan.savings.amountMinor, currency)} less than {plan.savings.periods} monthly payments (
-              {formatAmount(plan.savings.regularAmountMinor, currency)})
-            </span>
+            {shown.mode === 'estimate' ? (
+              <span>compared with {plan.savings.periods} monthly payments</span>
+            ) : (
+              <span>
+                {formatAmount(plan.savings.amountMinor, currency)} less than {plan.savings.periods} monthly payments (
+                {formatAmount(plan.savings.regularAmountMinor, currency)})
+              </span>
+            )}
           </p>
         )}
 
@@ -110,7 +121,7 @@ export default function PlanCard({ plan, currency, index, offset, selected, onSe
         <button
           type="button"
           className="plan-card__peek"
-          aria-label={`${plan.name}, ${priceDescription(plan, currency)}. Bring to front and select`}
+          aria-label={`${plan.name}, ${display ? shown.sr : priceDescription(plan, currency)}. Bring to front and select`}
           onClick={() => onPeek(plan.id)}
         />
       )}

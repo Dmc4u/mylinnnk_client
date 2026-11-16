@@ -162,7 +162,9 @@ describe('failures and retries', () => {
     await user.clear(title)
     await user.type(title, 'Saved without images')
     await waitFor(() => expect(pageStatus()).toMatch(/Saved to your account/), WAIT)
-    expect(mediaStatus()).toMatch(/Image upload failed/)
+    // The two are independent, so either may finish first: wait for the upload's own outcome too.
+    await waitFor(() => expect(mediaStatus()).toMatch(/Image upload failed/), WAIT)
+    expect(pageStatus()).toMatch(/Saved to your account/)
     expect(api.state.pages[0].title).toBe('Saved without images')
   })
 })

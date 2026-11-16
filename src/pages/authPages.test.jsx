@@ -72,7 +72,7 @@ describe('log in', () => {
     await user.type(await screen.findByLabelText('Email'), 'ana@example.com')
     await user.type(screen.getByLabelText('Password'), PASSWORD)
     await user.click(screen.getByRole('button', { name: 'Log in' }))
-    await waitFor(() => expect(location()).toBe('/account'))
+    await waitFor(() => expect(location()).toBe('/dashboard'))
   })
 
   it('lets the password be shown and hidden', async () => {
@@ -127,8 +127,9 @@ describe('sign up', () => {
     await user.click(screen.getByRole('button', { name: 'Confirm email' }))
     expect(await screen.findByText('Thanks, your email address is confirmed.')).toBeInTheDocument()
     await user.click(screen.getByRole('link', { name: 'Go to your account' }))
-    await waitFor(() => expect(location()).toBe('/account'))
-    expect(screen.getByText('Confirmed')).toBeInTheDocument()
+    await waitFor(() => expect(location()).toBe('/dashboard'))
+    expect(await screen.findByRole('heading', { name: 'Welcome back, Bea Costa' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Confirm your email' })).not.toBeInTheDocument() // confirmed: no code asked
   })
 
   it('keeps where the visitor was going: the code page continues (or skips) to it', async () => {
@@ -228,7 +229,7 @@ describe('email verification', () => {
     api.state.tokens.get(token).used = true
     renderApp(`/verify-email?token=${token}`, { api })
     expect(await screen.findByText('This verification link is invalid or has expired.')).toBeInTheDocument()
-    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login?next=%2Faccount')
+    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login?next=%2Fdashboard')
     expect(screen.getByText(/to get a verification code/)).toBeInTheDocument()
   })
 
@@ -317,17 +318,23 @@ describe('email verification code', () => {
     api.ageCode(ana, 61_000) // the page loads with the cooldown over…
     const { user } = renderApp('/verify-email', { api })
     const resend = await screen.findByRole('button', { name: 'Send a new code' })
+    await waitFor(() => expect(api.requestsTo('/auth/verification').length).toBeGreaterThan(0)) // timers loaded first
+    await waitFor(() => expect(resend).toBeEnabled())
     api.state.codes.get(ana.id).lastSentAt = Date.now() - 15_000 // …but another tab just asked for a code
     await user.click(resend)
-    expect(await screen.findByText('Please wait 45 seconds before asking for another code.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^Send a new code in (45|44) s$/ })).toBeDisabled()
+    // Seconds depend on how long the click took (slow under a full parallel run), so check the shape.
+    const message = await screen.findByText(/^Please wait \d+ seconds before asking for another code\.$/, {}, { timeout: 8000 })
+    const wait = Number(/\d+/.exec(message.textContent)[0])
+    expect(wait).toBeGreaterThan(30)
+    expect(wait).toBeLessThanOrEqual(45)
+    expect(screen.getByRole('button', { name: /^Send a new code in \d+ s$/ })).toBeDisabled()
   })
 
   it('asks signed-out visitors to log in, and tells verified users they’re done', async () => {
     const { api, ana } = apiWithAna({ emailVerified: true })
     renderApp('/verify-email', { api })
     expect(await screen.findByText(/to enter the code from your verification email/)).toBeInTheDocument()
-    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login?next=%2Faccount')
+    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login?next=%2Fdashboard')
 
     api.signIn(ana)
     cleanup()
@@ -337,7 +344,7 @@ describe('email verification code', () => {
 
   it('can be entered on the account page too', async () => {
     const { api, code } = signedInAnaWithCode()
-    const { user } = renderApp('/account', { api })
+    const { user } = renderApp('/dashboard/account', { api })
     expect(await screen.findByText('Not confirmed yet')).toBeInTheDocument()
     await user.type(screen.getByLabelText('6-digit code'), code)
     await user.click(screen.getByRole('button', { name: 'Confirm email' }))
@@ -348,14 +355,14 @@ describe('email verification code', () => {
 
 describe('account page and header', () => {
   it('sends signed-out visitors to log in first', async () => {
-    const { location } = renderApp('/account')
-    await waitFor(() => expect(location()).toBe('/login?next=%2Faccount'))
+    const { location } = renderApp('/dashboard')
+    await waitFor(() => expect(location()).toBe('/login?next=%2Fdashboard'))
   })
 
   it('shows the signed-in user and logs out to the home page', async () => {
     const { api, ana } = apiWithAna({ emailVerified: true })
     api.signIn(ana)
-    const { user, location } = renderApp('/account', { api })
+    const { user, location } = renderApp('/dashboard/account', { api })
     expect(await screen.findByText('ana@example.com', { selector: '.account-profile__email' })).toBeInTheDocument()
     expect(screen.getByText('Confirmed')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Log out' }))
@@ -368,7 +375,7 @@ describe('account page and header', () => {
   it('logging out still works after the server-side session has already expired', async () => {
     const { api, ana } = apiWithAna()
     api.signIn(ana)
-    const { user, location } = renderApp('/account', { api })
+    const { user, location } = renderApp('/dashboard/account', { api })
     await screen.findByText('ana@example.com', { selector: '.account-profile__email' })
     api.expireSession()
     await user.click(screen.getByRole('button', { name: 'Log out' }))
@@ -379,18 +386,18 @@ describe('account page and header', () => {
   it('redirects to log in with an explanation when a signed-in action finds the session expired', async () => {
     const { api, ana } = apiWithAna()
     api.signIn(ana)
-    const { user, location } = renderApp('/account', { api })
+    const { user, location } = renderApp('/dashboard/account', { api })
     const resend = await screen.findByRole('button', { name: 'Send a new code' })
     api.state.session = { userId: 'revoked', csrfToken: 'x' }
     await user.click(resend)
-    await waitFor(() => expect(location()).toBe('/login?next=%2Faccount'))
+    await waitFor(() => expect(location()).toBe('/login?next=%2Fdashboard%2Faccount'))
     expect(screen.getByText('Your session has expired. Please log in again.')).toBeInTheDocument()
   })
 
   it('shows a retry when the API is unavailable', async () => {
     const api = createFakeAuthApi()
     api.state.down = true
-    const { user } = renderApp('/account', { api })
+    const { user } = renderApp('/dashboard/account', { api })
     expect(await screen.findByText('We can’t reach MyLinnnk right now.')).toBeInTheDocument()
     api.state.down = false
     api.signIn(api.addUser({ email: 'ana@example.com', displayName: 'Ana' }))

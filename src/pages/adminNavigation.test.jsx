@@ -73,7 +73,7 @@ describe('after logging in', () => {
     const { api, adminCalls } = setup()
     const { user, location } = renderApp('/login', { api })
     await logIn(user, 'ana@example.com')
-    await waitFor(() => expect(location()).toBe('/account'), NAV_WAIT)
+    await waitFor(() => expect(location()).toBe('/dashboard'), NAV_WAIT)
     expect(adminCalls).toEqual([]) // no admin API is ever asked about an ordinary user
   })
 
@@ -115,14 +115,14 @@ describe('return URLs (no open redirects)', () => {
   it('never follows an unsafe next, for anyone', () => {
     for (const bad of ['https://evil.example', '//evil.example', '/\\evil.example', 'javascript:alert(1)', '/login', '/x\u0000y']) {
       expect(afterLoginPath(bad, { isAdmin: true })).toBe('/admin')
-      expect(afterLoginPath(bad, { isAdmin: false })).toBe('/account')
+      expect(afterLoginPath(bad, { isAdmin: false })).toBe('/dashboard')
     }
   })
 
   it('leaves the ordinary user flow exactly as before', () => {
     expect(afterLoginPath('/', { isAdmin: false })).toBe('/')
     expect(afterLoginPath('/templates', { isAdmin: false })).toBe('/templates')
-    expect(afterLoginPath(null, { isAdmin: false })).toBe('/account')
+    expect(afterLoginPath(null, { isAdmin: false })).toBe('/dashboard')
     expect(afterLoginPath('/admin', { isAdmin: false })).toBe('/admin') // and the server refuses them there
   })
 })

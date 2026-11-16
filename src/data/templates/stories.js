@@ -28,10 +28,12 @@ export const yearInLisbon = {
       },
     },
     {
-      id: 'prologue', type: 'text', variant: 'dropcap',
+      // Editorial photo essay: a full-width street, then the prologue in a narrow column
+      id: 'prologue', type: 'text', variant: 'essay',
       content: {
         eyebrow: 'Prologue',
         title: 'Two suitcases and no Portuguese',
+        image: lisbon('street', 'A narrow Lisbon street climbing between old buildings', { caption: 'Alfama, my first morning' }),
         body: 'I arrived in January with two suitcases, a phrasebook and a vague plan to stay for three months. The city had other ideas.\n\nBy spring I knew which bakery sold the last warm pastéis, which tram drivers waved and which viewpoint caught the best sunset.\n\nThis is the story of the year Lisbon quietly became home.',
       },
     },
@@ -58,6 +60,7 @@ export const lettersHome = {
   slug: 'letters-home',
   name: 'Letters Home',
   category: 'personal-stories',
+  motion: 'tender', // soft and unhurried, like reading a letter
   description: 'A heritage page for family stories, with archival photos and a handwritten letter.',
   tags: ['family', 'memories', 'history', 'heritage'],
   featured: false,
@@ -100,13 +103,16 @@ export const lettersHome = {
       },
     },
     {
-      id: 'album', type: 'gallery', variant: 'polaroids',
+      // Scrapbook: overlapping, taped photos from the family album
+      id: 'album', type: 'gallery', variant: 'scrapbook',
       content: {
         title: 'From the family album',
         images: [
           letters('grandmother', 'Portrait of an elderly woman smiling gently', { caption: 'Grandma Rosa' }),
           letters('family-bw', 'A black-and-white photograph of a large family', { caption: 'Union Street, 1964' }),
           letters('book', 'Close-up of an old book’s printed pages', { caption: 'The recipe book' }),
+          letters('family-sepia', 'An old sepia photograph of a family gathered outdoors', { caption: 'Summer, 1958' }),
+          letters('envelope', 'A handwritten envelope', { caption: 'Her letters' }),
         ],
       },
     },
@@ -121,6 +127,7 @@ export const graduationDay = {
   slug: 'graduation-day',
   name: 'Graduation Day',
   category: 'coming-soon',
+  motion: 'joyful', // a celebration rather than a quiet milestone
   description: 'Celebrate a graduate with achievements, photos and messages from family and friends.',
   tags: ['graduation', 'school', 'achievement'],
   featured: false,

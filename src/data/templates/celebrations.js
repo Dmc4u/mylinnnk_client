@@ -68,6 +68,7 @@ export const goldenThirty = {
   slug: 'golden-thirty',
   name: 'Golden Thirty',
   category: 'birthdays',
+  motion: 'glamour', // slow shimmer for a black-tie milestone (otherwise birthdays are 'joyful')
   description: 'An elegant milestone invitation in midnight navy and champagne gold.',
   tags: ['milestone', 'elegant', 'dinner', '30th'],
   featured: true,

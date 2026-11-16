@@ -45,7 +45,7 @@ export default function Canvas({ renderPage, device, zoomMode, selectedId, onSel
           <span className="ed-frame__url">Draft preview · not published</span>
         </div>
         <div className="ed-frame__page" aria-label="Page preview" role="region">
-          <TemplateRender template={renderPage} selectedSectionId={preview ? null : selectedId} />
+          <TemplateRender template={renderPage} selectedSectionId={preview ? null : selectedId} motion={preview ? 'play' : 'static'} />
         </div>
       </div>
     </div>

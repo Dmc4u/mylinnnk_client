@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, Navigate, useParams } from 'react-router'
 import TemplateRender from '../../components/TemplateRender/TemplateRender.jsx'
 import BrandMark from '../../components/Brand/BrandMark.jsx'
 import NeonRingLoader from '../../components/Loading/NeonRingLoader.jsx'
 import useDelayedLoading from '../../hooks/useDelayedLoading.js'
-import { loadPublishedPage } from './publicPage.js'
+import { SLUG_PATTERN, cleanedSlug, loadPublishedPage } from './publicPage.js'
 import './PublicPage.css'
 
 const MESSAGES = {
@@ -22,24 +22,30 @@ export default function PublicPage() {
   const { slug } = useParams()
   const [state, setState] = useState({ status: 'loading', slug })
   const [attempt, setAttempt] = useState(0)
+  // A pasted link with extra characters at the end ("moses**", "moses."): go to the address meant.
+  const cleaned = SLUG_PATTERN.test(slug) ? slug : cleanedSlug(slug)
+  const redirect = cleaned && cleaned !== slug
 
   useEffect(() => {
+    if (redirect) return undefined
     let active = true
     loadPublishedPage(slug).then((result) => active && setState({ ...result, slug }))
     return () => {
       active = false
     }
-  }, [slug, attempt])
+  }, [slug, attempt, redirect])
 
   // A new address (client-side navigation) starts in the loading state.
   const current = state.slug === slug ? state : { status: 'loading', slug }
   const showLoader = useDelayedLoading(current.status === 'loading')
 
+  if (redirect) return <Navigate to={`/p/${cleaned}`} replace />
+
   if (current.status === 'ready') {
     return (
       <main className="public-page" aria-label={current.page.title || 'Published page'}>
         <title>{current.page.title ? `${current.page.title}` : 'MyLinnnk page'}</title>
-        <TemplateRender template={current.page.render} />
+        <TemplateRender template={current.page.render} mode="published" branding={current.page.branding} motion="play" />
       </main>
     )
   }

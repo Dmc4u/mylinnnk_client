@@ -65,7 +65,8 @@ export function AdminHeading({ id, eyebrow = 'Administration', title, children }
 }
 
 const TONES = {
-  active: 'ok', approved: 'ok', live: 'ok', success: 'ok',
+  active: 'ok', approved: 'ok', live: 'ok', success: 'ok', responded: 'ok',
+  new: 'wait', in_progress: 'review', closed: 'neutral',
   submitted: 'review', under_review: 'review', pending_review: 'review', scheduled: 'review',
   awaiting_transfer: 'wait', pending_payment: 'wait', grace: 'wait', draft: 'wait',
   rejected: 'bad', expired: 'bad', cancelled: 'bad', unpublished: 'bad', suspended: 'bad', denied: 'bad', failure: 'bad',

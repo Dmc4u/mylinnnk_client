@@ -22,7 +22,10 @@ function LocationProbe() {
  */
 export function renderApp(path = '/', { api = createFakeAuthApi() } = {}) {
   vi.stubGlobal('fetch', vi.fn(api.fetch))
-  const user = userEvent.setup()
+  // delay: null — no artificial pause (a timer turn) between keystrokes and clicks. With the default,
+  // typing a long text queues dozens of timer turns per test; under a full parallel run those starve
+  // and slow tests drift past their time limits. The events themselves are unchanged.
+  const user = userEvent.setup({ delay: null })
   const utils = render(
     <StrictMode>
       <MemoryRouter initialEntries={[path]}>

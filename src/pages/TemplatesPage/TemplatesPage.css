@@ -133,33 +133,11 @@
   border-color: var(--navy-900);
 }
 
-.gallery__chip-count {
-  min-width: 22px;
-  padding: 1px 7px;
-  font-size: 0.75rem;
-  font-weight: 650;
-  text-align: center;
-  color: var(--muted);
-  background: rgb(10 22 48 / 0.06);
-  border-radius: 999px;
-}
-
-.gallery__chip[aria-pressed='true'] .gallery__chip-count {
-  color: var(--navy-900);
-  background: var(--teal-200);
-}
-
-.gallery__status {
-  margin-top: 22px;
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-
 .gallery__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
-  margin: 18px 0 0;
+  margin: 36px 0 0;
   padding: 0;
   list-style: none;
 }

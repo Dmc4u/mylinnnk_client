@@ -46,7 +46,7 @@ export default function PropertiesPanel({ page, section, apply, media, onStructu
   const imageProps = { mediaUrls: media.urls, library: media.records, onUpload: media.upload }
 
   function renderField(key, kind, value, path) {
-    const label = fieldLabel(key)
+    const label = fieldLabel(key, section.type)
     if (kind === 'richtext') return <TextField key={key} label={label} value={value} multiline onChange={(v) => setField(path, v)} hint="Leave an empty line between paragraphs." />
     if (kind === 'link') return <LinkField key={`${section.id}-${path.join('.')}`} label={label} value={value} onChange={(v) => setField(path, v)} />
     if (kind === 'number') return <NumberField key={key} label={label} value={value} min={0} max={100} onChange={(v) => setField(path, v)} />

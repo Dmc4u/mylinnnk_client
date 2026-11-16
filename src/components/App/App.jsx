@@ -13,6 +13,7 @@ import ForgotPasswordPage from '../../pages/ForgotPasswordPage/ForgotPasswordPag
 import ResetPasswordPage from '../../pages/ResetPasswordPage/ResetPasswordPage.jsx'
 import VerifyEmailPage from '../../pages/VerifyEmailPage/VerifyEmailPage.jsx'
 import AccountPage from '../../pages/AccountPage/AccountPage.jsx'
+import { AccountView, DraftsView, LegacyAccountRedirect, OverviewView, PaymentsView, PublicationsView, SupportView } from '../../pages/AccountPage/DashboardViews.jsx'
 import PricingPage from '../../pages/PricingPage/PricingPage.jsx'
 import PublicPage from '../../pages/PublicPage/PublicPage.jsx'
 import PublishPage from '../../pages/PublishPage/PublishPage.jsx'
@@ -23,6 +24,19 @@ import './App.css'
 const EditorPage = lazy(() => import('../../pages/EditorPage/EditorPage.jsx'))
 // Administration is only downloaded by people who open it (access is decided by the server).
 const AdminApp = lazy(() => import('../../admin/AdminApp.jsx'))
+// Information pages (forms and legal text) are downloaded only when opened.
+const RequestQuotePage = lazy(() => import('../../pages/RequestQuotePage/RequestQuotePage.jsx'))
+const ContactPage = lazy(() => import('../../pages/ContactPage/ContactPage.jsx'))
+const PrivacyPolicyPage = lazy(() => import('../../pages/PrivacyPolicyPage/PrivacyPolicyPage.jsx'))
+const TermsPage = lazy(() => import('../../pages/TermsPage/TermsPage.jsx'))
+const CookieSettingsPage = lazy(() => import('../../pages/CookieSettingsPage/CookieSettingsPage.jsx'))
+
+/** While an information page downloads: an empty, full-height space (the header stays). */
+const infoPage = (Page) => (
+  <Suspense fallback={<div className="app-loading" role="status" aria-label="Loading page" />}>
+    <Page />
+  </Suspense>
+)
 
 function EditorFallback() {
   return (
@@ -79,13 +93,28 @@ function App() {
         <Route path="templates" element={<TemplatesPage />} />
         <Route path="templates/:slug" element={<TemplatePreviewPage />} />
         <Route path="pricing" element={<PricingPage />} />
+        <Route path="request-quote" element={infoPage(RequestQuotePage)} />
+        <Route path="contact" element={infoPage(ContactPage)} />
+        <Route path="privacy-policy" element={infoPage(PrivacyPolicyPage)} />
+        <Route path="terms-of-service" element={infoPage(TermsPage)} />
+        <Route path="cookie-settings" element={infoPage(CookieSettingsPage)} />
         {/* Accounts. The editor never requires one. */}
         <Route path="login" element={<LoginPage />} />
         <Route path="signup" element={<SignupPage />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
         <Route path="verify-email" element={<VerifyEmailPage />} />
-        <Route path="account" element={<AccountPage />} />
+        {/* The customer dashboard: one layout (session check, navigation, shared data) and its views. */}
+        <Route path="dashboard" element={<AccountPage />}>
+          <Route index element={<OverviewView />} />
+          <Route path="publications" element={<PublicationsView />} />
+          <Route path="drafts" element={<DraftsView />} />
+          <Route path="payments" element={<PaymentsView />} />
+          <Route path="support" element={<SupportView />} />
+          <Route path="account" element={<AccountView />} />
+        </Route>
+        {/* The old address (links, bookmarks, #sections) leads to the matching dashboard view. */}
+        <Route path="account" element={<LegacyAccountRedirect />} />
         {/* Publishing and manual bank-transfer payments (signed in) */}
         <Route path="publish/:pageId" element={<PublishPage />} />
         <Route path="orders/:reference" element={<OrderPage />} />

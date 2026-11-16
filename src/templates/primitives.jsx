@@ -3,6 +3,8 @@
  * Images are content: { src, alt, focus?, credit? }. Decorative ornaments are
  * presentation and come from the theme, never from user content.
  */
+import { useContext } from 'react'
+import { RenderModeContext, usableHref } from './renderMode.js'
 
 const FOCUS = {
   center: '50% 50%',
@@ -27,9 +29,47 @@ export function Img({ image, className = '', eager = false }) {
   )
 }
 
-/** Looks like a button, but templates are static previews — no action yet. */
-export const Action = ({ children, variant = 'solid' }) =>
-  children ? <span className={`ts-action ts-action--${variant}`}>{children}</span> : null
+/**
+ * A template button. With a usable `href` it is a real link (web addresses open in a new tab, with no
+ * access to this page). Without one it is only drawn while designing (as a placeholder to fill in);
+ * a published page leaves it out rather than show a button that does nothing.
+ * (The editor canvas cancels clicks, so links never navigate away while editing.)
+ */
+export function Action({ children, variant = 'solid', href }) {
+  const mode = useContext(RenderModeContext)
+  if (!children) return null
+  const link = usableHref(href)
+  const className = `ts-action ts-action--${variant}`
+  if (link) {
+    const external = /^https?:\/\//i.test(link)
+    return (
+      <a className={className} href={link} {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+        {children}
+      </a>
+    )
+  }
+  if (mode === 'published') return null
+  return (
+    <span className={`${className} ts-action--unlinked`} title="Add a button link in the editor to make this button work">
+      {children}
+    </span>
+  )
+}
+
+/**
+ * A menu entry (chapter navigation). Same link rule as buttons: a usable href (#section, https, mailto:,
+ * tel:) is a real link, web addresses open in a new tab; without one it is plain text.
+ */
+export function MenuLink({ children, href }) {
+  const link = usableHref(href)
+  if (!link) return <span className="ts-menu-link ts-menu-link--plain">{children}</span>
+  const external = /^https?:\/\//i.test(link)
+  return (
+    <a className="ts-menu-link" href={link} {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+      {children}
+    </a>
+  )
+}
 
 export const Eyebrow = ({ children }) => (children ? <p className="ts-eyebrow">{children}</p> : null)
 
