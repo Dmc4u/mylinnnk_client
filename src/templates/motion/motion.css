@@ -28,6 +28,10 @@
 
 /* ---------- Entrances ---------- */
 .tpl[data-motion-ready] .m-in [data-m] {
+  /* Entrances always run on normal time, even where another rule gives the element a scroll timeline
+     (e.g. the hero photo's parallax): an entrance tied to scrolling would leave content hidden. */
+  animation-timeline: auto;
+  animation-range: normal;
   animation-duration: var(--m-dur, 900ms);
   animation-timing-function: var(--m-ease, ease-out);
   animation-delay: calc(var(--m-i, 0) * var(--m-stagger, 80ms));
@@ -106,7 +110,9 @@
 }
 
 /* ---------- Scroll parallax (native scroll-driven animation; no scroll listeners) ---------- */
-/* Browsers without animation-timeline (e.g. Firefox today) simply show the page still. */
+/* Browsers without animation-timeline (e.g. Firefox today) simply show the page still.
+   The hero section itself carries .m-in (.ts-hero.m-in), so its photo gets both animations: the
+   entrance on normal time and the parallax on the scroll timeline. */
 @supports (animation-timeline: view()) {
   .tpl[data-motion-play] .ts-hero img {
     animation: m-parallax linear both;
@@ -114,18 +120,18 @@
     animation-range: exit -10% exit 100%;
   }
   /* While the hero image makes its entrance, run both (each on its own timeline). */
-  .tpl[data-motion-ready][data-m-media='settle'] .m-in .ts-hero img[data-m] {
+  .tpl[data-motion-ready][data-m-media='settle'] .ts-hero.m-in img[data-m] {
     animation: m-settle calc(var(--m-dur, 900ms) * 1.4) var(--m-ease, ease-out) backwards, m-parallax linear both;
     animation-timeline: auto, view();
     animation-range: normal, exit -10% exit 100%;
   }
-  .tpl[data-motion-ready][data-m-media='curtain'] .m-in .ts-hero img[data-m] {
+  .tpl[data-motion-ready][data-m-media='curtain'] .ts-hero.m-in img[data-m] {
     animation: m-curtain calc(var(--m-dur, 900ms) * 1.2) var(--m-ease, ease-out) backwards, m-parallax linear both;
     animation-timeline: auto, view();
     animation-range: normal, exit -10% exit 100%;
   }
-  .tpl[data-motion-ready][data-m-media='fade'] .m-in .ts-hero img[data-m],
-  .tpl[data-motion-ready][data-m-media='pop'] .m-in .ts-hero img[data-m] {
+  .tpl[data-motion-ready][data-m-media='fade'] .ts-hero.m-in img[data-m],
+  .tpl[data-motion-ready][data-m-media='pop'] .ts-hero.m-in img[data-m] {
     animation: m-fade var(--m-dur, 900ms) var(--m-ease, ease-out) backwards, m-parallax linear both;
     animation-timeline: auto, view();
     animation-range: normal, exit -10% exit 100%;

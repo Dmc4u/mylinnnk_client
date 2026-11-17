@@ -35,9 +35,10 @@ class FakeObserver {
     this.targets.clear()
   }
 }
-const report = (el, isIntersecting) =>
+/** Like a real entry: `ratio` of the section in view and the visible height (default: fully in view). */
+const report = (el, isIntersecting, { ratio = isIntersecting ? 1 : 0, height = isIntersecting ? 600 : 0 } = {}) =>
   act(() => {
-    for (const o of observers) if (o.targets.has(el)) o.callback([{ target: el, isIntersecting }])
+    for (const o of observers) if (o.targets.has(el)) o.callback([{ target: el, isIntersecting, intersectionRatio: ratio, intersectionRect: { height }, rootBounds: { height: 800 } }])
   })
 
 beforeEach(() => {
@@ -251,5 +252,54 @@ describe('statistics count up and end on their real values', () => {
     const visible = item.querySelector('[data-countup]')
     expect(visible).toHaveAttribute('aria-hidden', 'true')
     expect(within(item).getByText(visible.dataset.countup, { selector: '.sr-only' })).toBeInTheDocument()
+  })
+})
+
+describe('regression: hero photos are never left invisible', () => {
+  it('CSS: the hero rules target the hero section itself (.ts-hero.m-in), and entrances always run on normal time', async () => {
+    const { readFileSync } = await import('node:fs')
+    const { resolve } = await import('node:path')
+    const { default: process } = await import('node:process')
+    const css = readFileSync(resolve(process.cwd(), 'src/templates/motion/motion.css'), 'utf8')
+    // The script puts m-in on the section, and the hero section is the .ts-hero element itself.
+    expect(css).not.toMatch(/\.m-in \.ts-hero/)
+    expect(css.match(/\.ts-hero\.m-in img\[data-m\]/g)).toHaveLength(4)
+    // An entrance tied to a scroll timeline would keep its opacity-0 start until scrolled past.
+    const entrance = /\.tpl\[data-motion-ready\] \.m-in \[data-m\] \{([^}]*)\}/.exec(css)[1]
+    expect(entrance).toMatch(/animation-timeline:\s*auto/)
+    expect(entrance).toMatch(/animation-range:\s*normal/)
+    // The hero photo keeps both: entrance on normal time, parallax on the scroll timeline.
+    expect(css).toMatch(/\.ts-hero\.m-in img\[data-m\] \{\s*animation: m-settle[^;]*, m-parallax linear both;\s*animation-timeline: auto, view\(\);/)
+  })
+
+  it('a section already on the first screen (even mostly below the fold) is revealed at once', () => {
+    const boxes = new Map()
+    const original = Element.prototype.getBoundingClientRect
+    Element.prototype.getBoundingClientRect = function () {
+      return boxes.get(this.getAttribute?.('data-section')) ?? original.call(this)
+    }
+    try {
+      const tpl = pageForRender(createPageFromTemplate(getTemplateBySlug('fieldhouse')))
+      // Hero starts 90 px above the bottom of an 844 px screen (about 11% visible); "classes" is far below.
+      const screen = window.innerHeight
+      boxes.set('hero', { top: screen - 90, bottom: screen - 90 + 844, height: 844 })
+      boxes.set('classes', { top: screen * 4, bottom: screen * 5, height: screen })
+      const { container } = render(<TemplateRender template={tpl} mode="published" motion="play" />)
+      expect(container.querySelector('[data-section="hero"]')).toHaveClass('m-in')
+      expect(container.querySelector('[data-section="classes"]')).toHaveClass('m-wait')
+    } finally {
+      Element.prototype.getBoundingClientRect = original
+    }
+  })
+
+  it('a section taller than the screen is revealed once enough of it shows, even below 12% of its height', () => {
+    const { container } = render(<TemplateRender template={page()} mode="published" motion="play" />)
+    const sections = [...container.querySelectorAll('.tpl > [data-section]')]
+    const later = sections.find((s) => s.classList.contains('m-wait'))
+    expect(later).toBeTruthy()
+    report(later, true, { ratio: 0.03, height: 40 }) // a sliver: keeps waiting
+    expect(later).toHaveClass('m-wait')
+    report(later, true, { ratio: 0.05, height: 400 }) // 5% of a very tall section = 400 px on screen
+    expect(later).toHaveClass('m-in')
   })
 })

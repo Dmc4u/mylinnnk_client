@@ -71,16 +71,28 @@ export function useTemplateMotion(rootRef, { enabled, key }) {
     }
     root.setAttribute('data-motion-ready', '')
 
+    // Revealed once 12% of the section is in view, or (for sections much taller than the screen, which
+    // may never reach 12%) once a good part of the screen shows it. Several thresholds make sure the
+    // callback runs as a tall section scrolls in.
+    const enoughInView = (entry) => entry.isIntersecting && (entry.intersectionRatio >= 0.12 || entry.intersectionRect.height >= Math.min(160, (entry.rootBounds?.height ?? 800) * 0.2))
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           entry.target.classList.toggle('m-on', entry.isIntersecting)
-          if (entry.isIntersecting) reveal(entry.target)
+          if (enoughInView(entry)) reveal(entry.target)
         }
       },
-      { threshold: 0.12, rootMargin: '0px 0px -6% 0px' },
+      { threshold: [0, 0.02, 0.05, 0.12], rootMargin: '0px 0px -6% 0px' },
     )
     for (const section of sections) observer.observe(section)
+
+    // Sections already on the first screen (even partly, e.g. a tall hero) are revealed at once, so the
+    // top of the page never waits for a scroll.
+    const screenHeight = window.innerHeight || document.documentElement.clientHeight || 0
+    for (const section of sections) {
+      const box = section.getBoundingClientRect()
+      if (box.top < screenHeight && box.bottom > 0) reveal(section)
+    }
 
     // Never leave content waiting: a section that takes focus (keyboard), or anything still waiting
     // when the page is printed, is shown at once.
