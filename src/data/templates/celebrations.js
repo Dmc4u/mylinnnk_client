@@ -12,7 +12,7 @@ export const confettiPop = {
   featured: true,
   status: 'available',
   theme: {
-    colors: { bg: '#fff8ee', surface: '#ffffff', ink: '#2b1b54', muted: '#6b5a8e', accent: '#ff4f86', accentInk: '#ffffff', inverseBg: '#2b1b54', inverseInk: '#fff8ee' },
+    colors: { bg: '#fff8ee', surface: '#ffffff', ink: '#2b1b54', muted: '#6b5a8e', accent: '#c73e69', accentInk: '#ffffff', inverseBg: '#2b1b54', inverseInk: '#fff8ee' },
     fonts: { display: 'fredoka', body: 'fredoka' },
     type: { displayWeight: 700, displayTracking: '-0.01em' },
     radius: 'round',
@@ -196,7 +196,7 @@ export const paperAndPetals = {
   featured: false,
   status: 'available',
   theme: {
-    colors: { bg: '#fdf7f1', surface: '#fffdfa', ink: '#47322b', muted: '#8f746a', accent: '#c9785f', accentInk: '#ffffff', inverseBg: '#f1e4d8', inverseInk: '#47322b' },
+    colors: { bg: '#fdf7f1', surface: '#fffdfa', ink: '#47322b', muted: '#846b62', accent: '#915644', accentInk: '#ffffff', inverseBg: '#f1e4d8', inverseInk: '#47322b' },
     fonts: { display: 'fraunces', body: 'inter', script: 'caveat' },
     type: { displayWeight: 400, displayTracking: '-0.025em' },
     radius: 'round',

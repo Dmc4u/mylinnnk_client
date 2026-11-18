@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { SECTION_TYPES, VARIANT_LABELS } from '../../templates/schema.js'
 import { FONT_STACKS, IMAGE_FILTERS, RADII } from '../../templates/theme.js'
-import { contrastRatio, readableOn, toHex6 } from '../model/contrast.js'
+import { contrastRatio, deepenToContrast, readableOn, toHex6 } from '../model/contrast.js'
 import { canDuplicate, canMove, canRemove, setTheme } from '../model/operations.js'
 import { collectMediaIds } from '../model/page.js'
 import { addableTypes } from '../model/sectionLibrary.js'
@@ -134,6 +134,8 @@ const COLOR_FIELDS = [
 const CONTRAST_PAIRS = [
   ['ink', 'bg', 'Text on page'],
   ['muted', 'bg', 'Secondary text on page'],
+  // The primary colour is also used for small headings and labels on the page.
+  ['accent', 'bg', 'Primary colour as text'],
   ['accentInk', 'accent', 'Button text'],
   ['surfaceInk', 'surface', 'Text on cards'],
   ['inverseInk', 'inverseBg', 'Text on dark sections'],
@@ -179,10 +181,11 @@ export function ThemePanel({ page, template, apply }) {
                 <span className="ed-contrast__swatch" style={{ background: colorOf(bg), color: colorOf(fg) }} aria-hidden="true">Aa</span>
                 <span>
                   {label}
-                  <small>{ratio.toFixed(1)}:1 {ok ? 'Readable' : 'Low contrast'}</small>
+                  {/* The page itself is drawn with a readable shade meanwhile (templates/theme.js). */}
+                  <small>{ratio.toFixed(1)}:1 {ok ? 'Readable' : 'Low contrast · the page uses a readable shade until fixed'}</small>
                 </span>
                 {!ok && (
-                  <button type="button" className="ed-btn ed-btn--ghost ed-btn--sm" onClick={() => set(['colors', fg], readableOn(colorOf(bg)), `fix:${fg}`)}>
+                  <button type="button" className="ed-btn ed-btn--ghost ed-btn--sm" onClick={() => set(['colors', fg], fg === 'accent' ? deepenToContrast(colorOf(fg), colorOf(bg)) : readableOn(colorOf(bg)), `fix:${fg}`)}>
                     Fix
                   </button>
                 )}

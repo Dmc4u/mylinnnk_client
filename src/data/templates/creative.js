@@ -209,7 +209,7 @@ export const charityRun = {
   featured: false,
   status: 'available',
   theme: {
-    colors: { bg: '#f4faf4', surface: '#ffffff', ink: '#0f2a1a', muted: '#4f6b5a', accent: '#16a34a', accentInk: '#ffffff', inverseBg: '#0f2a1a', inverseInk: '#f4faf4' },
+    colors: { bg: '#f4faf4', surface: '#ffffff', ink: '#0f2a1a', muted: '#4f6b5a', accent: '#12823b', accentInk: '#ffffff', inverseBg: '#0f2a1a', inverseInk: '#f4faf4' },
     fonts: { display: 'bricolage', body: 'inter' },
     type: { displayWeight: 800, displayCase: 'uppercase', displayTracking: '-0.03em', displayScale: 0.9 },
     radius: 'soft',

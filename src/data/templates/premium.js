@@ -45,7 +45,7 @@ export const goldenJubilee = {
       surface: '#f3ead4',
       ink: '#123d2f',
       muted: '#4c5f55',
-      accent: '#8a6416',
+      accent: '#876216',
       accentInk: '#fffaf0',
       line: 'rgba(138, 100, 22, 0.26)',
       inverseBg: '#0f3a2c',
@@ -739,7 +739,7 @@ export const scrapbookSixteen = {
   featured: false,
   status: 'available',
   theme: {
-    colors: { bg: '#fff4e6', surface: '#ffffff', ink: '#1f2a44', muted: '#55607a', accent: '#d6336c', accentInk: '#ffffff', inverseBg: '#1f2a44', inverseInk: '#fff4e6' },
+    colors: { bg: '#fff4e6', surface: '#ffffff', ink: '#1f2a44', muted: '#55607a', accent: '#cb3067', accentInk: '#ffffff', inverseBg: '#1f2a44', inverseInk: '#fff4e6' },
     fonts: { display: 'caveat', body: 'bricolage', script: 'caveat' },
     type: { displayWeight: 700, displayTracking: '0', displayScale: 1.1 },
     radius: 'soft',
@@ -790,7 +790,7 @@ export const firstTrip = {
   featured: false,
   status: 'available',
   theme: {
-    colors: { bg: '#f6f9f4', surface: '#e7efe3', ink: '#24352b', muted: '#56665b', accent: '#3f7a5a', accentInk: '#ffffff', inverseBg: '#24352b', inverseInk: '#f6f9f4' },
+    colors: { bg: '#f6f9f4', surface: '#e7efe3', ink: '#24352b', muted: '#56665b', accent: '#3c7556', accentInk: '#ffffff', inverseBg: '#24352b', inverseInk: '#f6f9f4' },
     fonts: { display: 'fredoka', body: 'inter', script: 'caveat' },
     type: { displayWeight: 600, displayTracking: '-0.01em' },
     radius: 'pill',

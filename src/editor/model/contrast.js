@@ -22,5 +22,23 @@ export function contrastRatio(a, b) {
   return (l1 + 0.05) / (l2 + 0.05)
 }
 
+/**
+ * The same colour, darkened (on a light background) or lightened (on a dark one) just enough to reach
+ * `target`:1 against `background`, keeping its hue, so a brand colour stays recognisable.
+ * Falls back to black or white if no shade of it gets there.
+ */
+export function deepenToContrast(color, background, target = 4.5) {
+  const hex = toHex6(color)
+  if (contrastRatio(hex, background) >= target) return hex
+  const rgb = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
+  const toward = luminance(background) > 0.18 ? 0 : 255
+  for (let step = 1; step <= 100; step++) {
+    const t = step / 100
+    const next = `#${rgb.map((v) => Math.round(v + (toward - v) * t).toString(16).padStart(2, '0')).join('')}`
+    if (contrastRatio(next, background) >= target + 0.05) return next
+  }
+  return readableOn(background)
+}
+
 /** Black or white, whichever reads better on `background`. */
 export const readableOn = (background) => (contrastRatio('#111111', background) >= contrastRatio('#ffffff', background) ? '#111111' : '#ffffff')

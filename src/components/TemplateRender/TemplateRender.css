@@ -7,6 +7,8 @@
   --pad: 72px;
   --gap: 28px;
   --muted: var(--t-muted);
+  /* Accent-coloured text: the theme accent, or a readable shade of it on this background (theme.js) */
+  --accent-text: var(--t-accent-on-bg, var(--t-accent));
 
   container: tpl / inline-size;
   display: flex;
@@ -71,7 +73,7 @@
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-body {
@@ -160,20 +162,29 @@
   padding-block: 140px;
 }
 
+.ts-tone-surface,
+.ts-details__list--cards .ts-details__item,
+.ts-details__list--ticket,
+.ts-text__paper,
+.ts-stats__row--cards .ts-stats__item:not(:first-child) {
+  --accent-text: var(--t-accent-on-surface, var(--t-accent));
+}
+
 .ts-tone-surface {
   color: var(--t-surface-ink);
   background: var(--t-surface);
 }
 
 .ts-tone-accent {
-  --muted: color-mix(in srgb, var(--t-accent-ink) 78%, transparent);
+  --accent-text: var(--t-accent-ink);
+  /* Secondary text at full strength: a blend of the button-text colour reads too weakly on most accents */
+  --muted: var(--t-accent-ink);
   color: var(--t-accent-ink);
   background: var(--t-accent);
 }
 
 .ts-tone-accent .ts-eyebrow {
   color: inherit;
-  opacity: 0.8;
 }
 
 .ts-tone-accent .ts-action {
@@ -182,7 +193,8 @@
 }
 
 .ts-tone-inverse {
-  --muted: color-mix(in srgb, var(--t-inverse-ink) 70%, transparent);
+  --accent-text: var(--t-accent-on-inverse, var(--t-accent));
+  --muted: color-mix(in srgb, var(--t-inverse-ink) 80%, transparent);
   color: var(--t-inverse-ink);
   background: var(--t-inverse-bg);
 }
@@ -190,7 +202,7 @@
 /* Accent text can lack contrast on inverse sections; use the section ink instead */
 .ts-tone-inverse :is(.ts-eyebrow, .ts-timeline__label, .ts-list__num, .ts-list__meta) {
   color: inherit;
-  opacity: 0.78;
+  opacity: 0.85;
 }
 
 /* ---------- Nav ---------- */
@@ -288,11 +300,11 @@
 }
 
 .ts-overlay-dark::after {
-  background: linear-gradient(180deg, rgb(0 0 0 / 0.25), rgb(0 0 0 / 0.6));
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.62));
 }
 
 .ts-overlay-gradient::after {
-  background: linear-gradient(90deg, color-mix(in srgb, var(--t-inverse-bg) 92%, transparent) 0%, transparent 75%);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--t-scrim, var(--t-inverse-bg)) 92%, transparent) 0%, transparent 75%);
 }
 
 .ts-overlay-light::after {
@@ -342,7 +354,7 @@
   top: -70px;
   left: 50%;
   width: 220px;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
   translate: -50% 0;
   opacity: 0.8;
 }
@@ -424,7 +436,7 @@
   position: absolute;
   bottom: -24px;
   width: 210px;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-hero__sprig--l {
@@ -439,7 +451,7 @@
 .ts-hero__arch .ts-hero__title {
   margin-top: 40px !important;
   font-size: calc(110px * var(--t-display-scale));
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-hero__arch .ts-hero__subtitle {
@@ -453,19 +465,20 @@
 .ts-hero__divider {
   width: 200px;
   margin-top: 26px;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 /* Poster */
 .ts-hero__poster {
+  --accent-text: var(--t-accent-on-poster, var(--t-accent));
   position: relative;
   isolation: isolate;
   display: grid;
   min-height: 760px;
   padding: 88px var(--pad) 140px;
   overflow: hidden;
-  color: var(--t-inverse-ink);
-  background: var(--t-inverse-bg);
+  color: var(--t-poster-ink, var(--t-inverse-ink));
+  background: var(--t-poster-bg, var(--t-inverse-bg));
 }
 
 .ts-hero__poster-img {
@@ -495,11 +508,11 @@
 }
 
 .ts-hero__poster .ts-hero__title .ts-line:nth-child(2) {
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-hero__poster .ts-eyebrow {
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-hero__strip {
@@ -651,14 +664,17 @@
   font-weight: 650;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-tone-accent .ts-details__item dt,
 .ts-tone-inverse .ts-details__item dt {
   color: inherit;
-  opacity: 0.7;
+  opacity: 0.85;
 }
+
+.ts-tone-accent .ts-details__item dt { opacity: 1; }
+
 
 .ts-details__item dd {
   margin-top: 6px;
@@ -789,7 +805,7 @@
   font-family: var(--t-font-display);
   font-size: 86px;
   line-height: 0.8;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-text__paper {
@@ -821,7 +837,7 @@
   margin-top: 28px !important;
   font-family: var(--t-font-script);
   font-size: 40px;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
   text-align: right;
 }
 
@@ -837,10 +853,13 @@
   left: 16px;
   bottom: 14px;
   padding: 6px 12px;
+  max-width: calc(100% - 32px);
   font-size: 13px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
   color: var(--t-surface-ink);
   background: color-mix(in srgb, var(--t-surface) 88%, transparent);
-  border-radius: 999px;
+  border-radius: 16px;
 }
 
 .ts-gallery__grid--masonry {
@@ -857,12 +876,23 @@
 .ts-gallery__grid--masonry .ts-gallery__item--4 { grid-row: span 3; }
 .ts-gallery__grid--masonry .ts-gallery__item--5 { grid-row: span 2; }
 
+/* One or two photos: as many columns as photos (no empty column) */
+.ts-gallery__grid--masonry:not(:has(> :nth-child(3))) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ts-gallery__grid--masonry:not(:has(> :nth-child(2))) { grid-template-columns: minmax(0, 1fr); }
+
+/* Filmstrip: a sideways-scrolling strip (every photo stays reachable; snaps to each photo) */
 .ts-gallery__grid--filmstrip {
   display: flex;
   gap: 18px;
   margin-right: calc(var(--pad) * -1);
-  overflow: hidden;
+  padding-bottom: 10px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
 }
+
+.ts-gallery__grid--filmstrip > .ts-gallery__item { scroll-snap-align: start; }
 
 .ts-gallery__grid--filmstrip .ts-gallery__item {
   flex: 0 0 34%;
@@ -873,41 +903,69 @@
   margin-top: 48px;
 }
 
+/* Polaroids: rows of cards that wrap. The card width comes from the number of columns that fit the
+   page width (3, or 4 when there are four or more photos on a wide page; 3 on tablets, 2 on phones),
+   capped at 300px; the photo keeps a fixed aspect ratio and the caption sits below it in the flow,
+   so many photos never shrink into slivers and long captions never cover the photo. */
 .ts-gallery__grid--polaroids {
+  --pol-cols: 3;
+  --pol-gap: 28px;
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 28px;
-  padding-block: 20px;
+  gap: 44px var(--pol-gap);
+  padding-block: 20px 38px;
 }
 
+.ts-gallery__grid--polaroids:has(> :nth-child(4)) { --pol-cols: 4; }
+
 .ts-gallery__grid--polaroids .ts-gallery__item {
-  flex: 0 1 280px;
-  height: 340px;
-  padding: 12px 12px 48px;
+  flex: 0 0 min(300px, (100% - (var(--pol-cols) - 1) * var(--pol-gap)) / var(--pol-cols));
+  display: flex;
+  flex-direction: column;
+  padding: 12px 12px 14px;
   background: #fff;
   border-radius: 4px;
   box-shadow: 0 24px 40px -24px rgb(0 0 0 / 0.45);
   overflow: visible;
 }
 
+.ts-gallery__grid--polaroids .ts-gallery__item:not(:has(figcaption)) { padding-bottom: 48px; }
+
+.ts-gallery__grid--polaroids .ts-img {
+  height: auto;
+  aspect-ratio: 10 / 11;
+}
+
 .ts-gallery__grid--polaroids .ts-gallery__item:nth-child(odd) { rotate: -3deg; }
 .ts-gallery__grid--polaroids .ts-gallery__item:nth-child(even) { rotate: 3deg; translate: 0 18px; }
 
 .ts-gallery__grid--polaroids figcaption {
-  left: 0;
-  right: 0;
-  bottom: 10px;
+  position: static;
+  max-width: none;
+  min-height: 34px;
+  margin-top: 8px;
+  padding: 2px 4px 0;
   font-family: var(--t-font-script);
   font-size: 22px;
+  line-height: 1.15;
   text-align: center;
+  overflow-wrap: anywhere;
   color: #333;
   background: transparent;
+  border-radius: 0;
+}
+
+@container tpl (max-width: 900px) {
+  .ts-gallery__grid--polaroids,
+  .ts-gallery__grid--polaroids:has(> :nth-child(4)) { --pol-cols: 3; --pol-gap: 22px; }
 }
 
 .ts-gallery__grid--mosaic {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
   grid-template-rows: 230px 230px;
+  grid-auto-rows: 230px;
   gap: 14px;
 }
 
@@ -920,6 +978,16 @@
   grid-template-columns: 1.6fr 1fr;
   grid-template-rows: 260px 260px;
 }
+
+/* One or two images: side by side, one row */
+.ts-gallery__grid--mosaic:not(:has(> :nth-child(3))) {
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-template-rows: 380px;
+}
+.ts-gallery__grid--mosaic:not(:has(> :nth-child(3))) .ts-gallery__item--0 { grid-row: auto; }
+
+/* Four images: the last one spans the two small columns, so no cell stays empty */
+.ts-gallery__grid--mosaic:has(> :nth-child(4):last-child) .ts-gallery__item--3 { grid-column: span 2; }
 
 /* =================== TIMELINE =================== */
 .ts-timeline__list--vertical {
@@ -965,7 +1033,7 @@
 .ts-timeline__label {
   font-family: var(--t-font-display);
   font-size: 24px;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-timeline__body {
@@ -1054,13 +1122,13 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-list__num {
   font-family: var(--t-font-display);
   font-size: 22px;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-list__items--numbered .ts-list__title {
@@ -1102,7 +1170,7 @@
 .ts-list__items--menu .ts-list__meta {
   font-family: var(--t-font-display);
   font-size: 22px;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-list__items--menu .ts-list__text {
@@ -1151,7 +1219,7 @@
 }
 
 .ts-list__items--lineup .ts-list__item:nth-child(even) .ts-list__title {
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-list__items--lineup .ts-list__meta {
@@ -1203,7 +1271,7 @@
   height: 64px;
   font-size: 140px;
   line-height: 1;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-quote__author {
@@ -1231,7 +1299,7 @@
   display: block;
   width: 200px;
   margin: 0 auto 28px;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-countdown__row {
@@ -1317,7 +1385,7 @@
 
 .ts-cta--signature .ts-cta__title {
   font-size: 84px;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-cta__inner .ts-body {
@@ -1384,7 +1452,7 @@
 .ts-marquee__run i {
   margin-left: 40px;
   font-style: normal;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-tone-accent .ts-marquee__run i,
@@ -1509,8 +1577,14 @@
 
   .ts-hero__poster-img {
     inset: 0;
-    -webkit-mask-image: linear-gradient(180deg, transparent, #000 60%);
-    mask-image: linear-gradient(180deg, transparent, #000 60%);
+    -webkit-mask-image: linear-gradient(180deg, transparent 45%, #000 85%);
+    mask-image: linear-gradient(180deg, transparent 45%, #000 85%);
+  }
+
+  /* The copy can reach the photo on narrow screens: full-strength text with a soft shadow */
+  .ts-hero__poster .ts-hero__subtitle {
+    color: var(--t-poster-ink, var(--t-inverse-ink));
+    text-shadow: 0 1px 14px rgb(0 0 0 / 0.75);
   }
 
   .ts-hero__strip {
@@ -1586,25 +1660,43 @@
   .ts-gallery__grid--mosaic {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: none;
-    grid-auto-rows: 130px;
+    grid-auto-rows: 140px;
+  }
+
+  /* Small phone tiles: a compact caption, at most three lines, so the photo stays visible */
+  .ts-gallery__grid:not(.ts-gallery__grid--polaroids, .ts-gallery__grid--scrapbook) figcaption {
+    left: 8px;
+    bottom: 8px;
+    max-width: calc(100% - 16px);
+    padding: 4px 10px;
+    font-size: 12px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
   }
 
   .ts-gallery__grid--mosaic .ts-gallery__item--0 { grid-column: span 2; grid-row: span 2; }
+  .ts-gallery__grid--mosaic:not(:has(> :nth-child(3))) { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-auto-rows: 240px; }
+  .ts-gallery__grid--mosaic:not(:has(> :nth-child(3))) .ts-gallery__item--0 { grid-column: auto; grid-row: span 1; }
 
   .ts-gallery__grid--filmstrip .ts-gallery__item {
     flex-basis: 64%;
     height: 280px;
   }
 
-  .ts-gallery__grid--polaroids {
-    flex-wrap: wrap;
-    gap: 20px;
+  .ts-gallery__grid--polaroids,
+  .ts-gallery__grid--polaroids:has(> :nth-child(4)) {
+    --pol-cols: 2;
+    --pol-gap: 18px;
+    row-gap: 34px;
   }
 
-  .ts-gallery__grid--polaroids .ts-gallery__item {
-    flex-basis: 44%;
-    height: 220px;
-  }
+  .ts-gallery__grid--polaroids .ts-gallery__item { padding: 8px 8px 10px; }
+  .ts-gallery__grid--polaroids .ts-gallery__item:not(:has(figcaption)) { padding-bottom: 30px; }
+  .ts-gallery__grid--polaroids .ts-gallery__item:nth-child(even) { translate: 0 12px; }
+  .ts-gallery__grid--polaroids figcaption { min-height: 26px; margin-top: 6px; font-size: 18px; }
 
   .ts-timeline__list--vertical::before { left: 6px; }
   .ts-timeline__list--vertical .ts-timeline__item { grid-template-columns: 1fr; gap: 6px; padding-left: 32px; }
@@ -1765,7 +1857,7 @@ a.ts-menu-link:focus-visible {
    template's pages only. Plain ink colour when the system forces its own colours. */
 .tpl--golden-jubilee .ts-hero__title,
 .tpl--golden-jubilee .ts-stats__item dd {
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
   background: linear-gradient(180deg, #a87a1e 0%, #7a5410 55%, #a87a1e 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -1776,13 +1868,25 @@ a.ts-menu-link:focus-visible {
   background-image: linear-gradient(180deg, #f6dc94 0%, #d1a043 60%, #f6dc94 100%);
 }
 
+/* A page whose owner chose another accent: the same lettering, in shades of that colour (on inverse
+   sections, lighter shades). Pages with the template's own accent keep the gold above (theme.js). */
+.tpl--golden-jubilee.tpl--accent-custom .ts-hero__title,
+.tpl--golden-jubilee.tpl--accent-custom .ts-stats__item dd {
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--accent-text) 80%, #fff) 0%, var(--accent-text) 55%, color-mix(in srgb, var(--accent-text) 80%, #fff) 100%);
+}
+
+.tpl--golden-jubilee.tpl--accent-custom .ts-tone-inverse .ts-stats__item dd {
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--accent-text) 40%, #fff) 0%, color-mix(in srgb, var(--accent-text) 80%, #fff) 60%, color-mix(in srgb, var(--accent-text) 40%, #fff) 100%);
+}
+
 .tpl--golden-jubilee .ts-eyebrow {
   letter-spacing: 0.16em;
 }
 
 @media (forced-colors: active) {
   .tpl--golden-jubilee .ts-hero__title,
-  .tpl--golden-jubilee .ts-stats__item dd {
+  .tpl--golden-jubilee .ts-stats__item dd,
+  .tpl--golden-jubilee.tpl--accent-custom :is(.ts-hero__title, .ts-stats__item dd, .ts-tone-inverse .ts-stats__item dd) {
     background: none;
     -webkit-text-fill-color: currentColor;
   }
@@ -1918,7 +2022,7 @@ a.ts-menu-link:focus-visible {
   font-family: var(--t-font-display);
   font-size: 44px;
   line-height: 1;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-timeline__list--alternating .ts-timeline__title {
@@ -1971,14 +2075,14 @@ a.ts-menu-link:focus-visible {
 
 .ts-list__items--tiles .ts-list__item:first-child :is(.ts-list__num, .ts-list__meta, .ts-list__text) {
   color: inherit;
-  opacity: 0.85;
+  opacity: 0.95;
 }
 
 .ts-list__items--tiles .ts-list__num {
   font-family: var(--t-font-display);
   font-size: 15px;
   letter-spacing: 0.12em;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-list__items--tiles .ts-list__title {
@@ -2086,7 +2190,7 @@ a.ts-menu-link:focus-visible {
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-list__items--people .ts-list__img + .ts-list__title { margin-top: 0; }
@@ -2117,7 +2221,7 @@ a.ts-menu-link:focus-visible {
   font-family: var(--t-font-display);
   font-size: 30px;
   line-height: 1;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts-timeline__list--programme .ts-timeline__body {
@@ -2140,6 +2244,8 @@ a.ts-menu-link:focus-visible {
 
 .ts-gallery__grid--scrapbook .ts-gallery__item {
   position: relative;
+  display: flex;
+  flex-direction: column;
   padding: 10px 10px 34px;
   background: #fff;
   border-radius: 3px;
@@ -2160,17 +2266,25 @@ a.ts-menu-link:focus-visible {
   z-index: 1;
 }
 
-.ts-gallery__grid--scrapbook .ts-gallery__item .ts-img { border-radius: 2px; }
+.ts-gallery__grid--scrapbook .ts-gallery__item .ts-img { flex: 1 1 auto; min-height: 0; height: auto; border-radius: 2px; }
+.ts-gallery__grid--scrapbook .ts-gallery__item:has(figcaption) { padding-bottom: 8px; }
 
 .ts-gallery__grid--scrapbook figcaption {
   left: 0;
   right: 0;
   bottom: 6px;
+  position: static;
+  flex: none;
+  max-width: none;
+  margin-top: 6px;
+  padding: 0 4px;
   font-family: var(--t-font-script);
   font-size: 20px;
+  line-height: 1.15;
   text-align: center;
   color: #333;
   background: transparent;
+  border-radius: 0;
 }
 
 .ts-gallery__grid--scrapbook .ts-gallery__item--0 { grid-column: 1 / 6; grid-row: 1 / 6; rotate: -3deg; z-index: 2; }
@@ -2179,15 +2293,25 @@ a.ts-menu-link:focus-visible {
 .ts-gallery__grid--scrapbook .ts-gallery__item--3 { grid-column: 2 / 6; grid-row: 6 / 10; rotate: 3deg; z-index: 4; }
 .ts-gallery__grid--scrapbook .ts-gallery__item--4 { grid-column: 6 / 10; grid-row: 6 / 10; rotate: -5deg; z-index: 3; }
 .ts-gallery__grid--scrapbook .ts-gallery__item--5 { grid-column: 9 / 13; grid-row: 5 / 9; rotate: 2deg; z-index: 2; }
+/* Photos after the sixth: a tilted row of three per 4 grid rows beneath the collage */
+.ts-gallery__grid--scrapbook .ts-gallery__item:nth-child(n + 7) { grid-column: span 4; grid-row: span 4; margin: 10px; z-index: 2; }
+.ts-gallery__grid--scrapbook .ts-gallery__item:nth-child(n + 7):nth-child(odd) { rotate: -3deg; }
+.ts-gallery__grid--scrapbook .ts-gallery__item:nth-child(n + 7):nth-child(even) { rotate: 3deg; }
 
 /* Gallery: Featured work (one full-width piece, the rest in a row beneath) */
 .ts-gallery__grid--feature {
+  --feat-cols: 3;
+  --feat-h: 240px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--feat-cols), minmax(0, 1fr));
   gap: 14px;
 }
 
-.ts-gallery__grid--feature .ts-gallery__item { height: 240px; }
+.ts-gallery__grid--feature .ts-gallery__item { height: var(--feat-h); }
+
+/* Two, three or five photos: the photos beneath the lead one fill their row (one or two columns) */
+.ts-gallery__grid--feature:has(> :nth-child(2):last-child) { --feat-cols: 1; --feat-h: 360px; }
+.ts-gallery__grid--feature:is(:has(> :nth-child(3):last-child), :has(> :nth-child(5):last-child)) { --feat-cols: 2; --feat-h: 300px; }
 
 .ts-gallery__grid--feature .ts-gallery__item--0 {
   grid-column: 1 / -1;
@@ -2229,7 +2353,9 @@ a.ts-menu-link:focus-visible {
 }
 
 .ts-stats__row--cards .ts-stats__item dd { font-size: 56px; line-height: 1; }
-.ts-stats__row--cards .ts-stats__item dt { font-size: 15px; opacity: 0.85; }
+.ts-stats__row--cards .ts-stats__item dt { font-size: 15px; }
+/* The highlighted first card has the accent background: its label uses the card text colour */
+.ts-stats__row--cards .ts-stats__item:first-child dt { color: inherit; opacity: 0.92; }
 .ts-tone-accent .ts-stats__row--cards .ts-stats__item:not(:first-child),
 .ts-tone-inverse .ts-stats__row--cards .ts-stats__item:not(:first-child) {
   background: transparent;
@@ -2266,7 +2392,7 @@ a.ts-menu-link:focus-visible {
   font-family: var(--t-font-display);
   font-size: 4.2em;
   line-height: 0.8;
-  color: var(--t-accent);
+  color: var(--accent-text, var(--t-accent));
 }
 
 .ts.ts-space-compact .ts-text__essay-figure { margin-top: -56px; }
@@ -2278,11 +2404,12 @@ a.ts-menu-link:focus-visible {
   .ts-list__items--people .ts-list__title { font-size: 19px; }
 
   .ts-gallery__grid--scrapbook { display: flex; flex-direction: column; gap: 26px; padding-inline: 18px; }
-  .ts-gallery__grid--scrapbook .ts-gallery__item { height: 300px; }
-  .ts-gallery__grid--scrapbook .ts-gallery__item:nth-child(n + 4) { display: none; }
+  .ts-gallery__grid--scrapbook .ts-gallery__item,
+  .ts-gallery__grid--scrapbook .ts-gallery__item:nth-child(n + 7) { height: 300px; margin: 0; }
 
-  .ts-gallery__grid--feature { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ts-gallery__grid--feature .ts-gallery__item { height: 160px; }
+  .ts-gallery__grid--feature,
+  .ts-gallery__grid--feature:is(:has(> :nth-child(3):last-child), :has(> :nth-child(5):last-child)) { --feat-cols: 2; --feat-h: 160px; }
+  .ts-gallery__grid--feature:has(> :nth-child(2):last-child) { --feat-cols: 1; --feat-h: 240px; }
   .ts-gallery__grid--feature .ts-gallery__item--0 { height: 360px; }
 
   .ts-stats__row--cards .ts-stats__item dd { font-size: 44px; }

@@ -231,7 +231,7 @@ export const cornerCafe = {
   featured: false,
   status: 'available',
   theme: {
-    colors: { bg: '#f8f1e7', surface: '#fffaf2', ink: '#3b2417', muted: '#7f6352', accent: '#b4532a', accentInk: '#ffffff', inverseBg: '#3b2417', inverseInk: '#f8f1e7' },
+    colors: { bg: '#f8f1e7', surface: '#fffaf2', ink: '#3b2417', muted: '#7f6352', accent: '#b05129', accentInk: '#ffffff', inverseBg: '#3b2417', inverseInk: '#f8f1e7' },
     fonts: { display: 'fraunces', body: 'inter' },
     type: { displayWeight: 600, displayTracking: '-0.02em' },
     radius: 'round',

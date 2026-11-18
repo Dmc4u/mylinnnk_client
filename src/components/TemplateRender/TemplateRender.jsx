@@ -5,7 +5,7 @@ import { useTemplateMotion } from '../../templates/motion/useTemplateMotion.js'
 import '../../templates/motion/motion.css'
 import { SECTION_COMPONENTS } from '../../templates/registry.js'
 import { RenderModeContext, anchorId } from '../../templates/renderMode.js'
-import { themeToStyle } from '../../templates/theme.js'
+import { accentCustomised, themeToStyle } from '../../templates/theme.js'
 import '../../templates/fonts.css'
 import './TemplateRender.css'
 
@@ -40,7 +40,7 @@ function TemplateRender({ template, maxSections, selectedSectionId, mode = 'desi
   return (
     <RenderModeContext.Provider value={published ? 'published' : 'design'}>
     <div
-      className={`tpl tpl--${template.slug} tpl--radius-${theme.radius ?? 'soft'} tpl--filter-${theme.imageFilter ?? 'none'}`}
+      className={`tpl tpl--${template.slug} tpl--radius-${theme.radius ?? 'soft'} tpl--filter-${theme.imageFilter ?? 'none'}${accentCustomised(template.slug, theme.colors) ? ' tpl--accent-custom' : ''}`}
       style={{ ...themeToStyle(theme), ...m.style }}
       data-template={template.slug}
       {...m.attrs}

@@ -10,7 +10,7 @@ export const gardenVows = {
   featured: true,
   status: 'available',
   theme: {
-    colors: { bg: '#f6f3ec', surface: '#fffdf8', ink: '#2f3a2f', muted: '#6f7a68', accent: '#7b8c62', accentInk: '#ffffff', inverseBg: '#3b4a37', inverseInk: '#f6f3ec' },
+    colors: { bg: '#f6f3ec', surface: '#fffdf8', ink: '#2f3a2f', muted: '#677160', accent: '#657350', accentInk: '#ffffff', inverseBg: '#3b4a37', inverseInk: '#f6f3ec' },
     fonts: { display: 'cormorant', body: 'cormorant', script: 'great-vibes' },
     type: { displayWeight: 500, displayTracking: '0', bodySize: '21px' },
     radius: 'soft',
@@ -85,7 +85,7 @@ export const coastalEvening = {
   featured: false,
   status: 'available',
   theme: {
-    colors: { bg: '#f3f6f7', surface: '#ffffff', ink: '#0f2c3d', muted: '#5a7383', accent: '#e0794f', accentInk: '#ffffff', inverseBg: '#0f2c3d', inverseInk: '#f3f6f7' },
+    colors: { bg: '#f3f6f7', surface: '#ffffff', ink: '#0f2c3d', muted: '#5a7383', accent: '#a75a3b', accentInk: '#ffffff', inverseBg: '#0f2c3d', inverseInk: '#f3f6f7' },
     fonts: { display: 'syne', body: 'inter' },
     type: { displayWeight: 700, displayCase: 'uppercase', displayTracking: '0', displayScale: 0.86 },
     radius: 'none',

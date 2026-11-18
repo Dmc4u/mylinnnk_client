@@ -66,7 +66,7 @@ export const lettersHome = {
   featured: false,
   status: 'available',
   theme: {
-    colors: { bg: '#efe6d5', surface: '#f8f2e6', ink: '#3b3024', muted: '#76674f', accent: '#8a5a2b', accentInk: '#ffffff', inverseBg: '#3b3024', inverseInk: '#efe6d5' },
+    colors: { bg: '#efe6d5', surface: '#f8f2e6', ink: '#3b3024', muted: '#73644d', accent: '#8a5a2b', accentInk: '#ffffff', inverseBg: '#3b3024', inverseInk: '#efe6d5' },
     fonts: { display: 'cormorant', body: 'cormorant', script: 'caveat' },
     type: { displayWeight: 500, displayTracking: '0', bodySize: '21px' },
     radius: 'none',
@@ -173,7 +173,7 @@ export const helloBaby = {
   featured: false,
   status: 'coming-soon',
   theme: {
-    colors: { bg: '#f6faf9', surface: '#ffffff', ink: '#1f3a3d', muted: '#61807f', accent: '#2a9d8f', accentInk: '#ffffff', inverseBg: '#e3f1ee', inverseInk: '#1f3a3d' },
+    colors: { bg: '#f6faf9', surface: '#ffffff', ink: '#1f3a3d', muted: '#546f6e', accent: '#20776c', accentInk: '#ffffff', inverseBg: '#e3f1ee', inverseInk: '#1f3a3d' },
     fonts: { display: 'fraunces', body: 'inter', script: 'caveat' },
     type: { displayWeight: 400, displayTracking: '-0.02em' },
     radius: 'round',
