@@ -70,10 +70,12 @@ const TONES = {
   submitted: 'review', under_review: 'review', pending_review: 'review', scheduled: 'review',
   awaiting_transfer: 'wait', pending_payment: 'wait', grace: 'wait', draft: 'wait',
   rejected: 'bad', expired: 'bad', cancelled: 'bad', unpublished: 'bad', suspended: 'bad', denied: 'bad', failure: 'bad',
+  // Email deliveries and the notification worker
+  sent: 'ok', running: 'ok', pending: 'wait', retry: 'wait', stale: 'wait', sending: 'review', skipped: 'neutral', disabled: 'neutral', dead: 'bad', stopped: 'bad',
 }
 
-/** A status as a small pill coloured with the site's status tokens. The text is always the status itself. */
-export function StatusChip({ value }) {
+/** A status as a small pill coloured with the site's status tokens. The text is the status itself, or `label`. */
+export function StatusChip({ value, label }) {
   if (!value) return '—'
-  return <span className={`adm-chip adm-chip--${TONES[value] ?? 'neutral'}`}>{String(value).replaceAll('_', ' ')}</span>
+  return <span className={`adm-chip adm-chip--${TONES[value] ?? 'neutral'}`}>{label ?? String(value).replaceAll('_', ' ')}</span>
 }

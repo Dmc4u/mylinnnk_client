@@ -3,12 +3,15 @@ import AuthNav from '../AccountMenu/AccountMenu.jsx'
 import Logo from '../Brand/Logo.jsx'
 import Button from '../Button/Button.jsx'
 import SmartLink from '../SmartLink/SmartLink.jsx'
+import NotificationBell from '../Notifications/NotificationBell.jsx'
+import useIsCompactHeader from '../../hooks/useIsCompactHeader.js'
 import { CREATE_PAGE_HREF, HEADER_LINKS } from '../../utils/navigation.js'
 import './Header.css'
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(() => typeof window !== 'undefined' && window.scrollY > 8)
   const [menuOpen, setMenuOpen] = useState(false)
+  const compact = useIsCompactHeader()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
@@ -52,6 +55,9 @@ export default function Header() {
             </li>
           </ul>
         </nav>
+
+        {/* Phones only (wide screens show the bell in the nav): outside the menu sheet so it stays visible. */}
+        {compact && <NotificationBell className="site-header__notif" historyPath="/dashboard/notifications" />}
 
         <button
           type="button"

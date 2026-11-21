@@ -13,7 +13,8 @@ import ForgotPasswordPage from '../../pages/ForgotPasswordPage/ForgotPasswordPag
 import ResetPasswordPage from '../../pages/ResetPasswordPage/ResetPasswordPage.jsx'
 import VerifyEmailPage from '../../pages/VerifyEmailPage/VerifyEmailPage.jsx'
 import AccountPage from '../../pages/AccountPage/AccountPage.jsx'
-import { AccountView, DraftsView, LegacyAccountRedirect, OverviewView, PaymentsView, PublicationsView, SupportView } from '../../pages/AccountPage/DashboardViews.jsx'
+import { AccountView, DraftsView, LegacyAccountRedirect, NotificationsView, OverviewView, PaymentsView, PublicationsView, SupportView } from '../../pages/AccountPage/DashboardViews.jsx'
+import NotificationsProvider from '../../notifications/NotificationsProvider.jsx'
 import PricingPage from '../../pages/PricingPage/PricingPage.jsx'
 import PublicPage from '../../pages/PublicPage/PublicPage.jsx'
 import PublishPage from '../../pages/PublishPage/PublishPage.jsx'
@@ -49,7 +50,9 @@ function EditorFallback() {
 function SiteLayout() {
   const { pathname } = useLocation()
 
+  // Signed in: one live notifications connection for the header bell and the dashboard.
   return (
+    <NotificationsProvider>
     <div className="app">
       <a className="skip-link" href="#main">
         Skip to content
@@ -62,6 +65,7 @@ function SiteLayout() {
       </main>
       <Footer continuous={pathname === '/'} />
     </div>
+    </NotificationsProvider>
   )
 }
 
@@ -111,6 +115,7 @@ function App() {
           <Route path="drafts" element={<DraftsView />} />
           <Route path="payments" element={<PaymentsView />} />
           <Route path="support" element={<SupportView />} />
+          <Route path="notifications" element={<NotificationsView />} />
           <Route path="account" element={<AccountView />} />
         </Route>
         {/* The old address (links, bookmarks, #sections) leads to the matching dashboard view. */}

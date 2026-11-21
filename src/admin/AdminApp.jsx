@@ -9,9 +9,14 @@ import Footer from '../components/Footer/Footer.jsx'
 import Header from '../components/Header/Header.jsx'
 import NeonRingLoader from '../components/Loading/NeonRingLoader.jsx'
 import MagneticButton from '../components/UI/MagneticButton.jsx'
+import NotificationBell from '../components/Notifications/NotificationBell.jsx'
+import NotificationList from '../components/Notifications/NotificationList.jsx'
+import { useNotifications } from '../notifications/NotificationsContext.js'
+import NotificationsProvider from '../notifications/NotificationsProvider.jsx'
 import useDelayedLoading from '../hooks/useDelayedLoading.js'
 import { AdminPaymentDetail, AdminPayments } from './AdminPayments.jsx'
 import { AdminEnquiries, AdminEnquiryDetail } from './AdminEnquiries.jsx'
+import AdminDeliveries from './AdminDeliveries.jsx'
 import ReauthPrompt, { AdminNotice } from './ReauthPrompt.jsx'
 import { REAUTH_CODE, needsReauth } from './reauth.js'
 import StateView, { AdminHeading, StatusChip } from './StateView.jsx'
@@ -25,6 +30,8 @@ const NAV = [
   { to: '/admin/payments', label: 'Payment reviews', icon: 'M3 7h18v10H3V7Zm0 3h18M7 14h3' },
   { to: '/admin/transactions', label: 'Transactions', icon: 'M7 7h11l-3-3M17 17H6l3 3' },
   { to: '/admin/enquiries', label: 'Enquiries', icon: 'M4 5h16v11H8l-4 4V5Zm4 4h8M8 12h5' },
+  { to: '/admin/notifications', label: 'Notifications', icon: 'M6 9a6 6 0 1 1 12 0c0 4.5 1.5 6.5 2.5 7.5h-17C4.5 15.5 6 13.5 6 9ZM10 19.5a2 2 0 0 0 4 0' },
+  { to: '/admin/email-deliveries', label: 'Email delivery', icon: 'M3 6h18v12H3V6Zm0 0 9 7 9-7' },
   { to: '/admin/audit', label: 'Audit log', icon: 'M12 3 5 6v5c0 4.4 3 8.3 7 9.5 4-1.2 7-5.1 7-9.5V6l-7-3Zm-3 9 2 2 4-4' },
   { to: '/admin/settings', label: 'Settings', icon: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-3a7.4 7.4 0 0 0-.1-1.2l2-1.6-2-3.4-2.4.9a7.6 7.6 0 0 0-2-1.2L14.5 3h-5l-.4 2.5a7.6 7.6 0 0 0-2 1.2l-2.4-.9-2 3.4 2 1.6a7.4 7.4 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-.9c.6.5 1.3.9 2 1.2l.4 2.5h5l.4-2.5c.7-.3 1.4-.7 2-1.2l2.4.9 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z' },
 ]
@@ -103,9 +110,20 @@ export default function AdminApp() {
   return <AdminShell user={me.data.user} />
 }
 
-/** The signed-in dashboard: top bar, sidebar (a drawer on small screens) and the current section. */
+/** The signed-in dashboard, with its live notifications (bell, payments awaiting review). */
 function AdminShell({ user }) {
+  return (
+    <NotificationsProvider>
+      <AdminShellLayout user={user} />
+    </NotificationsProvider>
+  )
+}
+
+/** Top bar, sidebar (a drawer on small screens) and the current section. */
+function AdminShellLayout({ user }) {
   const { logout } = useAuth()
+  // A live count from the orders (server), independent of read notifications.
+  const { paymentsAwaitingReview } = useNotifications()
   const { pathname } = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
   const [openedAt, setOpenedAt] = useState(pathname)
@@ -150,6 +168,7 @@ function AdminShell({ user }) {
         </Link>
         {import.meta.env.DEV && <span className="adm-devtag">Local development</span>}
         <div className="adm-top__actions">
+          <NotificationBell historyPath="/admin/notifications" />
           <Link to="/" className="btn btn--ghost btn--sm adm-top__site">View site</Link>
           <span className="adm-who">
             <span className="adm-who__avatar" aria-hidden="true">{(user.displayName || '?').slice(0, 1).toUpperCase()}</span>
@@ -166,6 +185,12 @@ function AdminShell({ user }) {
               <NavLink key={n.to} to={n.to} end={n.end} className="adm-nav__link">
                 <Icon d={n.icon} />
                 <span>{n.label}</span>
+                {n.to === '/admin/payments' && paymentsAwaitingReview > 0 && (
+                  <>
+                    <span className="adm-nav__count" aria-hidden="true">{paymentsAwaitingReview}</span>
+                    <span className="sr-only">{`, ${paymentsAwaitingReview} awaiting review`}</span>
+                  </>
+                )}
               </NavLink>
             ))}
           </nav>
@@ -185,6 +210,8 @@ function AdminShell({ user }) {
             <Route path="transactions" element={<Transactions />} />
             <Route path="enquiries" element={<AdminEnquiries />} />
             <Route path="enquiries/:reference" element={<AdminEnquiryDetail />} />
+            <Route path="notifications" element={<AdminNotifications />} />
+            <Route path="email-deliveries" element={<AdminDeliveries />} />
             <Route path="audit" element={<Audit />} />
             <Route path="settings" element={<Settings />} />
             <Route path="*" element={<p className="adm-state">This page doesn’t exist.</p>} />
@@ -197,9 +224,18 @@ function AdminShell({ user }) {
 
 function Overview() {
   const s = useAdminData(() => adminApi.overview(), [])
+  // Notification worker: a warning here when it has stopped (details on the Email delivery page).
+  const worker = useAdminData(() => adminApi.deliveryHealth(), [])
+  const workerStatus = worker.data?.health?.status
   return (
     <section aria-labelledby="adm-overview">
       <AdminHeading id="adm-overview" title="Overview">What needs attention across MyLinnnk today.</AdminHeading>
+      {['stale', 'stopped'].includes(workerStatus) && (
+        <p className="adm-error" role="alert">
+          {workerStatus === 'stale' ? 'The notification worker is not responding' : 'The notification worker has stopped'}: emails are waiting in the queue.{' '}
+          <Link to="/admin/email-deliveries">Open Email delivery</Link>
+        </p>
+      )}
       <StateView state={s} skeleton="cards">
         {s.data && (
           <div className="adm-cards">
@@ -413,6 +449,19 @@ function Settings() {
           </dl>
         )}
       </StateView>
+    </section>
+  )
+}
+
+/** /admin/notifications: the administrator's notification history. */
+function AdminNotifications() {
+  return (
+    <section aria-labelledby="adm-notifications">
+      <title>Notifications · Administration · MyLinnnk</title>
+      <AdminHeading id="adm-notifications" title="Notifications">
+        New accounts, enquiries, payments and other activity that may need your attention.
+      </AdminHeading>
+      <NotificationList />
     </section>
   )
 }

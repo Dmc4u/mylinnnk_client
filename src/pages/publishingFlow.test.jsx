@@ -90,6 +90,10 @@ function setup({ admin = false, signedIn = true, checkout = null, adminErrors = 
         order.admin = { ...order.admin, status: 'approved', review: { decision: 'approved', decidedAt: new Date().toISOString(), bankTransactionRef: body.bankTransactionRef, reason: '' } }
         return json(200, { data: { order: order.admin } })
       }
+      if (path === `/admin/payments/${ORDER.reference}/reject` && method === 'POST') {
+        order.admin = { ...order.admin, status: 'rejected', review: { decision: 'rejected', decidedAt: new Date().toISOString(), reason: body.reason } }
+        return json(200, { data: { order: order.admin } })
+      }
       const own = /^\/admin\/my-pages\/[^/]+\/(publish|extend|update-content)$/.exec(path)
       if (own && method === 'POST') {
         if (own[1] === 'update-content' && body.confirmSlug !== 'ada-and-tunde') return json(409, { error: { code: 'CONFIRMATION_REQUIRED', message: 'Type the page address to confirm.' } })
@@ -144,7 +148,7 @@ describe('admin dashboard', () => {
   it('shows the admin every section, labelled simply “Admin” (no other roles exist)', async () => {
     renderApp('/admin', setup({ admin: true }))
     const nav = await screen.findByRole('navigation', { name: 'Administration' })
-    expect(within(nav).getAllByRole('link').map((a) => a.textContent)).toEqual(['Overview', 'Users', 'Publications', 'Payment reviews', 'Transactions', 'Enquiries', 'Audit log', 'Settings'])
+    expect(within(nav).getAllByRole('link').map((a) => a.textContent)).toEqual(['Overview', 'Users', 'Publications', 'Payment reviews', 'Transactions', 'Enquiries', 'Notifications', 'Email delivery', 'Audit log', 'Settings'])
     expect(screen.getByText('Admin', { selector: 'b' })).toBeInTheDocument()
     expect(screen.queryByText(/super admin/i)).not.toBeInTheDocument()
     expect(await screen.findByText('Payments to review')).toBeInTheDocument()
@@ -175,6 +179,22 @@ describe('admin dashboard', () => {
     const call = calls.find((c) => c.path.endsWith('/approve'))
     expect(call.body.verifiedAmountMinor).toBe(250000)
     expect(call.body.bankTransactionRef).toBe('NIP-0001')
+    expect(call.csrf).toBeTruthy()
+  })
+
+  it('rejecting: the reason field is labelled as customer-visible, limited to 500 characters, and sent with the CSRF token', async () => {
+    const { calls, ...rest } = setup({ admin: true })
+    const { user } = renderApp(`/admin/payments/${ORDER.reference}`, rest)
+    const field = await screen.findByLabelText('Reason for the customer')
+    expect(field).toHaveAccessibleDescription(/Customer-visible: shown on their order page and in the email we send them/)
+    expect(field).toHaveAttribute('maxLength', '500')
+    await user.type(field, 'No transfer with this reference has arrived yet.')
+    expect(screen.getByText(/48 of 500 characters/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Reject payment' }))
+    // The review forms disappear after a decision: focus moves to the confirmation (never lost).
+    await waitFor(() => expect(screen.getByText('Payment rejected. The customer can send new details.')).toHaveFocus())
+    const call = calls.find((c) => c.path.endsWith('/reject'))
+    expect(call.body).toEqual({ reason: 'No transfer with this reference has arrived yet.' })
     expect(call.csrf).toBeTruthy()
   })
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { authHref } from '../auth/redirects.js'
 import { useAuth } from '../auth/useAuth.js'
@@ -42,17 +42,29 @@ export default function ReauthPrompt({ message = 'For security, administration n
 }
 
 /** An action's result message; a "sign in again" answer offers the way to do it. */
-export function AdminNotice({ notice }) {
+/**
+ * The result of an action. `focusOnShow`: focus (and so scroll to) the message when it appears, for actions whose
+ * button disappears afterwards (e.g. a payment decision removes the review forms), so focus is never lost.
+ * `layoutKey` (e.g. the page's data): when it changes while the message is shown (the page reloaded and its
+ * length changed), the message is brought back into view.
+ */
+export function AdminNotice({ notice, focusOnShow = false, layoutKey = null }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!focusOnShow || !notice || !ref.current) return
+    ref.current.focus({ preventScroll: true })
+    ref.current.scrollIntoView?.({ block: 'center' })
+  }, [notice, focusOnShow, layoutKey])
   if (!notice) return null
   if (!notice.ok && notice.code === REAUTH_CODE) {
     return (
-      <div className="adm-state adm-state--error" role="alert">
+      <div className="adm-state adm-state--error" role="alert" ref={ref} tabIndex={-1}>
         <ReauthPrompt message={notice.text} />
       </div>
     )
   }
   return (
-    <p className={notice.ok ? 'adm-ok' : 'adm-error'} role={notice.ok ? 'status' : 'alert'}>
+    <p className={notice.ok ? 'adm-ok' : 'adm-error'} role={notice.ok ? 'status' : 'alert'} ref={ref} tabIndex={-1}>
       {notice.text}
     </p>
   )

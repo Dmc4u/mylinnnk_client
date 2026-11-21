@@ -15,6 +15,7 @@ const DASHBOARD_VIEWS = [
   { to: '/dashboard/publications', label: 'Published pages' },
   { to: '/dashboard/drafts', label: 'Drafts' },
   { to: '/dashboard/payments', label: 'Payments' },
+  { to: '/dashboard/notifications', label: 'Notifications' },
   { to: '/dashboard/support', label: 'Help & support' },
   { to: '/dashboard/account', label: 'Account' },
 ]

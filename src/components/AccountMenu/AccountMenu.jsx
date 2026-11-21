@@ -3,6 +3,8 @@ import { Link, useLocation } from 'react-router'
 import { useGuardedLogout } from '../../auth/useGuardedLogout.jsx'
 import { authHref } from '../../auth/redirects.js'
 import { useAuth } from '../../auth/useAuth.js'
+import useIsCompactHeader from '../../hooks/useIsCompactHeader.js'
+import NotificationBell from '../Notifications/NotificationBell.jsx'
 import SmartLink from '../SmartLink/SmartLink.jsx'
 import './AccountMenu.css'
 
@@ -17,6 +19,7 @@ import './AccountMenu.css'
 export default function AuthNav({ onNavigate }) {
   const { status } = useAuth()
   const { pathname, search } = useLocation()
+  const compact = useIsCompactHeader()
 
   if (status === 'loading') {
     return (
@@ -28,9 +31,17 @@ export default function AuthNav({ onNavigate }) {
 
   if (status === 'authenticated') {
     return (
-      <li className="site-nav__account">
-        <AccountMenu onNavigate={onNavigate} />
-      </li>
+      <>
+        {/* Wide screens: the bell sits beside the account menu (compact headers show it in the bar instead). */}
+        {!compact && (
+          <li className="site-nav__notif">
+            <NotificationBell historyPath="/dashboard/notifications" />
+          </li>
+        )}
+        <li className="site-nav__account">
+          <AccountMenu onNavigate={onNavigate} />
+        </li>
+      </>
     )
   }
 

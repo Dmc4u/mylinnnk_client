@@ -39,10 +39,14 @@ const DETAIL = {
   context: { plan: 'special-request', page: 'mylinnnk.com/p/moses' },
   notification: { state: 'failed', attempts: 1, sentAt: null },
   notes: [],
+  fromAccount: true,
+  acknowledgement: 'account',
+  replies: [{ id: 'r0', requestId: 'first-request', at: '2026-11-15T10:30:00.000Z', text: 'Thank you, we are looking into it.', email: 'sent' }],
 }
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
 
-function setup({ admin = true } = {}) {
+function setup({ admin = true, failReplies: failing = 0 } = {}) {
+  let failReplies = failing
   const api = createFakeAuthApi()
   api.signIn(api.addUser({ email: 'support@dmclimited.net', displayName: 'Support', emailVerified: true, admin }))
   const calls = []
@@ -66,6 +70,15 @@ function setup({ admin = true } = {}) {
       if (path === `/admin/enquiries/${ENQ.reference}` && method === 'PATCH') {
         detail = { ...detail, ...body }
         return json(200, { data: { enquiry: detail } })
+      }
+      if (path === `/admin/enquiries/${ENQ.reference}/replies` && method === 'POST') {
+        if (failReplies > 0) {
+          failReplies -= 1
+          return json(503, { error: { code: 'SERVICE_UNAVAILABLE', message: 'Please try again in a moment.' } })
+        }
+        if (detail.replies.some((r) => r.requestId === body.requestId)) return json(200, { data: { enquiry: detail, duplicate: true } })
+        detail = { ...detail, status: 'responded', replies: [...detail.replies, { id: `r${detail.replies.length + 1}`, requestId: body.requestId, at: '2026-11-15T12:00:00.000Z', text: body.text, email: 'queued' }] }
+        return json(201, { data: { enquiry: detail, duplicate: false } })
       }
       if (path === `/admin/enquiries/${ENQ.reference}/notes` && method === 'POST') {
         detail = { ...detail, notes: [...detail.notes, { id: 'n1', at: '2026-11-15T11:00:00.000Z', authorName: 'Support', text: body.text }] }
@@ -104,7 +117,7 @@ describe('admin enquiry inbox', () => {
     expect(await screen.findByText('A wedding page with our story and photos.')).toBeInTheDocument()
     expect(screen.getByText(/Not delivered: reply from here/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'MLK-NK8W-XBZU' })).toHaveAttribute('href', '/admin/payments/MLK-NK8W-XBZU')
-    const reply = new URL(screen.getByRole('link', { name: 'Reply by email' }).getAttribute('href'))
+    const reply = new URL(screen.getByRole('link', { name: 'Open in email app' }).getAttribute('href'))
     expect(reply.protocol).toBe('mailto:')
     expect(decodeURIComponent(reply.pathname)).toBe('moses@example.com')
     expect(reply.searchParams.get('subject')).toBe('Re: Your quote request [ENQ-ABC234]')
@@ -121,6 +134,50 @@ describe('admin enquiry inbox', () => {
     const notePost = calls.find((c) => c.path.endsWith('/notes'))
     expect(notePost).toMatchObject({ method: 'POST', body: { text: 'They will send photos by Friday.' } })
     expect(notePost.csrf).toBe(api.state.session.csrfToken)
+  })
+
+  it('replies: shows the history and email state, sends a reply with the CSRF token and a request id', async () => {
+    const { api, calls } = setup()
+    const { user } = renderApp('/admin/enquiries/ENQ-ABC234', { api })
+    const history = await screen.findByRole('list', { name: 'Reply history' })
+    expect(within(history).getByText('Thank you, we are looking into it.')).toBeInTheDocument()
+    expect(within(history).getByText(/Email sent/)).toBeInTheDocument()
+    expect(screen.getByText('Sent while signed in')).toBeInTheDocument()
+    expect(screen.getByText('Sent to their account')).toBeInTheDocument()
+    expect(screen.getByText(/Replies are emailed to moses@example.com from MyLinnnk Support and also shown/)).toBeInTheDocument()
+
+    const box = screen.getByLabelText('Your reply')
+    expect(box).toHaveAccessibleDescription(/The customer receives exactly this text/)
+    expect(screen.getByRole('button', { name: 'Send reply' })).toBeDisabled()
+    await user.type(box, 'Your photos arrived. The page will be ready on Friday.')
+    expect(screen.getByText(/54 of 5,000 characters/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Send reply' }))
+    const confirmation = await screen.findByText('Reply sent to the customer.')
+    // Shown next to the reply form (where the admin is), not at the top of the page.
+    expect(confirmation.closest('form')).toBe(screen.getByLabelText('Your reply').closest('form'))
+    const sent = calls.find((c) => c.path.endsWith('/replies'))
+    expect(sent).toMatchObject({ method: 'POST', body: { text: 'Your photos arrived. The page will be ready on Friday.' } })
+    expect(sent.body.requestId).toMatch(/^[A-Za-z0-9-]{8,64}$/)
+    expect(sent.csrf).toBe(api.state.session.csrfToken)
+    expect(await within(screen.getByRole('list', { name: 'Reply history' })).findByText('Your photos arrived. The page will be ready on Friday.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Your reply')).toHaveValue('')
+  })
+
+  it('replies: a failed send keeps the text and retries with the same request id; the next reply gets a new one', async () => {
+    const { api, calls } = setup({ failReplies: 1 })
+    const { user } = renderApp('/admin/enquiries/ENQ-ABC234', { api })
+    await user.type(await screen.findByLabelText('Your reply'), 'We have checked this.')
+    await user.click(screen.getByRole('button', { name: 'Send reply' }))
+    expect(await screen.findByText('Please try again in a moment.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Your reply')).toHaveValue('We have checked this.')
+    await user.click(screen.getByRole('button', { name: 'Send reply' }))
+    expect(await screen.findByText('Reply sent to the customer.')).toBeInTheDocument()
+    const [first, second] = calls.filter((c) => c.path.endsWith('/replies'))
+    expect(second.body.requestId).toBe(first.body.requestId)
+    await user.type(screen.getByLabelText('Your reply'), 'One more thing.')
+    await user.click(screen.getByRole('button', { name: 'Send reply' }))
+    await waitFor(() => expect(calls.filter((c) => c.path.endsWith('/replies'))).toHaveLength(3))
+    expect(calls.filter((c) => c.path.endsWith('/replies'))[2].body.requestId).not.toBe(first.body.requestId)
   })
 
   it('a signed-in non-admin sees no enquiry data (the server refuses)', async () => {

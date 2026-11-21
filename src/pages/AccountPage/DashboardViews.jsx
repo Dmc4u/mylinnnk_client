@@ -1,11 +1,13 @@
 import { Link, Navigate, useLocation, useOutletContext } from 'react-router'
 import { FormAlert } from '../../components/Form/Form.jsx'
+import NotificationList from '../../components/Notifications/NotificationList.jsx'
 import VerifyEmailCode from '../../components/VerifyEmailCode/VerifyEmailCode.jsx'
 import AccountDrafts from './AccountDrafts.jsx'
 import AccountOrders from './AccountOrders.jsx'
 import AccountPublications from './AccountPublications.jsx'
 import DashboardOverview from './DashboardOverview.jsx'
 import DashboardSupport from './DashboardSupport.jsx'
+import NotificationSettings from './NotificationSettings.jsx'
 
 /** A view's heading (each view is its own page in the dashboard). */
 function ViewHeader({ eyebrow = 'Dashboard', title, children }) {
@@ -99,6 +101,17 @@ export function SupportView() {
   )
 }
 
+/** /dashboard/notifications */
+export function NotificationsView() {
+  return (
+    <>
+      <title>Notifications · MyLinnnk</title>
+      <ViewHeader title="Notifications">Updates about your account, pages and payments.</ViewHeader>
+      <NotificationList />
+    </>
+  )
+}
+
 const formatDate = (iso) => {
   const date = new Date(iso)
   return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
@@ -138,6 +151,7 @@ export function AccountView() {
           )}
         </dl>
       </section>
+      <NotificationSettings />
       <section className="account-section" aria-labelledby="dash-security-title">
         <h2 id="dash-security-title">Security</h2>
         <p>

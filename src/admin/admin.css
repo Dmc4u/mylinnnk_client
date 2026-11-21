@@ -746,6 +746,25 @@
 .adm-notes { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .adm-notes li { padding: 10px 12px; background: color-mix(in srgb, var(--teal-500) 6%, var(--surface)); border-radius: 10px; }
 .adm-notes p { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* Enquiry replies: full width under the message, the textarea sized for a real answer. */
+.adm-reply { margin-block: 20px; }
+.adm-reply textarea { min-height: 9rem; resize: vertical; }
 .adm-form textarea { width: 100%; padding: 10px 12px; font: inherit; border: 1px solid var(--line); border-radius: 10px; resize: vertical; }
 .adm-ctx-item { display: inline-flex; align-items: center; gap: 6px; margin: 0 12px 6px 0; }
 @media (max-width: 720px) { .adm-search { margin-left: 0; width: 100%; } .adm-search input { flex: 1; min-width: 0; } }
+
+/* ---------- Email delivery (notification monitoring) ---------- */
+.adm .adm-subheading, .adm-subheading { margin: 28px 0 12px; font-size: 1.05rem; color: var(--ink); }
+.adm-btn--ghost { background: transparent; }
+.adm-card--muted { --adm-card-accent: var(--line); }
+.adm-health { display: grid; gap: 12px; }
+.adm-health .adm-error, .adm-health .adm-ok { margin: 0; }
+.adm-health__list { margin: 0; }
+.adm-health > .adm-muted { margin: 0; font-size: 0.86rem; }
+.adm-deliveries td { vertical-align: top; }
+.adm-deliveries code { font-size: 0.82rem; overflow-wrap: anywhere; }
+.adm-retry-confirm { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+@media (max-width: 720px) {
+  .adm-filters .adm-filter { flex: 1 1 140px; }
+  .adm-filters .adm-filter :is(select, input) { width: 100%; min-height: 44px; }
+}

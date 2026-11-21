@@ -251,6 +251,16 @@ export default function AuthProvider({ children, api = authApi }) {
     return data
   }, [api, withCsrf])
 
+  /** Saves the signed-in user's optional notifications (CSRF); the user in context follows the server. */
+  const updatePreferences = useCallback(
+    async (preferences) => {
+      const data = await withCsrf((csrfToken) => api.updatePreferences(preferences, csrfToken))
+      if (data?.user) setState((prev) => (prev.status === 'authenticated' && prev.user?.id === data.user.id ? { ...prev, user: { ...prev.user, preferences: data.user.preferences } } : prev))
+      return data
+    },
+    [api, withCsrf],
+  )
+
   const forgotPassword = useCallback((email) => api.forgotPassword(email), [api])
 
   const resetPassword = useCallback(
@@ -278,12 +288,13 @@ export default function AuthProvider({ children, api = authApi }) {
       verifyEmailCode,
       getVerification,
       resendVerification,
+      updatePreferences,
       forgotPassword,
       resetPassword,
       clearNotice,
       withCsrf,
     }),
-    [state, refreshSession, login, register, logout, verifyEmail, verifyEmailCode, getVerification, resendVerification, forgotPassword, resetPassword, clearNotice, withCsrf],
+    [state, refreshSession, login, register, logout, verifyEmail, verifyEmailCode, getVerification, resendVerification, updatePreferences, forgotPassword, resetPassword, clearNotice, withCsrf],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

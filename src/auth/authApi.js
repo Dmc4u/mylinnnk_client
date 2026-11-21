@@ -105,6 +105,8 @@ export const authApi = {
   getVerification: () => apiRequest('/auth/verification'),
   /** → { sent, alreadyVerified, verification? } (signed in + CSRF); 429 RESEND_COOLDOWN (details[0].retryAfter) */
   resendVerification: (csrfToken) => post('/auth/resend-verification', {}, csrfToken),
+  /** → { user } (signed in + CSRF). Optional notifications only: { loginAlerts } ("Email me when I sign in"). */
+  updatePreferences: (preferences, csrfToken) => apiRequest('/auth/preferences', { method: 'PATCH', body: preferences, csrfToken }),
   /** → { message } (same answer whether or not the account exists) */
   forgotPassword: (email) => post('/auth/forgot-password', { email }),
   /** → { passwordReset: true } (the API signs the user out everywhere) */

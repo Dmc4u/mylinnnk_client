@@ -573,3 +573,61 @@ a.dash-stat:focus-visible { outline: 3px solid rgb(20 184 166 / 0.45); outline-o
 .account-orders__status--page { background: rgb(20 184 166 / 0.08); }
 .dash__logout { justify-self: start; }
 @media (max-width: 900px) { .dash__logout { display: none; } }
+
+/* ---------- Account settings: optional notifications ---------- */
+.account-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 4px 0 12px;
+  cursor: pointer;
+}
+
+.account-toggle input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  accent-color: var(--purple-600);
+  cursor: pointer;
+}
+
+.account-toggle input:disabled {
+  cursor: progress;
+}
+
+.account-toggle input:focus-visible {
+  outline: 2px solid var(--purple-600);
+  outline-offset: 2px;
+}
+
+.account-toggle__text {
+  display: grid;
+  gap: 2px;
+}
+
+.account-toggle__label {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.account-toggle__hint {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.account-toggle__status {
+  min-height: 1.4em;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--success-700);
+}
+
+.account-toggle__error {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--danger-50);
+  color: var(--danger-600);
+  font-size: 0.9rem;
+}

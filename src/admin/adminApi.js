@@ -36,6 +36,13 @@ export const adminApi = {
   enquiry: (ref) => apiRequest(`${base}/enquiries/${encodeURIComponent(ref)}`),
   updateEnquiry: (csrfToken, ref, body) => apiRequest(`${base}/enquiries/${encodeURIComponent(ref)}`, { method: 'PATCH', body, csrfToken }),
   addEnquiryNote: (csrfToken, ref, text) => post(csrfToken, `/enquiries/${encodeURIComponent(ref)}/notes`, { text }),
+  // requestId: one per composed reply, so a repeated request never sends it twice.
+  replyToEnquiry: (csrfToken, ref, text, requestId) => post(csrfToken, `/enquiries/${encodeURIComponent(ref)}/replies`, { text, requestId }),
+  // Notification monitoring (recipients masked by the server; no email content).
+  deliveries: ({ state = '', type = '', from = '', to = '', page = 1 } = {}) =>
+    apiRequest(`${base}/email-deliveries?${new URLSearchParams({ ...(state ? { state } : {}), ...(type ? { type } : {}), ...(from ? { from } : {}), ...(to ? { to } : {}), page: String(page) })}`),
+  deliveryHealth: () => apiRequest(`${base}/email-deliveries/health`),
+  retryDelivery: (csrfToken, id) => post(csrfToken, `/email-deliveries/${encodeURIComponent(id)}/retry`),
   // The administrator's own pages, without payment (the server only ever finds the admin's own pages).
   publishOwn: (csrfToken, pageId, expiry, credit) => post(csrfToken, `/my-pages/${encodeURIComponent(pageId)}/publish`, { expiry, credit }),
   updateOwnContent: (csrfToken, pageId, confirmSlug) => post(csrfToken, `/my-pages/${encodeURIComponent(pageId)}/update-content`, { confirmSlug }),

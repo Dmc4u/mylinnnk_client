@@ -45,13 +45,59 @@ export function createFakeAuthApi() {
     publicDown: false, // /public requests fail with a network error
     activePageRequests: 0,
     maxConcurrentPageRequests: 0,
+    notifications: [], // in-app notifications { id, userId, type, title, body, link, createdAt, readAt } (mylinnnk_api/routes/notifications.js)
+    paymentsAwaitingReview: 0, // the administrator's live count (GET /notifications/summary, admin only)
+  }
+
+  let nextNotification = 1
+  /** Adds an in-app notification for `user` (as the server's dispatcher would). */
+  function addNotification(user, { title = 'Update', body = '', link = null, createdAt = new Date(Date.UTC(2026, 10, 20, 10, 0, nextNotification)).toISOString(), read = false, type = 'test.item' } = {}) {
+    const n = { id: String(nextNotification++).padStart(40, 'a'), userId: user.id, type, title, body, link, createdAt, readAt: read ? createdAt : null }
+    state.notifications.push(n)
+    return n
+  }
+  const toClientNotification = (n) => ({ id: n.id, type: n.type, title: n.title, body: n.body, link: n.link, createdAt: n.createdAt, read: Boolean(n.readAt), readAt: n.readAt })
+
+  /** /notifications (session; changes need CSRF; only the signed-in user's own items). */
+  function notificationsRoute(method, path, params, headers) {
+    const user = currentUser()
+    if (!user) return fail(401, 'UNAUTHENTICATED', 'You need to sign in.')
+    const mine = () => state.notifications.filter((n) => n.userId === user.id).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    if (method === 'GET' && path === '/notifications/summary') {
+      const all = mine()
+      return ok({ unread: all.filter((n) => !n.readAt).length, latest: all.slice(0, 5).map(toClientNotification), ...(user.admin ? { paymentsAwaitingReview: state.paymentsAwaitingReview } : {}) })
+    }
+    if (method === 'GET' && path === '/notifications') {
+      const limit = Number(params.get('limit') ?? 20)
+      const before = params.get('before')
+      let items = mine()
+      if (params.get('unread') === 'true') items = items.filter((n) => !n.readAt)
+      if (before) items = items.filter((n) => n.createdAt < before)
+      const page = items.slice(0, limit).map(toClientNotification)
+      return ok({ items: page, nextBefore: items.length > limit ? page.at(-1).createdAt : null })
+    }
+    if (method === 'POST') {
+      const denied = requireSession(headers)
+      if (denied) return denied
+      if (path === '/notifications/read-all') {
+        const unread = mine().filter((n) => !n.readAt)
+        for (const n of unread) n.readAt = '2026-11-20T12:00:00.000Z'
+        return ok({ updated: unread.length })
+      }
+      const match = /^\/notifications\/([0-9a-f]{40})\/read$/.exec(path)
+      const n = match && mine().find((x) => x.id === match[1])
+      if (!n) return fail(404, 'NOT_FOUND', 'Notification not found.')
+      n.readAt ??= '2026-11-20T12:00:00.000Z'
+      return ok({ read: true })
+    }
+    return fail(404, 'NOT_FOUND', `No route for ${method} ${path}.`)
   }
 
   const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8' } })
   const ok = (data, status = 200) => json(status, { data })
   const fail = (status, code, message, details) => json(status, { error: { code, message, ...(details ? { details } : {}), requestId: 'req-test-1' } })
 
-  const publicUser = (u) => ({ id: u.id, email: u.email, displayName: u.displayName, emailVerified: u.emailVerified, createdAt: '2026-11-01T10:00:00.000Z' })
+  const publicUser = (u) => ({ id: u.id, email: u.email, displayName: u.displayName, emailVerified: u.emailVerified, createdAt: '2026-11-01T10:00:00.000Z', preferences: { loginAlerts: Boolean(u.loginAlerts) } })
   const currentUser = () => (state.session ? state.users.find((u) => u.id === state.session.userId) : null)
 
   /** `admin: true` makes the account the admin as the real server would report it (isAdmin). */
@@ -137,6 +183,15 @@ export function createFakeAuthApi() {
       if (!user || user.password !== body.password) return fail(401, 'INVALID_CREDENTIALS', 'Email or password is incorrect.')
       const csrfToken = signIn(user)
       return ok({ user: publicUser(user), isAdmin: user.admin === true, csrfToken })
+    },
+    'PATCH /auth/preferences': ({ headers, body }) => {
+      const denied = requireSession(headers)
+      if (denied) return denied
+      if (typeof body.loginAlerts !== 'boolean' || Object.keys(body).length !== 1) return fail(400, 'VALIDATION_FAILED', 'The request is invalid.')
+      if (state.preferencesFailure) return fail(503, 'SERVICE_UNAVAILABLE', 'MyLinnnk is temporarily unavailable. Please try again in a moment.')
+      const user = currentUser()
+      user.loginAlerts = body.loginAlerts
+      return ok({ user: publicUser(user) })
     },
     'POST /auth/logout': ({ headers }) => {
       const denied = requireSession(headers)
@@ -437,6 +492,7 @@ export function createFakeAuthApi() {
         if (isWrite) state.activePageRequests -= 1
       }
     }
+    if (path === '/notifications' || path.startsWith('/notifications/')) return notificationsRoute(method, path, new URL(url, 'http://localhost').searchParams, headers)
     const handler = routes[`${method} ${path}`]
     if (!handler) return fail(404, 'NOT_FOUND', `No route for ${method} ${path}.`)
     return handler({ headers, body: body ?? {} })
@@ -445,6 +501,7 @@ export function createFakeAuthApi() {
   return {
     fetch,
     state,
+    addNotification,
     addUser,
     signIn,
     issueToken,

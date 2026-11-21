@@ -84,7 +84,7 @@ describe('dashboard views', () => {
   it('one layout with a persistent menu; each view is its own route, highlighted when active', async () => {
     const { user, location } = renderApp('/dashboard', { api: anaWith() })
     expect(await screen.findByRole('heading', { level: 1, name: 'Your dashboard' })).toBeInTheDocument()
-    expect(within(nav()).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/dashboard', '/dashboard/publications', '/dashboard/drafts', '/dashboard/payments', '/dashboard/support', '/dashboard/account'])
+    expect(within(nav()).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/dashboard', '/dashboard/publications', '/dashboard/drafts', '/dashboard/payments', '/dashboard/notifications', '/dashboard/support', '/dashboard/account'])
     expect(within(nav()).getByRole('link', { name: 'Overview' })).toHaveAttribute('aria-current', 'page')
     for (const [name, path, heading] of [
       ['Published pages', '/dashboard/publications', 'Published pages'],

@@ -26,6 +26,23 @@ const TYPES = [
 const labelOf = (list, value) => list.find(([v]) => v === value)?.[1] ?? value
 
 /** A reply in the support mailbox's own email program (no email is sent by MyLinnnk itself). */
+const MAX_REPLY_LENGTH = 5000
+const newRequestId = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `r-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`)
+const REPLY_EMAIL = {
+  queued: 'Email queued',
+  retrying: 'Email delayed, retrying',
+  sent: 'Email sent',
+  not_sent: 'Email not sent',
+  failed: 'Email could not be delivered',
+  not_queued: 'Not emailed (notifications are off)',
+}
+const ACKNOWLEDGEMENT = {
+  account: 'Sent to their account',
+  email: 'Sent to the address given',
+  limited: 'Not sent (limit for this address reached)',
+  none: 'Not sent',
+}
+
 const replyHref = (e) =>
   `mailto:${encodeURIComponent(e.email)}?subject=${encodeURIComponent(`Re: ${e.type === 'quote' ? 'Your quote request' : e.subjectLine || e.subject || 'Your message'} [${e.reference}]`)}`
 
@@ -199,6 +216,8 @@ export function AdminEnquiryDetail() {
   const ids = useId()
   const s = useAdminData(() => adminApi.enquiry(reference), [reference])
   const [note, setNote] = useState('')
+  const [reply, setReply] = useState('')
+  const [requestId, setRequestId] = useState(newRequestId)
   const [busy, setBusy] = useState(null)
   const [notice, setNotice] = useState(null)
   const e = s.data?.enquiry
@@ -209,17 +228,25 @@ export function AdminEnquiryDetail() {
     setNotice(null)
     try {
       await withCsrf(fn)
-      setNotice({ ok: true, text: done })
+      setNotice({ ok: true, text: done, at: key })
       s.reload()
       return true
     } catch (error) {
-      setNotice({ ok: false, text: error.message, code: error.code })
+      setNotice({ ok: false, text: error.message, code: error.code, at: key })
       return false
     } finally {
       setBusy(null)
     }
   }
   const update = (body, done) => act('update', (csrf) => adminApi.updateEnquiry(csrf, reference, body), done)
+  const sendReply = async (event) => {
+    event.preventDefault()
+    // The same requestId is kept until the reply is sent: retrying after an error can't send it twice.
+    if (await act('reply', (csrf) => adminApi.replyToEnquiry(csrf, reference, reply.trim(), requestId), 'Reply sent to the customer.')) {
+      setReply('')
+      setRequestId(newRequestId())
+    }
+  }
   const addNote = async (event) => {
     event.preventDefault()
     if (await act('note', (csrf) => adminApi.addEnquiryNote(csrf, reference, note.trim()), 'Note added.')) setNote('')
@@ -231,13 +258,14 @@ export function AdminEnquiryDetail() {
         <Link to="/admin/enquiries">← Enquiries</Link>
       </p>
       <AdminHeading id={`${ids}-h`} eyebrow={e?.type === 'quote' ? 'Quote request' : 'Contact message'} title={reference} />
-      <AdminNotice notice={notice} />
+      {/* Reply results are shown next to the reply form (where the person is), everything else here. */}
+      <AdminNotice notice={notice?.at === 'reply' ? null : notice} />
       <StateView state={s} skeleton="detail">
         {e && (
           <div className="adm-detail">
             <div className="adm-enquiry-actions">
-              <MagneticButton href={replyHref(e)} size="sm">
-                Reply by email
+              <MagneticButton href={replyHref(e)} size="sm" variant="secondary">
+                Open in email app
               </MagneticButton>
               <label className="adm-filter">
                 <span>Status</span>
@@ -277,6 +305,8 @@ export function AdminEnquiryDetail() {
               {e.budget && <div><dt>Budget</dt><dd>{e.budget.label}</dd></div>}
               {e.timeline && <div><dt>Timeline</dt><dd>{e.timeline.label}</dd></div>}
               {e.context && <div><dt>Looking at</dt><dd>{[e.context.plan && `Plan: ${e.context.plan}`, e.context.page && `Page: ${e.context.page}`].filter(Boolean).join(' · ')}</dd></div>}
+              {e.fromAccount && <div><dt>Account</dt><dd>Sent while signed in</dd></div>}
+              {e.acknowledgement && <div><dt>Acknowledgement</dt><dd>{ACKNOWLEDGEMENT[e.acknowledgement] ?? e.acknowledgement}</dd></div>}
               <div>
                 <dt>Inbox email</dt>
                 <dd>{e.notification.state === 'sent' ? `Delivered ${when(e.notification.sentAt)}` : e.notification.state === 'failed' ? <b className="adm-warn-text">Not delivered: reply from here</b> : 'Pending'}</dd>
@@ -287,6 +317,38 @@ export function AdminEnquiryDetail() {
               <h2>{e.type === 'quote' ? 'Project description' : 'Message'}</h2>
               <p>{e.message ?? e.description}</p>
             </div>
+
+            <form className="adm-form adm-reply" onSubmit={sendReply} aria-labelledby={`${ids}-replies`}>
+              <h2 id={`${ids}-replies`}>Replies</h2>
+              <p className="adm-muted">
+                Replies are emailed to {e.email} from MyLinnnk Support{e.fromAccount ? ' and also shown in the customer’s MyLinnnk notifications' : ''}. Your name and internal notes are never included.
+              </p>
+              {(e.replies ?? []).length === 0 ? (
+                <p className="adm-muted">No replies yet.</p>
+              ) : (
+                <ol className="adm-notes" aria-label="Reply history">
+                  {e.replies.map((r) => (
+                    <li key={r.id}>
+                      <small>
+                        {when(r.at)}
+                        {REPLY_EMAIL[r.email] && ' · '}
+                        {REPLY_EMAIL[r.email] && <span className={['failed', 'retrying', 'not_sent'].includes(r.email) ? 'adm-warn-text' : undefined}>{REPLY_EMAIL[r.email]}</span>}
+                      </small>
+                      <p className="adm-reply-text">{r.text}</p>
+                    </li>
+                  ))}
+                </ol>
+              )}
+              <label htmlFor={`${ids}-reply`}>Your reply</label>
+              <textarea id={`${ids}-reply`} rows={6} maxLength={MAX_REPLY_LENGTH} value={reply} onChange={(ev) => setReply(ev.target.value)} aria-describedby={`${ids}-reply-hint`} required />
+              <p id={`${ids}-reply-hint`} className="adm-muted">
+                The customer receives exactly this text. {reply.length.toLocaleString('en-GB')} of {MAX_REPLY_LENGTH.toLocaleString('en-GB')} characters.
+              </p>
+              <MagneticButton type="submit" size="sm" disabled={!reply.trim() || busy === 'reply'} loading={busy === 'reply'} loadingLabel="Sending…">
+                Send reply
+              </MagneticButton>
+              <AdminNotice notice={notice?.at === 'reply' ? notice : null} />
+            </form>
 
             <div className="adm-forms">
               <div className="adm-form" aria-labelledby={`${ids}-ctx`}>

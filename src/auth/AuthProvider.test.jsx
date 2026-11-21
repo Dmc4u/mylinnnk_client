@@ -228,7 +228,7 @@ describe('no leaks between users', () => {
     await act(() => tab.auth.login({ email: 'ana@example.com', password: PASSWORD }))
     await act(() => tab.auth.logout())
     await act(() => tab.auth.login({ email: 'ben@example.com', password: PASSWORD }))
-    expect(tab.auth.user).toEqual({ id: 'user2', email: 'ben@example.com', displayName: 'Ben', emailVerified: false, createdAt: expect.any(String) })
+    expect(tab.auth.user).toEqual({ id: 'user2', email: 'ben@example.com', displayName: 'Ben', emailVerified: false, createdAt: expect.any(String), preferences: { loginAlerts: false } })
     expect(tab.auth.notice).toBeNull()
   })
 

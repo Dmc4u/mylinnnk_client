@@ -89,7 +89,7 @@ export function AdminPaymentDetail() {
     <section aria-labelledby={`${ids}-h`}>
       <p className="adm-back"><Link to="/admin/payments">← Payment reviews</Link></p>
       <AdminHeading id={`${ids}-h`} eyebrow="Payment review" title={`Order ${reference}`} />
-      <AdminNotice notice={notice} />
+      <AdminNotice notice={notice} focusOnShow layoutKey={s.data} />
       <StateView state={s} skeleton="detail">
         {o && (
           <div className="adm-detail">
@@ -137,8 +137,11 @@ export function AdminPaymentDetail() {
                 </form>
                 <form className="adm-form" onSubmit={(e) => { e.preventDefault(); act('reject', (csrf) => adminApi.reject(csrf, reference, reason), 'Payment rejected. The customer can send new details.') }} aria-labelledby={`${ids}-reject`}>
                   <h2 id={`${ids}-reject`}>Reject</h2>
-                  <label htmlFor={`${ids}-why`}>Reason (shown to the customer)</label>
-                  <input id={`${ids}-why`} required minLength={3} maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} />
+                  <label htmlFor={`${ids}-why`}>Reason for the customer</label>
+                  <textarea id={`${ids}-why`} rows={3} required minLength={3} maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} aria-describedby={`${ids}-why-hint`} />
+                  <p id={`${ids}-why-hint`} className="adm-muted">
+                    Customer-visible: shown on their order page and in the email we send them. Write it for the customer; keep internal details out. {reason.length} of 500 characters.
+                  </p>
                   <button type="submit" className="adm-btn adm-btn--danger" disabled={busy === 'reject'}>Reject payment</button>
                 </form>
               </div>

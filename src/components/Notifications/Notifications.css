@@ -1,0 +1,335 @@
+/* Notification bell, panel and list (site header, admin top bar, notifications pages). */
+
+.notif {
+  position: relative;
+  display: inline-flex;
+}
+
+.notif__bell {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.notif__bell:hover,
+.notif__bell[aria-expanded="true"] {
+  border-color: var(--purple-200);
+  background: var(--bg);
+}
+
+.notif__bell:focus-visible,
+.notif__item:focus-visible,
+.notif__textbtn:focus-visible,
+.notif__all:focus-visible,
+.notif__panel:focus-visible {
+  outline: 2px solid var(--purple-600);
+  outline-offset: 2px;
+}
+
+.notif__badge {
+  position: absolute;
+  top: 2px;
+  right: 1px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--purple-600);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.notif__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  width: min(380px, calc(100vw - 32px));
+  max-height: min(520px, calc(100vh - var(--header-h) - 24px));
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.notif__head,
+.notif__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.notif__head {
+  border-bottom: 1px solid var(--line);
+}
+
+.notif__foot {
+  border-top: 1px solid var(--line);
+  justify-content: center;
+}
+
+.notif__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.notif__textbtn {
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--purple-600);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.notif__textbtn:hover,
+.notif__all:hover {
+  text-decoration: underline;
+}
+
+.notif__all {
+  color: var(--purple-600);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.notif__list {
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.notif__item {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.notif__item:hover {
+  background: var(--bg);
+}
+
+.notif__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.notif__dot.is-unread {
+  background: var(--purple-600);
+}
+
+.notif__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.notif__item-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.notif__item.is-unread .notif__item-title {
+  font-weight: 600;
+}
+
+.notif__item-body {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.notif__time {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.notif__empty,
+.notif__error {
+  margin: 0;
+  padding: 20px 16px;
+  font-size: 14px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.notif__error {
+  padding: 10px 16px;
+  color: var(--danger-600);
+  background: var(--danger-50);
+  text-align: left;
+}
+
+/* Phones: the panel spans the screen under the header. */
+@media (max-width: 560px) {
+  .notif__panel {
+    position: fixed;
+    top: calc(var(--header-h) - 4px);
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+}
+
+/* Restrained motion, only when the visitor hasn't asked for less. */
+@media (prefers-reduced-motion: no-preference) {
+  .notif__bell,
+  .notif__item {
+    transition: background-color 150ms var(--ease-out), border-color 150ms var(--ease-out);
+  }
+
+  .notif__panel {
+    animation: notif-in 160ms var(--ease-out);
+  }
+
+  @keyframes notif-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+}
+
+/* ---------- Notifications page ---------- */
+
+.notif-page__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.notif-page__filters {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.notif-page__filter {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.notif-page__filter[aria-pressed="true"] {
+  background: var(--navy-900);
+  color: #fff;
+}
+
+.notif-page__filter:focus-visible {
+  outline: 2px solid var(--purple-600);
+  outline-offset: 2px;
+}
+
+.notif-page__list {
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.notif-page__list > li + li {
+  border-top: 1px solid var(--line);
+}
+
+.notif-page__list .notif__item {
+  padding: 14px 18px;
+}
+
+.notif-page__more {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.notif-page__status {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ---------- Placement ---------- */
+
+/* Site header: in the nav beside the account menu on wide screens; in the header bar on phones. */
+.site-nav__notif {
+  display: flex;
+  margin-left: 10px;
+}
+
+.site-header__notif {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .site-nav__notif {
+    display: none;
+  }
+
+  .site-header__notif {
+    display: inline-flex;
+    margin-left: auto;
+    margin-right: 8px;
+  }
+}
+
+.adm-nav__count {
+  margin-left: auto;
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--warn-50);
+  color: var(--warn-700);
+  border: 1px solid var(--warn-200);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+}
